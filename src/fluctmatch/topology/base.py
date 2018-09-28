@@ -14,25 +14,37 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.utils import (
-    with_metaclass, )
+import os
+import time
 
 from MDAnalysis.coordinates.base import (_Readermeta, _Writermeta, IOBase)
 
+from ..lib.register import register_reader, register_writer
 
-class TopologyReaderBase(with_metaclass(_Readermeta, IOBase)):
+
+class TopologyReaderBase(IOBase, metaclass=_Readermeta):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        register_reader(cls)
+
     def read(self):  # pragma: no cover
         """Read the file"""
         raise NotImplementedError("Override this in each subclass")
 
 
-class TopologyWriterBase(with_metaclass(_Writermeta, IOBase)):
+class TopologyWriterBase(IOBase, metaclass=_Writermeta):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        register_writer(cls)
+
+    def __init__(self):
+        self.title: str = (
+            f"""
+            * Created by fluctmatch on {time.asctime(time.localtime())}
+            * User: {os.environ["USER"]}
+            """
+        )
+
     def write(self, selection):  # pragma: no cover
         # type: (object) -> object
         """Write selection at current trajectory frame to file.
