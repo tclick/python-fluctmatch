@@ -14,22 +14,14 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import dict
-
 import logging
 
-__version__ = "3.4.1"
+__version__: str = "3.4.1"
 
-_MODELS = dict()
-_DESCRIBE = dict()
+_MODELS: dict = {}
+_DESCRIBE: dict = {}
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 from .coordinates import COR
