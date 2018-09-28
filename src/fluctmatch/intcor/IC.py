@@ -14,29 +14,16 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict,
-    next,
-    open,
-)
-from future.utils import (
-    native_str, )
-
 import logging
-import time
-from io import TextIOWrapper
-from os import environ
+import pathlib
+import textwrap
 
 import numpy as np
 import pandas as pd
-from MDAnalysis.lib import util
-from fluctmatch.topology.base import (TopologyReaderBase, TopologyWriterBase)
+from MDAnalysis.lib.util import FORTRANReader
+
+from ..lib.typing import FileName
+from ..topology.base import (TopologyReaderBase, TopologyWriterBase)
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +32,13 @@ class IntcorReader(TopologyReaderBase):
     """
     Parameters
     ----------
-    filename : str or :class:`~MDAnalysis.lib.util.NamedStream`
+    filename : str or :class:`~pathlib.Path`
          name of the output file or a stream
     """
-    format = "IC"
-    units = dict(time=None, length="Angstrom")
+    format: str = "IC"
+    units: dict = dict(time=None, length="Angstrom")
 
-    fmt = dict(
+    fmt: dict = dict(
         # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
         STANDARD=("I5,1X,I3,1X,A4,I3,1X,A4,I3,1X,A4,I3,1X,A4,F9.4,3F8.2,F9.4"),
         # fortran_format = "(I9,1X,4(I5,1X,A8),F9.4,3F8.2,F9.4)"
@@ -59,21 +46,23 @@ class IntcorReader(TopologyReaderBase):
         # fortran_format = "(I5,4(1X,A4,1X,A4,1X,A4,"":""),F12.6,3F12.4,F12.6)"
         STANDARD_RESID=(
             "I5,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,"
-            "1X,A4,1X,A4,1X,A4,A1,F12.6,3F12.4,F12.6"),
+            "1X,A4,1X,A4,1X,A4,A1,F12.6,3F12.4,F12.6"
+        ),
         # fortran_format = "(I10,4(1X,A8,1X,A8,1X,A8,"":""),F12.6,3F12.4,F12.6)"
         EXTENDED_RESID=(
             "I10,1X,A8,1X,A8,1X,A8,A1,1X,A8,1X,A8,1X,A8,A1,1X,A8,1X,A8,1X,A8,"
-            "A1,1X,A8,1X,A8,1X,A8,A1,F12.6,3F12.4,F12.6"),
+            "A1,1X,A8,1X,A8,1X,A8,A1,F12.6,3F12.4,F12.6"
+        ),
     )
-    cols = np.asarray([
+    cols: np.array = np.asarray([
         "segidI", "resI", "I", "segidJ", "resJ", "J", "segidK", "resK", "K",
         "segidL", "resL", "L", "r_IJ", "T_IJK", "P_IJKL", "T_JKL", "r_KL"
     ])
 
-    def __init__(self, filename):
-        self.filename = util.filename(filename, ext="ic")
+    def __init__(self, filename: FileName):
+        self.filename: pathlib.Path = pathlib.Path(filename).with_suffix(".ic")
 
-    def read(self):
+    def read(self) -> pd.DataFrame:
         """Read the internal coordinates file.
 
         Returns
@@ -81,46 +70,51 @@ class IntcorReader(TopologyReaderBase):
         :class:`~pandas.DataFrame`
             An internal coordinates table.
         """
-        table = pd.DataFrame()
-        with open(self.filename, "rb") as icfile, TextIOWrapper(
-                icfile, encoding="utf-8") as buf:
-            logger.info("Reading {}".format(self.filename))
-            for line in buf:
-                line = line.split("!")[0].strip()
+        table: pd.DataFrame = pd.DataFrame()
+        with open(self.filename, "r") as infile:
+            logger.info(f"Reading {self.filename}")
+
+            # Read title and header lines
+            for line in infile:
+                line: str = line.split("!")[0].strip()
                 if line.startswith("*") or not line:
                     continue  # ignore TITLE and empty lines
                 break
-            line = np.fromiter(line.strip().split(), dtype=np.int)
-            key = "EXTENDED" if line[0] == 30 else "STANDARD"
+            line: np.array = np.fromiter(line.strip().split(), dtype=np.int)
+            key: str = "EXTENDED" if line[0] == 30 else "STANDARD"
             key += "_RESID" if line[1] == 2 else ""
             resid_a = line[1]
 
-            line = next(buf).strip().split()
+            line: str = next(infile).strip().split()
             n_lines, resid_b = np.array(line, dtype=np.int)
             if resid_a != resid_b:
                 raise IOError(
-                    "A mismatch has occurred on determining the IC format.")
+                    "A mismatch has occurred on determining the IC format."
+                )
 
-            TableParser = util.FORTRANReader(self.fmt[key])
-            table = pd.DataFrame(
-                [TableParser.read(line) for line in buf], dtype=np.object)
-            table = table[table != ":"]
-            table = table.dropna(axis=1).apply(pd.to_numeric, errors="ignore")
-            table.set_index(0, inplace=True)
+            # Read the internal coordinates
+            TableParser = FORTRANReader(self.fmt[key])
+            table: pd.DataFrame = pd.DataFrame(
+                [TableParser.read(_) for _ in infile], dtype=np.object
+            ).set_index(0)
+            table: pd.DataFrame = table[table != ":"].dropna(axis=1)
+            table: pd.DataFrame = table.apply(pd.to_numeric, errors="ignore")
             if n_lines != table.shape[0]:
-                raise IOError("A mismatch has occurred between the number "
-                              "of lines expected and the number of lines "
-                              "read. ({:d} != {:d})".format(
-                                  n_lines, len(table)))
+                raise IOError(
+                    f"A mismatch has occurred between the number of "
+                    f"lines expected and the number of lines read. "
+                    f"({n_lines:d} != {len(table):d})"
+                )
 
             if key == "STANDARD":
-                idx = np.where(
+                idx: tuple = np.where(
                     (self.cols != "segidI") & (self.cols != "segidJ") &
-                    (self.cols != "segidK") & (self.cols != "segidL"))
-                columns = self.cols[idx]
+                    (self.cols != "segidK") & (self.cols != "segidL")
+                )
+                columns: np.array = self.cols[idx]
             else:
-                columns = self.cols
-            table.columns = columns
+                columns: np.array = self.cols
+            table.columns: pd.Index = columns
             logger.info("Table read successfully.")
         return table
 
@@ -130,7 +124,7 @@ class IntcorWriter(TopologyWriterBase):
 
     Parameters
     ----------
-    filename : str
+    filename : str or :class:`pathlib.Path`
         Filename for output.
     n_atoms : int, optional
         The number of atoms in the output trajectory.
@@ -142,43 +136,40 @@ class IntcorWriter(TopologyWriterBase):
         A header section written at the beginning of the stream file.
         If no title is given, a default title will be written.
     """
-    format = "IC"
-    units = {"time": "picosecond", "length": "Angstrom"}
+    format: str = "IC"
+    units: dict = dict(time="picosecond", length="Angstrom")
 
-    fmt = dict(
+    fmt: dict = dict(
         # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
         STANDARD=(
-            "%5d %3s %-4s%3s %-4%3s %-4%3s %-4%9.4f%8.2f%8.2f%8.2f%9.4f"),
+            "%5d %3s %-4s%3s %-4%3s %-4%3s %-4%9.4f%8.2f%8.2f%8.2f%9.4f"
+        ),
         # fortran_format = "(I9,1X,4(I5,1X,A8),F9.4,3F8.2,F9.4)"
         EXTENDED=(
-            "%10d %5s %-8s%5s %-8s%5s %-8s%5s %-8s%9.4f%8.2f%8.2f%8.2f%9.4f"),
+            "%10d %5s %-8s%5s %-8s%5s %-8s%5s %-8s%9.4f%8.2f%8.2f%8.2f%9.4f"
+        ),
         # fortran_format = "(I5,4(1X,A4,1X,A4,1X,A4,"":""),F12.6,3F12.4,F12.6)"
-        STANDARD_RESID=("%5d %-4s %-4s %-4s: %-4s %-4s %-4s: %-4s %-4s %-4s: "
-                        "%-4s %-4s %-4s:%12.6f%12.4f%12.4f%12.4f%12.6f"),
+        STANDARD_RESID=(
+            "%5d %-4s %-4s %-4s: %-4s %-4s %-4s: %-4s %-4s %-4s: %-4s %-4s "
+            "%-4s:%12.6f%12.4f%12.4f%12.4f%12.6f"
+        ),
         # fortran_format = "(I10,4(1X,A8,1X,A8,1X,A8,"":""),F12.6,3F12.4,F12.6)"
-        EXTENDED_RESID=("%10d %-8s %-8s %-8s: %-8s %-8s %-8s: %-8s %-8s %-8s: "
-                        "%-8s %-8s %-8s:%12.6f%12.4f%12.4f%12.4f%12.6f"),
+        EXTENDED_RESID=(
+            "%10d %-8s %-8s %-8s: %-8s %-8s %-8s: %-8s %-8s %-8s: %-8s %-8s "
+            "%-8s:%12.6f%12.4f%12.4f%12.4f%12.6f"
+        ),
     )
 
-    def __init__(self, filename, **kwargs):
-        self.filename = util.filename(filename, ext="ic")
-        self._intcor = None
-        self._extended = kwargs.get("extended", True)
-        self._resid = kwargs.get("resid", True)
-        self.key = "EXTENDED" if self._extended else "STANDARD"
+    def __init__(self, filename: FileName, **kwargs):
+        super().__init__()
+        self.filename: pathlib.Path = pathlib.Path(filename).with_suffix(".ic")
+        self._intcor: pd.DataFrame = None
+        self._extended: bool = kwargs.get("extended", True)
+        self._resid: bool = kwargs.get("resid", True)
+        self.key: str = "EXTENDED" if self._extended else "STANDARD"
         self.key += "_RESID" if self._resid else ""
 
-        date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user = environ["USER"]
-        self._title = kwargs.get(
-            "title", (
-                "* Created by fluctmatch on {date}".format(date=date),
-                "* User: {user}".format(user=user),
-            ))
-        if not util.iterable(self._title):
-            self._title = util.asiterable(self._title)
-
-    def write(self, table):
+    def write(self, table: pd.DataFrame):
         """Write an internal coordinates table.
 
         Parameters
@@ -186,42 +177,42 @@ class IntcorWriter(TopologyWriterBase):
         table : :class:`~pandas.DataFrame`
             A CHARMM-compliant internal coordinate table.
         """
-        ictable = table.copy(deep=True)
+        ictable: pd.DataFrame = table.copy(deep=True)
 
         # Increment index.
         if ictable.index[0] == 0:
             ictable.index += 1
-        rescol = [
-            "resI",
-            "resJ",
-            "resK",
-            "resL",
-        ]
-        ictable[rescol] = ictable[rescol].astype(np.unicode)
 
-        with open(self.filename, "wb") as icfile:
-            logger.info("Writing to {}".format(self.filename))
-            for _ in self._title:
-                icfile.write(_.encode())
-                icfile.write("\n".encode())
-            line = np.zeros(20, dtype=np.int)
-            line[0] = 30 if self._extended else 20
-            line[1] = 2 if self._resid else 1
+        with open(self.filename, "w") as outfile:
+            logger.info(f"Writing to {self.filename}")
+            # Save the title lines
+            print(textwrap.dedent(self.title).strip(), file=outfile)
+
+            # Save the header information
+            line: np.array = np.zeros((1, 20), dtype=np.int)
+            line[0, 0]: int = 30 if self._extended else 20
+            line[0, 1]: int = 2 if self._resid else 1
             np.savetxt(
-                icfile,
-                line[np.newaxis, :],
-                fmt=native_str("%4d"),
-                delimiter=native_str(""))
-            line = np.zeros(2, dtype=np.int)
-            line[0] = ictable.shape[0]
-            line[1] = 2 if self._resid else 1
+                outfile,
+                line,
+                fmt="%4d",
+                delimiter=""
+            )
+
+            # Save the internal coordinates
+            line: np.array = np.zeros((1, 2), dtype=np.int)
+            n_rows, _ = ictable.shape
+            line[0, 0] += n_rows
+            line[0, 1] += 2 if self._resid else 1
             np.savetxt(
-                icfile,
-                line[np.newaxis, :],
-                fmt=native_str("%5d"),
-                delimiter=native_str(""))
+                outfile,
+                line,
+                fmt="%5d",
+                delimiter=""
+            )
             np.savetxt(
-                icfile,
-                ictable.reset_index(),
-                fmt=native_str(self.fmt[self.key]))
+                outfile,
+                ictable.reset_index().values,
+                fmt=self.fmt[self.key]
+            )
             logger.info("Table successfully written.")
