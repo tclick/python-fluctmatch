@@ -31,3 +31,8 @@ _DESCRIBE = dict()
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+from .coordinates import COR
+from .intcor import IC
+from .parameter import PRM
+from .topology import PSFParser, RTF, STR
