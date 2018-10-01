@@ -54,7 +54,7 @@ class IntcorReader(TopologyReaderBase):
             "A1,1X,A8,1X,A8,1X,A8,A1,F12.6,3F12.4,F12.6"
         ),
     )
-    cols: np.array = np.asarray([
+    cols: np.ndarray = np.asarray([
         "segidI", "resI", "I", "segidJ", "resJ", "J", "segidK", "resK", "K",
         "segidL", "resL", "L", "r_IJ", "T_IJK", "P_IJKL", "T_JKL", "r_KL"
     ])
@@ -80,7 +80,7 @@ class IntcorReader(TopologyReaderBase):
                 if line.startswith("*") or not line:
                     continue  # ignore TITLE and empty lines
                 break
-            line: np.array = np.fromiter(line.strip().split(), dtype=np.int)
+            line: np.ndarray = np.fromiter(line.strip().split(), dtype=np.int)
             key: str = "EXTENDED" if line[0] == 30 else "STANDARD"
             key += "_RESID" if line[1] == 2 else ""
             resid_a = line[1]
@@ -111,9 +111,9 @@ class IntcorReader(TopologyReaderBase):
                     (self.cols != "segidI") & (self.cols != "segidJ") &
                     (self.cols != "segidK") & (self.cols != "segidL")
                 )
-                columns: np.array = self.cols[idx]
+                columns: np.ndarray = self.cols[idx]
             else:
-                columns: np.array = self.cols
+                columns: np.ndarray = self.cols
             table.columns: pd.Index = columns
             logger.info("Table read successfully.")
         return table
@@ -189,7 +189,7 @@ class IntcorWriter(TopologyWriterBase):
             print(textwrap.dedent(self.title).strip(), file=outfile)
 
             # Save the header information
-            line: np.array = np.zeros((1, 20), dtype=np.int)
+            line: np.ndarray = np.zeros((1, 20), dtype=np.int)
             line[0, 0]: int = 30 if self._extended else 20
             line[0, 1]: int = 2 if self._resid else 1
             np.savetxt(
@@ -200,7 +200,7 @@ class IntcorWriter(TopologyWriterBase):
             )
 
             # Save the internal coordinates
-            line: np.array = np.zeros((1, 2), dtype=np.int)
+            line: np.ndarray = np.zeros((1, 2), dtype=np.int)
             n_rows, _ = ictable.shape
             line[0, 0] += n_rows
             line[0, 1] += 2 if self._resid else 1
