@@ -14,15 +14,6 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import range
-
-import functools
 import multiprocessing as mp
 import os
 from os import path
@@ -32,41 +23,72 @@ import numpy as np
 import pandas as pd
 from scipy import linalg
 from scipy.stats import (scoreatpercentile, t)
-from sklearn.utils import extmath
+from sklearn.utils.validation import check_array, FLOAT_DTYPES
 
+from ..lib.center import Center2D
 
-def _rand(avg_kb, std_kb, x):
-    return (x, np.random.normal(avg_kb, std_kb))
-
-
-def randomize(table, ntrials=100):
+def fluct_stats(X: np.ndarray) -> dict:
     """
 
     Parameters
     ----------
-    table : :class:`pandas.DataFrame`
+    X : array-like, (n_residues, n_windows)
         Table of coupling strengths
-    ntrials : int, optional
+
+    Returns
+    -------
+    D : dict
+        Contains n_residues x n_windows arrays of the mean and standard
+        deviations for residues across all windows. 'positive' is True
+        if the original matrix was >= 0.
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES).T
+    n_residues, _ = X.shape
+
+    positive = np.all(X >= 0.)
+    scaler = StandardScaler()
+    scaler.fit(X)
+    mean = np.tile(scaler.mean_, (n_residues, 1)).T
+    std = np.tile(scaler.scale_, (n_residues, 1)).T
+
+    D = dict(
+        mean=mean,
+        std=std,
+        positive=positive
+    )
+
+    return D
+
+
+def randomize(mean: np.ndarray, std: np.ndarray, n_trials: int=100,
+              positive: bool=True) -> np.ndarray:
+    """Calculates eigenvalues from a random matrix.
+
+    Parameters
+    ----------
+    n_trials : int, optional
         Number of trials for eigenvalues
+    positive : bool, optional
+        If True,
 
     Returns
     -------
         Array of eigenvalues
     """
-    _, Ntime = table.shape
+    from sklearn.preprocessing import scale
+    from sklearn.preprocessing import StandardScaler
+
     Lrand = []
+    for _ in range(n_trials):
+        Y = np.random.normal(mean, std)
+        if positive:
+            Y[Y < 0.] = 0.
+        # Y = StandardScaler(with_std=False).fit_transform(Y)
+        Y = Center2D().fit_transform(Y)
+        Lrand.append(linalg.svdvals(Y))
 
-    avg_kb = table.mean(axis=1)
-    std_kb = table.std(axis=1)
-
-    rand = functools.partial(_rand, avg_kb, std_kb)
-    for _ in range(ntrials):
-        pool = mp.Pool(maxtasksperchild=2)
-        values = pool.map_async(rand, range(Ntime))
-        pool.close()
-        pool.join()
-        kb_rand = pd.DataFrame.from_items(values.get())
-        Lrand.append(linalg.svdvals(kb_rand))
     return np.array(Lrand)
 
 
