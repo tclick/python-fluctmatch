@@ -14,50 +14,18 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 
-from fluctmatch.models.protein import (
-    Calpha,
-    Caside,
-    Ncsc,
-)
-from fluctmatch.models.enm import Enm
-from fluctmatch.models.nucleic import (
-    Nucleic3,
-    Nucleic4,
-)
-from fluctmatch.models.ions import (
-    SolventIons,
-    BioIons,
-    NobleAtoms,
-)
-from fluctmatch.models.solvent import (
-    Water,
-    Tip3p,
-    Dma,
-)
+from .enm import Enm
+from .ions import BioIons, NobleAtoms, SolventIons
+from .nucleic import Nucleic3, Nucleic4, Nucleic6
+from .protein import Calpha, Caside, Ncsc, Polar
+from .solvent import Dma, Tip3p, Water
 
 __all__ = [
-    "Calpha",
-    "Caside",
-    "Ncsc",
-    "Enm",
-    "Nucleic3",
-    "Nucleic4",
-    "Water",
-    "Tip3p",
-    "Dma",
-    "SolventIons",
-    "BioIons",
-    "NobleAtoms",
+    "Calpha", "Caside", "Ncsc", "Polar", "Enm", "Nucleic3", "Nucleic4",
+    "Nucleic6", "Water", "Tip3p", "Dma", "SolventIons", "BioIons", "NobleAtoms",
 ]
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

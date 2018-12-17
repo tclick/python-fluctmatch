@@ -14,24 +14,19 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-from future.utils import (
-    viewkeys,
-    raise_with_traceback,
-    reraise,
-)
-
 import logging
+import traceback
+from typing import List
 
-from fluctmatch import _MODELS
-from fluctmatch.models import *
-from fluctmatch.models.base import Merge
+import MDAnalysis as mda
+
+from .. import _MODELS
+from .base import Merge
 
 logger = logging.getLogger(__name__)
 
 
-def modeller(*args, **kwargs):
+def modeller(*args, **kwargs) -> mda.Universe:
     """Create coarse-grain model from universe selection.
 
     Parameters
@@ -43,28 +38,32 @@ def modeller(*args, **kwargs):
     -------
     A coarse-grain model
     """
-    models = kwargs.pop("model", [
-        "ncsc",
-    ])
-    models = [_.upper() for _ in models]
+    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar",])]
     try:
         if "ENM" in models:
             logger.warning(
-                "ENM model detected. All other models are being ignored.")
+                "ENM model detected. All other models are being ignored."
+            )
             universe = _MODELS["ENM"](*args, **kwargs)
             return universe
-    except Exception as e:
+    except Exception as exc:
         logger.exception(
-            "An error occurred while trying to create the universe.")
-        reraise(e)
+            "An error occurred while trying to create the universe."
+        )
+        raise RuntimeError from exc
 
     try:
-        universe = [_MODELS[model](*args, **kwargs) for model in models]
+        universe: List[mda.Universe] = [
+            _MODELS[_](*args, **kwargs)
+            for _ in models
+        ]
     except KeyError:
-        msg = ("{0} is not an available model. "
-               "Please try {1}".format(model, viewkeys(_MODELS)))
+        tb: List[str] = traceback.format_exc()
+        msg = (
+            f"One of the models is not implemented. Please try {_MODELS.keys()}"
+        )
         logger.exception(msg)
-        raise_with_traceback(KeyError(msg))
+        raise KeyError(msg).with_traceback(tb)
     else:
-        universe = Merge(*universe) if len(universe) > 1 else universe[0]
+        universe: mda.Universe = Merge(*universe) if len(universe) > 1 else universe[0]
         return universe

@@ -43,7 +43,7 @@ from MDAnalysis.core.topologyattrs import (
 from MDAnalysis.core.topology import Topology
 from fluctmatch.topology import base
 
-logger = logging.getLogger("MDAnalysis.topology.PSF")
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Changed the segid squash_by to change_squash to prevent segment ID sorting.
@@ -450,6 +450,11 @@ class PSFWriter(base.TopologyWriterBase):
         values = np.asarray(getattr(self._universe, attr).to_indices()) + 1
         values = values.astype(np.object)
         n_rows, n_cols = values.shape
+        extra = (
+            n_rows // (n_perline // n_cols) + 1
+            if n_rows % (n_perline // n_cols) > 0
+            else n_rows % (n_perline // n_cols)
+        ) - n_rows
         n_values = n_perline // n_cols
         if n_rows % n_values > 0:
             n_extra = n_values - (n_rows % n_values)

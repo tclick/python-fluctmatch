@@ -17,15 +17,16 @@
 import multiprocessing as mp
 import os
 from os import path
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from scipy import linalg
 from scipy.stats import (scoreatpercentile, t)
+from sklearn.decomposition import PCA
+from sklearn.utils.extmath import svd_flip
 from sklearn.utils.validation import check_array, FLOAT_DTYPES
 
-from ..lib.center import Center2D
 
 def fluct_stats(X: np.ndarray) -> dict:
     """
@@ -42,28 +43,21 @@ def fluct_stats(X: np.ndarray) -> dict:
         deviations for residues across all windows. 'positive' is True
         if the original matrix was >= 0.
     """
-    from sklearn.preprocessing import StandardScaler
+    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+    _, n_windows = X.shape
 
-    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES).T
-    n_residues, _ = X.shape
+    mean_: np.ndarray = np.mean(X, axis=-1)[:, None]
+    std_: np.ndarray = np.std(X, axis=-1)[:, None]
 
-    positive = np.all(X >= 0.)
-    scaler = StandardScaler()
-    scaler.fit(X)
-    mean = np.tile(scaler.mean_, (n_residues, 1)).T
-    std = np.tile(scaler.scale_, (n_residues, 1)).T
-
-    D = dict(
-        mean=mean,
-        std=std,
-        positive=positive
+    D: dict = dict(
+        mean=np.tile(mean_, (1, n_windows)),
+        std=np.tile(std_, (1, n_windows)),
+        positive=np.all(X >= 0.)
     )
-
     return D
 
 
-def randomize(mean: np.ndarray, std: np.ndarray, n_trials: int=100,
-              positive: bool=True) -> np.ndarray:
+def randomize(X: np.ndarray, n_trials: int=100) -> np.ndarray:
     """Calculates eigenvalues from a random matrix.
 
     Parameters
@@ -77,27 +71,35 @@ def randomize(mean: np.ndarray, std: np.ndarray, n_trials: int=100,
     -------
         Array of eigenvalues
     """
-    from sklearn.preprocessing import scale
     from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+
+    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+    n_samples, _ = X.shape
+    scaler.fit(X)
+    positive = np.all(X >= 0.)
+    mean: np.ndarray = np.tile(scaler.mean_, (n_samples, 1))
+    std: np.ndarray = np.tile(scaler.var_, (n_samples, 1))
 
     Lrand = []
+    # pca = PCA(whiten=True, svd_solver='full')
     for _ in range(n_trials):
         Y = np.random.normal(mean, std)
         if positive:
             Y[Y < 0.] = 0.
-        # Y = StandardScaler(with_std=False).fit_transform(Y)
-        Y = Center2D().fit_transform(Y)
-        Lrand.append(linalg.svdvals(Y))
+        corr = get_correlation(Y)
+        L, _ = eigenVect(corr)
+        Lrand.append(L)
 
     return np.array(Lrand)
 
 
-def svd(kb):
+def svd(X: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the singular value decomposition with an appropriate sign flip.
 
     Parameters
     ----------
-    a : (M, N) array_like
+    X : np.ndarray, [n_samples, n_features]
         Matrix to decompose.
 
     Returns
@@ -112,12 +114,39 @@ def svd(kb):
         Unitary matrix having right singular vectors as rows.
         Of shape ``(N, N)`` or ``(K, N)`` depending on `full_matrices`.
     """
-    U, W, Vt = linalg.svd(kb, full_matrices=False)
-    U, Vt = extmath.svd_flip(U, Vt, u_based_decision=True)
+    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+
+    U, W, Vt = linalg.svd(X, full_matrices=False)
+    U, Vt = svd_flip(U, Vt)
     return U, W, Vt
 
 
-def correlate(Usca, Lsca, kmax=6):
+def get_correlation(X: np.ndarray) -> np.ndarray:
+    X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+    corr: np.ndarray = np.corrcoef(X, rowvar=False)
+    corr /= np.diag(corr)
+    return corr
+
+
+def eigenVect(M):
+    """ Return the eigenvectors and eigenvalues, ordered by decreasing values of the
+    eigenvalues, for a real symmetric matrix M. The sign of the eigenvectors is fixed
+    so that the mean of its components is non-negative.
+
+    :Example:
+       >>> eigenVectors, eigenValues = eigenVect(M)
+    """
+    eigenValues, eigenVectors = linalg.eigh(M)
+    idx: np.ndarray = eigenValues.argsort()[::-1]
+    eigenValues: np.ndarray = eigenValues[idx]
+    eigenVectors: np.ndarray = eigenVectors[:, idx]
+    for k in range(eigenVectors.shape[1]):
+        if np.sign(np.mean(eigenVectors[:, k])) != 0:
+            eigenVectors[:, k] *= np.sign(np.mean(eigenVectors[:, k]))
+    return eigenValues, eigenVectors
+
+
+def correlate(Usca: np.ndarray, Lsca: np.ndarray, kmax: int=6) -> List[np.ndarray]:
     """Calculate the correlation matrix of *Usca* with *Lsca* eigenvalues.
 
     Parameters
@@ -133,12 +162,15 @@ def correlate(Usca, Lsca, kmax=6):
     -------
     Correlation matrix
     """
-    S = np.power(Lsca, 2)
-    Ucorr = [np.outer(Usca[:, _].dot(S[_]), Usca.T[_]) for _ in range(kmax)]
+    S: np.ndarray = np.power(Lsca, 2)
+    Ucorr: List[np.ndarray] = [
+        np.outer(Usca[:, _].dot(S[_]), Usca.T[_])
+        for _ in range(kmax)
+    ]
     return Ucorr
 
 
-def chooseKpos(Lsca, Lrand, stddev=2):
+def chooseKpos(Lsca: np.ndarray, Lrand: np.ndarray, stddev: float=2.0) -> int:
     """Calculate the significant number of eigenvalues.
 
     Parameters
@@ -154,19 +186,12 @@ def chooseKpos(Lsca, Lrand, stddev=2):
     -------
     Number of significant eigenvalues
     """
-    value = Lrand[:, 1].mean() + ((stddev + 1) * Lrand[:, 1].std())
-    return Lsca[Lsca > value].shape[0]
+    value: float = Lrand[:, 1].mean() + ((stddev + 1) * Lrand[:, 1].std())
+    return Lsca[Lsca > value].size
 
 
-def figUnits(v1,
-             v2,
-             v3,
-             units,
-             filename,
-             fig_path=os.getcwd(),
-             marker='o',
-             dotsize=9,
-             notinunits=1):
+def figUnits(v1, v2, v3, units, filename, fig_path=os.getcwd(), marker='o',
+             dotsize=9, notinunits=1):
     ''' 3d scatter plot specified by 'units', which must be a list of elements
     in the class Unit_. See figColors_ for the color code. Admissible color codes are in [0 1]
     (light/dark gray can also be obtained by using -1/+1).
@@ -244,7 +269,7 @@ def figUnits(v1,
 
 
 # From pySCA 6.0
-class Unit(object):
+class Unit:
     """ A class for units (sectors, sequence families, etc.)
 
         **Attributes:**
@@ -256,13 +281,13 @@ class Unit(object):
     """
 
     def __init__(self):
-        self.name = ""
-        self.items = set()
-        self.col = 0
-        self.vect = 0
+        self.name: str = ""
+        self.items: set = set()
+        self.col: float = 0
+        self.vect: np.ndarray = 0
 
 
-def icList(Vpica, kpos, Csca, p_cut=0.95):
+def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float=0.95):
     """ Produces a list of positions contributing to each independent component (IC) above
     a defined statistical cutoff (p_cut, the cutoff on the CDF of the t-distribution
     fit to the histogram of each IC).  Any position above the cutoff on more than one IC
@@ -271,54 +296,56 @@ def icList(Vpica, kpos, Csca, p_cut=0.95):
     pdf fit, which can be used for plotting/evaluation.
     icList, icsize, sortedpos, cutoff, pd  = icList(Vsca,Lsca,Lrand) """
     #do the PDF/CDF fit, and assign cutoffs
-    Npos = len(Vpica)
-    cutoff = list()
-    scaled_pdf = list()
-    all_fits = list()
+    Npos, _ = Vpica.shape
+    cutoff: list = []
+    scaled_pdf: list = []
+    all_fits: list = []
     for k in range(kpos):
-        pd = t.fit(Vpica[:,k])
+        pd: np.ndarray = t.fit(Vpica[:, k])
         all_fits.append(pd)
-        iqr = scoreatpercentile(Vpica[:,k],75) - scoreatpercentile(Vpica[:,k],25)
-        binwidth=2*iqr*(len(Vpica[:,k])**(-0.33))
-        nbins=round((max(Vpica[:,k])-min(Vpica[:,k]))/binwidth)
-        h_params = np.histogram(Vpica[:,k], int(nbins))
-        x_dist = np.linspace(min(h_params[1]), max(h_params[1]), num=100)
-        area_hist=Npos*(h_params[1][2]-h_params[1][1]);
-        scaled_pdf.append(area_hist*(t.pdf(x_dist,pd[0],pd[1],pd[2])))
-        cd = t.cdf(x_dist,pd[0],pd[1],pd[2])
-        tmp = scaled_pdf[k].argmax()
-        if abs(max(Vpica[:,k])) > abs(min(Vpica[:,k])):
-            tail = cd[tmp:len(cd)]
+        iqr: float = (scoreatpercentile(Vpica[:, k], 75) -
+                      scoreatpercentile(Vpica[:, k], 25))
+        binwidth: float = 2 * iqr * np.power(Npos, -0.33)
+        nbins: int = np.round((Vpica[:, k].max() - Vpica[:, k].min()) / binwidth).astype(np.int)
+        hist, bin_edges = np.histogram(Vpica[:, k], nbins)
+        x_dist: np.ndarray = np.linspace(bin_edges.min(), bin_edges.max(), num=100)
+        area_hist: np.ndarray = Npos * (bin_edges[2] - bin_edges[1])
+        scaled_pdf.append(area_hist * t.pdf(x_dist, *pd))
+        cd: np.ndarray = t.cdf(x_dist, *pd)
+        tmp: np.ndarray = scaled_pdf[k].argmax()
+        if np.abs(Vpica[:, k].max()) > np.abs(Vpica[:, k].min()):
+            tail: np.ndarray = cd[tmp:]
         else:
-            cd = 1 - cd
-            tail = cd[0:tmp]
-        diff = abs(tail - p_cut);
-        x_pos = diff.argmin()
-        cutoff.append(x_dist[x_pos+tmp])
+            cd: np.ndarray = 1 - cd
+            tail: np.ndarray = cd[:tmp]
+        diff: np.ndarray = np.abs(tail - p_cut)
+        x_pos: np.ndarray = diff.argmin()
+        cutoff.append(x_dist[x_pos + tmp])
+
     # select the positions with significant contributions to each IC
-    ic_init = list()
-    for k in range(kpos): ic_init.append([i for i in range(Npos) if Vpica[i,k]> cutoff[k]])
+    ic_init: list = [np.where(Vpica[:, k] > cutoff[k])[0] for k in range(kpos)]
+
     # construct the sorted, non-redundant iclist
-    sortedpos = list()
-    icsize = list()
-    ics = list()
-    icpos_tmp = list()
-    Csca_nodiag = Csca.copy()
-    for i in range(Npos): Csca_nodiag[i,i]=0
+    sortedpos = []
+    icsize = []
+    ics = []
+    Csca_nodiag: np.ndarray = Csca.copy()
+    np.fill_diagonal(Csca_nodiag, 0.)
     for k in range(kpos):
-        icpos_tmp = list(ic_init[k])
-        for kprime in [kp for kp in range(kpos) if (kp != k)]:
+        icpos_tmp: list = list(ic_init[k])
+        for kprime in (kp for kp in range(kpos) if (kp != k)):
             tmp = [v for v in icpos_tmp if v in ic_init[kprime]]
             for i in tmp:
-                remsec = np.linalg.norm(Csca_nodiag[i,ic_init[k]]) \
-                         < np.linalg.norm(Csca_nodiag[i,ic_init[kprime]])
-                if remsec: icpos_tmp.remove(i)
+                remsec = np.linalg.norm(Csca_nodiag[i, ic_init[k]]) \
+                         < np.linalg.norm(Csca_nodiag[i, ic_init[kprime]])
+                if remsec:
+                    icpos_tmp.remove(i)
         sortedpos += sorted(icpos_tmp, key=lambda i: -Vpica[i,k])
         icsize.append(len(icpos_tmp))
-        s = Unit()
-        s.items = sorted(icpos_tmp, key=lambda i: -Vpica[i,k])
-        s.col = k/kpos
-        s.vect = -Vpica[s.items,k]
+        s: Unit = Unit()
+        s.items: np.ndarray = sorted(icpos_tmp, key=lambda i: -Vpica[i,k])
+        s.col: float = k / kpos
+        s.vect: np.ndarray = -Vpica[s.items, k]
         ics.append(s)
     return ics, icsize, sortedpos, cutoff, scaled_pdf, all_fits
 

@@ -14,27 +14,20 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.utils import native_str, PY3
-from future.builtins import open
-from six.moves import cPickle
-
 import logging
 import logging.config
 import os
-from os import path
+import pickle
+import sys
+from pathlib import Path
 
 import click
 import numpy as np
 import pandas as pd
-from fluctmatch.analysis.paramtable import ParamTable
-from fluctmatch.analysis import (
-    fluctsca, )
+from sklearn.decomposition import PCA
+from ..analysis.paramtable import ParamTable
+from ..analysis import fluctsca
+from fluctmatch.fluctsca import ica
 
 
 @click.command(
@@ -45,7 +38,7 @@ from fluctmatch.analysis import (
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "fluctsca.log"),
+    default=Path.cwd() / "fluctsca.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -89,7 +82,7 @@ from fluctmatch.analysis import (
 @click.option(
     "-o",
     "--output",
-    default=path.join(path.curdir, "scafluct.db"),
+    default=Path.cwd() / "scafluct.db",
     show_default=True,
     type=click.Path(
         exists=False,
@@ -101,7 +94,7 @@ from fluctmatch.analysis import (
     "-s",
     "--subset",
     metavar="SEGID RES RES",
-    type=(native_str, click.IntRange(1, None, clamp=True),
+    type=(str, click.IntRange(1, None, clamp=True),
           click.IntRange(1, None, clamp=True)),
     multiple=True,
     help="Subset of a system (SEGID FIRST LAST)")
@@ -110,21 +103,33 @@ from fluctmatch.analysis import (
     "transformation",
     flag_value="all",
     default=True,
+    help="Include all interactions [default]",
 )
 @click.option(
     "--bb",
     "transformation",
     flag_value="backbone",
+    help="Include backbone-backone interactions only",
 )
 @click.option(
     "--sc",
     "transformation",
     flag_value="sidechain",
+    help="Include sidechain-sidechain interactions only",
 )
 @click.option(
     "--bbsc",
     "transformation",
     flag_value="bbsc",
+    help="Include backbone-sidechain interactions only",
+)
+@click.option(
+    "-m",
+    "--ictype",
+    type=click.Choice(["fastica", "infomax", "extended-infomax"]),
+    show_default=True,
+    default="infomax",
+    help="ICA method",
 )
 @click.argument(
     "filename",
@@ -134,7 +139,7 @@ from fluctmatch.analysis import (
         resolve_path=True,
     ))
 def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
-        transformation, filename):
+        transformation, ictype, filename):
     # Setup logger
     logging.config.dictConfig({
         "version": 1,
@@ -194,7 +199,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         logger.info("Calculating backbone-sidechain interactions.")
         kb.reset_index(inplace=True)
         tmp1 = kb[(kb["I"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
-        tmp2 = kb[(kb["J"] == "CB") & ((kb["I"] == "N") | (kb["I"] == "O"))]
+        tmp2 = kb[(kb["J"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
         table.table = pd.concat([tmp1, tmp2], axis=0).set_index(_index)
     else:
         logger.info("Accounting for all interactions.")
@@ -202,6 +207,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
 
     D_info = dict(
         kb=kb,
+        npos=kb.index.size,
         ressep=ressep,
     )
 
@@ -212,69 +218,72 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         kb = kb.loc[segid].loc[start:stop]
         D_info["kb"] = kb.copy(deep=True)
         D_info["subset"] = subset[0]
+        D_info["Npos"] = kb.index.size
 
-    # Calculate eigenvalues and eigenvectors for the time series with sign correction.
-    U, Lsca, Vt = fluctsca.svd(kb)
+    kb: np.ndarray = kb.T.values
+    U: np.ndarray = PCA(whiten=True, svd_solver="full").fit_transform(kb)
+    if kpos < 1:
+        logger.info("Using {:d} random trials.".format(ntrials))
+        Lrand: np.ndarray = fluctsca.randomize(kb, n_trials=ntrials)
 
-    logger.info("Using {:d} random trials.".format(ntrials))
-    Lrand = fluctsca.randomize(kb, ntrials=ntrials)
-    Ucorrel = kb.values.dot(kb.T.values)
-    Vcorrel = kb.values.T.dot(kb.values)
+    Csca: np.ndarray = fluctsca.get_correlation(kb)
     D_sca = dict(
         U=U,
-        Lsca=Lsca,
-        Vt=Vt,
-        Lrand=Lrand,
-        Ucorrel=Ucorrel,
-        Vcorrel=Vcorrel,
-        ntrials=ntrials)
+        Csca=Csca,
+        Lrand=Lrand if kpos < 1 else None,
+        ntrials=ntrials
+    )
 
     # Determine the number of eigenmodes if kpos = 0
-    _kpos = fluctsca.chooseKpos(Lsca, Lrand, stddev=std) if kpos == 0 else kpos
+    Lsca, Vsca = fluctsca.eigenVect(Csca)
+    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand, stddev=std) if kpos == 0 else kpos
     logger.info("Selecting {:d} eigenmodes".format(_kpos))
-    Ucorr = fluctsca.correlate(U, Lsca, kmax=_kpos)
-    Vcorr = fluctsca.correlate(Vt.T, Lsca, kmax=_kpos)
 
     # Calculate IC sectors
     logger.info("Calculating the ICA for the residues.")
-    Uica, Wres = fluctsca.rotICA(U, kmax=_kpos)
-    Uics, Uicsize, Usortedpos, Ucutoff, Uscaled_pd, Upd = fluctsca.icList(
-        Uica, _kpos, Ucorrel, p_cut=pcut)
+    time_info = ica.ICA(n_components=_kpos, method=ictype,
+                        max_iter=ntrials, whiten=False)
+    try:
+        Vpica: np.ndarray = time_info.fit_transform(Vsca[:,:_kpos])
+    except IndexError:
+        logger.error(f"An error occurred while using {ictype}. Exiting...")
+        sys.exit(os.EX_DATAERR)
+
+    ics, icsize, sortedpos, cutoff, scaled_pd, pdf = fluctsca.icList(
+        Vpica, _kpos, Csca, p_cut=pcut)
+    percentage: float = len(sortedpos) / D_info["npos"] * 100
+    logger.info(f"{len(sortedpos):d} residues are within {_kpos:d} "
+                f"sectors: {percentage:.2f}%")
 
     logger.info("Calculating the ICA for the windows.")
-    Vica, Wtime = fluctsca.rotICA(Vt.T, kmax=_kpos)
-    Utica = Wtime.dot(U[:, :_kpos].T).T
-    Vrica = Wres.dot(Vt[:_kpos]).T
-    Vics, Vicsize, Vsortedpos, Vcutoff, Vscaled_pd, Vpd = fluctsca.icList(
-        Vica, _kpos, Vcorrel, p_cut=pcut)
+    Usca: np.ndarray = U.dot(Vsca[:,:_kpos]).dot(np.diag(1/np.sqrt(Lsca[:_kpos])))
+    Upica: np.ndarray = time_info.mixing_.dot(Usca.T).T
+    for k in range(Upica.shape[1]):
+        Upica[:, k] /= np.sqrt(Upica[:, k].T.dot(Upica[:, k]))
+
+    res_info = ica.ICA(n_components=_kpos, method=ictype,
+                       max_iter=ntrials, whiten=False)
+    Usica: np.ndarray = res_info.fit_transform(Usca)
+
     D_sector = dict(
-        std=std,
         kpos=_kpos,
-        Ucorr=Ucorr,
-        Vcorr=Vcorr,
-        Uica=Uica,
-        Wres=Wres,
-        Vica=Vica,
-        Wtime=Wtime,
-        Uics=Uics,
-        Uicsize=Uicsize,
-        Usortedpos=Usortedpos,
-        Ucutoff=Ucutoff,
-        Uscaled_pd=Uscaled_pd,
-        Upd=Upd,
-        Vics=Vics,
-        Vicsize=Vicsize,
-        Vsortedpos=Vsortedpos,
-        Vcutoff=Vcutoff,
-        Vscaled_pd=Vscaled_pd,
-        Vpd=Vpd,
-        Utica=Utica,
-        Vrica=Vrica)
+        Vsca=Vsca,
+        Lsca=Lsca,
+        Vpica=Vpica,
+        Wpica=time_info.mixing_,
+        ics=ics,
+        icsize=icsize,
+        sortedpos=sortedpos,
+        cutoff=cutoff,
+        scaled_pd=scaled_pd,
+        pdf=pdf,
+        Usca=Usca,
+        Upica=Upica,
+        Usica=Usica,
+        Wsica=res_info.mixing_,
+    )
 
     D = dict(info=D_info, sca=D_sca, sector=D_sector)
     with open(click.format_filename(output), mode="wb") as dbf:
         logger.info("Saving data to {}".format(click.format_filename(output)))
-        if PY3:
-            logger.warning(
-                "Note: The saved file will be incompatible with Python 2.")
-        cPickle.dump(D, dbf, protocol=cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(D, dbf, protocol=pickle.HIGHEST_PROTOCOL)

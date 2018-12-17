@@ -17,62 +17,27 @@
 # The original code is from Richard J. Gowers.
 # https://github.com/richardjgowers/MDAnalysis-coarsegraining
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import super, zip
-from future.utils import (
-    raise_with_traceback,
-    viewitems,
-    with_metaclass,
-)
-
 import abc
 import itertools
 import logging
 import string
+import traceback
+from typing import Dict, List
 
 import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.core import (
-    topology,
-    topologyattrs,
-)
-from MDAnalysis.lib.util import asiterable
+from MDAnalysis.core import topology, topologyattrs, topologyobjects
 from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
-from fluctmatch import (_DESCRIBE, _MODELS)
-from fluctmatch.models import trajectory
 
-logger = logging.getLogger(__name__)
+from .. import _MODELS, _DESCRIBE
+from ..lib.typing import FileName, MDUniverse
+from . import trajectory
 
-
-class _ModelMeta(abc.ABCMeta):
-    # Auto register upon class creation
-    def __init__(cls, name, bases, classdict):
-        type.__init__(type, name, bases, classdict)
-        try:
-            fmt = asiterable(classdict['model'])
-        except KeyError:
-            pass
-        else:
-            for f in fmt:
-                f = f.upper()
-                _MODELS[f] = cls
-        try:
-            description = asiterable(classdict['describe'])
-        except KeyError:
-            pass
-        else:
-            for f, d in zip(fmt, description):
-                f = f.upper()
-                _DESCRIBE[f] = d
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
+class ModelBase(mda.Universe):
     """Base class for creating coarse-grain models.
 
     Parameters
@@ -114,7 +79,7 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
         Once Universe has been loaded, attempt to guess the connectivity
         between atoms.  This will populate the .bonds .angles and .dihedrals
         attributes of the Universe.
-    vdwradii : dict, optional
+    vdwradii : Dict, optional
         For use with *guess_bonds*. Supply a dict giving a vdwradii for each
         atom type which are used in guessing bonds.
     is_anchor : bool, optional
@@ -146,8 +111,13 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
     bonds, angles, dihedrals
         master ConnectivityGroups for each connectivity type
     """
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        _MODELS[cls.model.upper()]: object = cls
+        _DESCRIBE[cls.model.upper()]: str = cls.describe
 
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args: List[FileName], **kwargs):
         """Initialise like a normal MDAnalysis Universe but give the mapping and
         com keywords.
 
@@ -165,20 +135,20 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
         # Make a blank Universe for myself.
         super().__init__()
 
-        self._com = kwargs.pop("com", True)
+        self._com: bool = kwargs.pop("com", True)
 
         # Atomistic Universe
         try:
-            self.atu = mda.Universe(*args, **kwargs)
+            self.atu: mda.Universe = mda.Universe(*args, **kwargs)
         except (IOError, OSError, ValueError):
-            raise_with_traceback(RuntimeError("Failed to create a universe."))
+            tb: List[str] = traceback.format_exc()
+            RuntimeError("Failed to create a universe.").with_traceback(tb)
 
     def __repr__(self):
-        message = "<CG Universe with {} beads".format(len(self.atoms))
+        message: str = f"<CG Universe with {len(self.atoms)} beads"
         try:
-            message += " and {:d} bonds".format(
-                len(self._topology.bonds.values))
-        except AttributeError as exc:
+            message += f" and {len(self._topology.bonds.values):d} bonds"
+        except AttributeError:
             pass
         finally:
             message += ">"
@@ -186,7 +156,7 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
 
     def _initialize(self, *args, **kwargs):
         try:
-            mapping = kwargs.pop("mapping")
+            mapping: Dict = kwargs.pop("mapping")
         except KeyError:
             raise ValueError("CG mapping has not been defined.")
 
@@ -202,18 +172,20 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
         # This replaces load_new in a traditional Universe
         try:
             self.trajectory = trajectory._Trajectory(
-                self.atu, mapping, n_atoms=self.atoms.n_atoms, com=self._com)
+                self.atu, mapping, n_atoms=self.atoms.n_atoms, com=self._com
+            )
         except (IOError, TypeError) as exc:
-            raise_with_traceback(
-                RuntimeError("Unable to open {}".format(
-                    self.atu.trajectory.filename)))
+            tb: List[str] = traceback.format_exc()
+            RuntimeError(
+                f"Unable to open {self.atu.trajectory.filename}"
+            ).with_traceback(tb)
 
-    def _apply_map(self, mapping):
+    def _apply_map(self, mapping: Dict) -> topology.Topology:
         """Apply the mapping scheme to the beads.
 
         Parameters
         ----------
-        mapping : dict
+        mapping : Dict
             Mapping definitions per bead/
 
         Returns
@@ -221,20 +193,21 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
         :class:`~MDAnalysis.core.topology.Topology` defining the new universe.
         """
         # Allocate arrays
-        _beads = []
-        atomnames = []
-        atomids = []
-        resids = []
-        resnames = []
-        segids = []
-        charges = []
-        masses = []
+        _beads: List[mda.AtomGroup] = []
+        atomnames: List[str] = []
+        atomids: List[int] = []
+        resids: List[int] = []
+        resnames: List[str] = []
+        segids: List[str] = []
+        charges: List[float] = []
+        masses: List[float] = []
 
-        residues = self.atu.atoms.split("residue")
-        select_residues = enumerate(
-            itertools.product(residues, viewitems(mapping)))
+        residues: List[mda.AtomGroup] = self.atu.atoms.split("residue")
+        select_residues: enumerate = enumerate(
+            itertools.product(residues, mapping.items())
+        )
         for i, (res, (name, selection)) in select_residues:
-            bead = res.select_atoms(selection)
+            bead: mda.AtomGroup = res.select_atoms(selection)
             if bead:
                 _beads.append(bead)
                 atomnames.append(name)
@@ -248,26 +221,28 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
                     charges.append(0.)
                 masses.append(bead.total_mass())
 
-        _beads = np.array(_beads)
-        n_atoms = len(_beads)
+        _beads: np.ndarray = np.array(_beads)
+        n_atoms: int = len(_beads)
 
         # Atom
         # _beads = topattrs._Beads(_beads)
-        vdwradii = np.zeros_like(atomids)
+        vdwradii: np.ndarray = np.zeros_like(atomids)
         vdwradii = topologyattrs.Radii(vdwradii)
         atomids = topologyattrs.Atomids(np.asarray(atomids))
         atomnames = topologyattrs.Atomnames(
-            np.asarray(atomnames, dtype=np.object))
+            np.asarray(atomnames, dtype=np.object)
+        )
         atomtypes = topologyattrs.Atomtypes(
-            np.asarray(np.arange(n_atoms) + 100))
+            np.asarray(np.arange(n_atoms) + 100)
+        )
         charges = topologyattrs.Charges(np.asarray(charges))
         masses = topologyattrs.Masses(np.asarray(masses))
 
         # Residue
         # resids, resnames
-        segids = np.asarray(segids, dtype=np.object)
-        resids = np.asarray(resids, dtype=np.int32)
-        resnames = np.asarray(resnames, dtype=np.object)
+        segids: np.ndarray = np.asarray(segids, dtype=np.object)
+        resids: np.ndarray = np.asarray(resids, dtype=np.int32)
+        resnames: np.ndarray = np.asarray(resnames, dtype=np.object)
         residx, (new_resids, new_resnames,
                  perres_segids) = topbase.change_squash(
                      (resids, resnames, segids), (resids, resnames, segids))
@@ -291,7 +266,8 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
                 residueids, residuenums, residuenames, segids
             ],
             atom_resindex=residx,
-            residue_segindex=segidx)
+            residue_segindex=segidx
+        )
         return top
 
     @abc.abstractmethod
@@ -300,7 +276,9 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
 
     def _add_angles(self):
         try:
-            angles = guessers.guess_angles(self.bonds)
+            angles: topologyobjects.TopologyGroup = guessers.guess_angles(
+                self.bonds
+            )
             self._topology.add_TopologyAttr(topologyattrs.Angles(angles))
             self._generate_from_topology()
         except AttributeError:
@@ -308,7 +286,9 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
 
     def _add_dihedrals(self):
         try:
-            dihedrals = guessers.guess_dihedrals(self.angles)
+            dihedrals: topologyobjects.TopologyGroup = guessers.guess_dihedrals(
+                self.angles
+            )
             self._topology.add_TopologyAttr(topologyattrs.Dihedrals(dihedrals))
             self._generate_from_topology()
         except AttributeError:
@@ -316,7 +296,9 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
 
     def _add_impropers(self):
         try:
-            impropers = guessers.guess_improper_dihedrals(self.angles)
+            impropers: topologyobjects.TopologyGroup = guessers.guess_improper_dihedrals(
+                self.angles
+            )
             self._topology.add_TopologyAttr(
                 (topologyattrs.Impropers(impropers)))
             self._generate_from_topology()
@@ -340,7 +322,7 @@ class ModelBase(with_metaclass(_ModelMeta, mda.Universe)):
         return Merge(self)
 
 
-def Merge(*args):
+def Merge(*args: List[MDUniverse]) -> mda.Universe:
     """Combine multiple coarse-grain systems into one.
 
     Parameters
@@ -363,24 +345,21 @@ def Merge(*args):
     ]):
         logger.error("The trajectories are not the same length.")
         raise ValueError("The trajectories are not the same length.")
-    ag = [_.atoms for _ in args]
-    unit_cell = np.mean([_._unitcell for _ in args[0].trajectory], axis=0)
-    universe = mda.Merge(*ag)
+    ag: List[mda.AtomGroup] = [_.atoms for _ in args]
+    unit_cell: np.ndarray = np.mean([_._unitcell for _ in args[0].trajectory], axis=0)
+    universe: mda.Universe = mda.Merge(*ag)
 
     if args[0].universe.trajectory.n_frames > 1:
         traj = (_.trajectory for _ in args)
-        coordinates = [
+        coordinates: List[np.ndarray] = [
             np.concatenate([_.positions for _ in ts], axis=0)
             for ts in zip(*traj)
         ]
-        coordinates = np.array(coordinates)
+        coordinates: np.ndarray = np.array(coordinates)
         if universe.atoms.n_atoms != coordinates.shape[1]:
-            logger.error(
-                "The number of sites does not match the number of coordinates."
-            )
-            raise RuntimeError(
-                "The number of sites does not match the number of coordinates."
-            )
+            msg = "The number of sites does not match the number of coordinates."
+            logger.error(msg)
+            raise RuntimeError(msg)
         logger.info("The new universe has {1} beads in {0} frames.".format(
             *coordinates.shape))
 
@@ -388,12 +367,13 @@ def Merge(*args):
         logger.warning(
             "The new trajectory will is assigned an average unit cell "
             "for the entire trajectory. This is currently a limitation "
-            "implemented by MDAnalysis.")
+            "implemented by MDAnalysis."
+        )
         universe.trajectory.ts._unitcell = unit_cell
     return universe
 
 
-def rename_universe(universe):
+def rename_universe(universe: mda.Universe) -> mda.Universe:
     """Rename the atoms and residues within a universe.
 
     Standardizes naming of the universe by renaming atoms and residues based
@@ -413,12 +393,12 @@ def rename_universe(universe):
         The universe with renamed residues and atoms.
     """
     logger.info("Renaming atom names and atom types within the universe.")
-    atomnames = np.array([
+    atomnames: np.ndarray = np.array([
         "{}{:0>3d}".format(lett, i)
         for lett, segment in zip(string.ascii_uppercase, universe.segments)
         for i, _ in enumerate(segment.atoms, 1)
     ])
-    resnames = np.array([
+    resnames: np.ndarray = np.array([
         "{}{:0>3d}".format(lett, i)
         for lett, segment in zip(string.ascii_uppercase, universe.segments)
         for i, _ in enumerate(segment.residues, 1)

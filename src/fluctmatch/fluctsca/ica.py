@@ -32,7 +32,7 @@ from sklearn.utils.validation import (
     as_float_array, check_array, check_is_fitted, check_random_state, FLOAT_DTYPES
 )
 
-from ..lib.center import Center2D
+from fluctmatch.lib.center import Center2D
 
 logger: logging.Logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
@@ -514,7 +514,7 @@ class ICA(BaseEstimator, TransformerMixin):
            subgaussian and supergaussian sources. Neural computation, 11(2),
            pp.417-441.
     """
-    def __init__(self, n_components=None, whiten=True, random_state=None,
+    def __init__(self, whiten=True, n_components=None, random_state=None,
                  method='fastica', fit_params=None, max_iter=200,
                  verbose=None):
         methods = ('fastica', 'infomax', 'extended-infomax', 'picard')
@@ -529,8 +529,8 @@ class ICA(BaseEstimator, TransformerMixin):
 
         self.verbose = verbose
         self.n_components = n_components
-        self.whiten = whiten
         self.random_state = random_state
+        self.whiten = whiten
 
         if fit_params is None:
             fit_params = {}
@@ -557,58 +557,54 @@ class ICA(BaseEstimator, TransformerMixin):
     def __repr__(self):
         """ICA fit information."""
         s = (f"fit ({self.method}): "
-             f"{str(getattr(self, 'n_samples_', ''))} samples, ")
+             f"{getattr(self, 'n_samples', '')} samples, ")
         s += (
-            '%s components' % str(self.n_components_)
-            if hasattr(self, 'n_components_')
-            else 'no dimension reduction'
+            f"{str(self.n_components)} components"
+            if self.n_components is not None
+            else "no dimension reduction"
         )
 
-        return '<ICA  |  %s>' % s
+        return f"<ICA  |  {s}>"
 
     def _reset(self):
         """Aux method."""
         if hasattr(self, "mixing_"):
             del self.components_
             del self.mixing_
-            if self.whiten:
-                del self.pca_components_
-                del self.pca_explained_variance_
-                del self.mean_
+            del self.pca_components_
+            del self.pca_explained_variance_
+            del self.mean_
 
     def fit(self, data: np.ndarray):
         """Aux function."""
         self._reset()
-        _, n_features = data.shape
+        self.n_samples, n_features = data.shape
         random_state = check_random_state(self.random_state)
 
-        center = Center2D()
-        pca = PCA(n_components=self.n_components, whiten=self.whiten,
+        pca = PCA(n_components=self.n_components, whiten=True,
                   copy=True, svd_solver='full')
-        whitening = [center, pca]
 
         # take care of ICA
         if self.method == 'fastica':
             ica = FastICA(whiten=False, random_state=random_state,
                           **self.fit_params)
-            steps = [*whitening, ica] if self.whiten else [ica,]
-            pipeline = make_pipeline(steps)
+            pipe_data = [pca, ica] if self.whiten else [ica,]
+            pipeline = make_pipeline(*pipe_data)
             pipeline.fit(data)
             self.components_ = ica.components_
             self.mixing_ = ica.mixing_
         elif self.method in ('infomax', 'extended-infomax'):
             if self.whiten:
-                pipeline = make_pipeline(*whitening)
-                data = pipeline.fit_transform(data)
-
+                data = pca.fit_transform(data)
             self.components_ = _infomax(data, random_state=random_state,
-                                        **self.fit_params)
+                                        **self.fit_params)[:self.n_components]
             if self.whiten:
                 self.components_ /= np.sqrt(pca.explained_variance_)[None, :]  # whitening
             self.mixing_ = linalg.pinv(self.components_)
+
+        # the things to store for PCA
         if self.whiten:
-            # the things to store for PCA
-            self.mean_ = center.mean_
+            self.mean_ = pca.mean_
             self.pca_components_ = pca.components_
             self.pca_explained_variance_ = pca.explained_variance_
 
@@ -620,9 +616,9 @@ class ICA(BaseEstimator, TransformerMixin):
 
         data = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
 
+        # Apply first PCA
         if self.whiten:
             data -= self.mean_
-            # Apply first PCA
             data = np.dot(data, self.pca_components_.T)
 
         # Apply unmixing to low dimension PCA
@@ -632,7 +628,7 @@ class ICA(BaseEstimator, TransformerMixin):
     def inverse_transform(self, data: np.ndarray, copy: bool=True) -> np.ndarray:
         check_is_fitted(self, 'mixing_')
 
-        data: np.ndarray = check_array(data, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
+        data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
         data = np.dot(data, self.mixing_.T)
         if self.whiten:
             data = np.dot(data, self.pca_components_)

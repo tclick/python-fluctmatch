@@ -185,7 +185,7 @@ class ParamTable(object):
         """
         with open(filename, mode="rb") as table:
             self.table = pd.read_csv(
-                table,
+                table.name,
                 skipinitialspace=True,
                 delim_whitespace=True,
                 header=0,

@@ -14,20 +14,9 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    super,
-    zip,
-)
-
 import numpy as np
 from MDAnalysis.core import topologyattrs
-from MDAnalysis.lib.distances import distance_array
+from MDAnalysis.lib.distances import distance_array, self_capped_distance
 from fluctmatch.fluctmatch import utils as fmutils
 from fluctmatch.models.base import (
     ModelBase,
@@ -47,15 +36,14 @@ class Enm(ModelBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._rmin = kwargs.get("rmin", 0.)
-        self._rmax = kwargs.get("rmax", 10.)
+        self._rmin: float = kwargs.get("rmin", 0.)
+        self._rmax: float = kwargs.get("rmax", 10.)
         self._initialize(*args, **kwargs)
 
-    def __repr__(self):
-        message = "<CG Universe with {} beads".format(self.atoms.n_atoms)
+    def __repr__(self) -> str:
+        message: str = f"<CG Universe with {self.atoms.n_atoms} beads"
         try:
-            message += " and {:d} bonds".format(
-                len(self._topology.bonds.values))
+            message += f" and {len(self._topology.bonds.values)} bonds"
         except AttributeError as exc:
             pass
         finally:
@@ -66,12 +54,14 @@ class Enm(ModelBase):
         self.__dict__.update(self.atu.__dict__)
 
         rename_universe(self)
-        charges = kwargs.get("charges", False)
+        charges: bool = kwargs.get("charges", False)
         if not charges:
             self._topology.add_TopologyAttr(
-                topologyattrs.Charges(np.zeros(self.atoms.n_atoms)))
+                topologyattrs.Charges(np.zeros(self.atoms.n_atoms))
+            )
         self._topology.add_TopologyAttr(
-            topologyattrs.Atomtypes(np.arange(self.atoms.n_atoms) + 1))
+            topologyattrs.Atomtypes(np.arange(self.atoms.n_atoms) + 1)
+        )
         self._topology.add_TopologyAttr(topologyattrs.Angles([]))
         self._topology.add_TopologyAttr(topologyattrs.Dihedrals([]))
         self._topology.add_TopologyAttr(topologyattrs.Impropers([]))
@@ -84,20 +74,16 @@ class Enm(ModelBase):
             self._add_impropers()
 
     def _add_bonds(self):
-        positions = fmutils.AverageStructure(self.atu.atoms).run().result
-        distmat = distance_array(positions, positions, backend="OpenMP")
-        if self._rmin > 0.:
-            a0, a1 = np.where((distmat >= self._rmin) &
-                              (distmat <= self._rmax))
-        else:
-            a0, a1 = np.where((distmat > self._rmin) & (distmat <= self._rmax))
-        bonds = topologyattrs.Bonds(
-            set([(x, y) for x, y in zip(a0, a1) if y > x]))
+        positions: np.ndarray = fmutils.AverageStructure(self.atu.atoms).run().result
+        pairs, _ = self_capped_distance(
+            positions, self._rmax, min_cutoff=self._rmin
+        )
+        bonds = topologyattrs.Bonds(np.unique(pairs, axis=0))
         self._topology.add_TopologyAttr(bonds)
         self._generate_from_topology()
 
     @property
-    def rmin(self):
+    def rmin(self) -> float:
         """The minimum distance required to define a bond interaction.
 
         Returns
@@ -107,7 +93,7 @@ class Enm(ModelBase):
         return self._rmin
 
     @rmin.setter
-    def rmin(self, distance):
+    def rmin(self, distance: float):
         """Set the minimum distance required for a bond definition.
 
         Parameters
@@ -115,10 +101,10 @@ class Enm(ModelBase):
         distance : float
             Minimum distance between beads
         """
-        self._rmin = distance
+        self._rmin: float = distance
 
     @property
-    def rmax(self):
+    def rmax(self) -> float:
         """The maximum distance required to define a bond interaction.
 
         Returns
@@ -128,7 +114,7 @@ class Enm(ModelBase):
         return self._rmax
 
     @rmax.setter
-    def rmax(self, distance):
+    def rmax(self, distance: float):
         """Set the maximum distance required for a bond definition.
 
         Parameters
@@ -136,4 +122,4 @@ class Enm(ModelBase):
         distance : float
             Maximum distance between beads
         """
-        self._rmax = distance
+        self._rmax: float = distance
