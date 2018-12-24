@@ -31,7 +31,7 @@ from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
 
 from .. import _MODELS, _DESCRIBE
-from ..lib.typing import FileName, MDUniverse
+from ..libs.typing import FileName, MDUniverse
 from . import trajectory
 
 logger: logging.Logger = logging.getLogger(__name__)

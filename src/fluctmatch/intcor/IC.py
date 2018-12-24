@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from MDAnalysis.lib.util import FORTRANReader
 
-from ..lib.typing import FileName
+from ..libs.typing import FileName
 from ..topology.base import (TopologyReaderBase, TopologyWriterBase)
 
 logger = logging.getLogger(__name__)

@@ -21,7 +21,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
 
-from ..lib.center import Center2D
+from ..libs.center import Center2D
 from .ica import ICA
 
 class FluctSCA(BaseEstimator, TransformerMixin):

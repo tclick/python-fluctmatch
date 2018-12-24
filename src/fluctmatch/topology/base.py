@@ -19,7 +19,7 @@ import time
 
 from MDAnalysis.coordinates.base import (_Readermeta, _Writermeta, IOBase)
 
-from ..lib.register import register_reader, register_writer
+from ..libs.register import register_reader, register_writer
 
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):

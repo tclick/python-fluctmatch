@@ -23,7 +23,7 @@ import MDAnalysis as mda
 import pandas as pd
 from MDAnalysis.core.topologyobjects import TopologyGroup
 
-from ..lib.typing import MDUniverse
+from ..libs.typing import MDUniverse
 
 _HEADER: List[str] = [
     "segidI", "resI", "I", "segidJ", "resJ", "J", "segidK", "resK", "K",
