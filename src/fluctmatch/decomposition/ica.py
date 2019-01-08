@@ -32,8 +32,6 @@ from sklearn.utils.validation import (
     as_float_array, check_array, check_is_fitted, check_random_state, FLOAT_DTYPES
 )
 
-from fluctmatch.lib.center import Center2D
-
 logger: logging.Logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
 
@@ -41,7 +39,7 @@ logging.captureWarnings(True)
 def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
              w_change: float=1e-12, anneal_deg: float=60., anneal_step: float=0.9,
              extended: bool=True, n_subgauss: int=1, kurt_size: int=6000,
-             ext_blocks: int=1, max_iter:int =200,
+             ext_blocks: int=1, max_iter:int =200, whiten=True,
              random_state: np.random.RandomState=None, blowup: float=1e4,
              blowup_fac: float=0.5, n_small_angle: int=20, use_bias: bool=True,
              verbose: bool=None) -> np.ndarray:
@@ -149,7 +147,27 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
 
     # check data shape
     n_samples, n_features = X.shape
-    n_features_square = n_features ** 2
+    n_features_square = np.square(n_features)
+
+    if whiten:
+        # Centering the columns (ie the variables)
+        X_mean = X.mean(axis=-1)
+        X -= X_mean[:, np.newaxis]
+
+        # Whitening and preprocessing by PCA
+        u, d, _ = linalg.svd(X, full_matrices=False)
+
+        del _
+        K = (u / d).T[:n_components]  # see (6.33) p.140
+        del u, d
+        X1 = np.dot(K, X)
+        # see (13.6) p.267 Here X1 is white and data
+        # in X has been projected onto a subspace by PCA
+        X1 *= np.sqrt(n_features)
+    else:
+        # X must be casted to floats to avoid typing issues with numpy
+        # 2.0 and the line below
+        X1 = as_float_array(X, copy=False)  # copy has been taken care of
 
     # check input parameters
     # heuristic default - may need adjustment for large or tiny data sets
@@ -204,7 +222,7 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
         # ICA training block
         # loop across block samples
         for t in range(0, lastt, block):
-            u = np.dot(X[permute[t:t + block], :], weights)
+            u = np.dot(X1[permute[t:t + block], :], weights)
             u += np.dot(bias, onesrow).T
 
             if extended:
@@ -581,32 +599,18 @@ class ICA(BaseEstimator, TransformerMixin):
         self.n_samples, n_features = data.shape
         random_state = check_random_state(self.random_state)
 
-        pca = PCA(n_components=self.n_components, whiten=True,
-                  copy=True, svd_solver='full')
-
         # take care of ICA
         if self.method == 'fastica':
-            ica = FastICA(whiten=False, random_state=random_state,
+            ica = FastICA(whiten=self.whiten, random_state=random_state,
                           **self.fit_params)
-            pipe_data = [pca, ica] if self.whiten else [ica,]
-            pipeline = make_pipeline(*pipe_data)
-            pipeline.fit(data)
+            ica.fit(data)
             self.components_ = ica.components_
             self.mixing_ = ica.mixing_
         elif self.method in ('infomax', 'extended-infomax'):
-            if self.whiten:
-                data = pca.fit_transform(data)
             self.components_ = _infomax(data, random_state=random_state,
+                                        whiten=self.whiten,
                                         **self.fit_params)[:self.n_components]
-            if self.whiten:
-                self.components_ /= np.sqrt(pca.explained_variance_)[None, :]  # whitening
             self.mixing_ = linalg.pinv(self.components_)
-
-        # the things to store for PCA
-        if self.whiten:
-            self.mean_ = pca.mean_
-            self.pca_components_ = pca.components_
-            self.pca_explained_variance_ = pca.explained_variance_
 
         return self
 
@@ -615,11 +619,6 @@ class ICA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'mixing_')
 
         data = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
-
-        # Apply first PCA
-        if self.whiten:
-            data -= self.mean_
-            data = np.dot(data, self.pca_components_.T)
 
         # Apply unmixing to low dimension PCA
         sources = np.dot(data, self.components_.T)
@@ -630,9 +629,6 @@ class ICA(BaseEstimator, TransformerMixin):
 
         data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
         data = np.dot(data, self.mixing_.T)
-        if self.whiten:
-            data = np.dot(data, self.pca_components_)
-            data += self.mean_
         return data
 
     def copy(self) -> object:

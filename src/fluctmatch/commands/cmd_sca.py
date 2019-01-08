@@ -27,7 +27,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from ..analysis.paramtable import ParamTable
 from ..analysis import fluctsca
-from fluctmatch.fluctsca import ica
+from fluctmatch.decomposition import ica
 
 
 @click.command(

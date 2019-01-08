@@ -22,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
 
 from ..libs.center import Center2D
-from .ica import ICA
+from fluctmatch.decomposition.ica import ICA
 
 class FluctSCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components: int=None, max_iter: int=1000,
