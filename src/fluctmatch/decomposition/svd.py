@@ -71,7 +71,7 @@ class SVD(BaseEstimator, TransformerMixin):
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
-    svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
+    algorithm : string {'auto', 'full', 'arpack', 'randomized'}
         auto :
             the solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -88,8 +88,6 @@ class SVD(BaseEstimator, TransformerMixin):
             0 < n_components < min(X.shape)
         randomized :
             run randomized SVD by the method of Halko et al.
-
-        .. versionadded:: 0.18.0
 
     tol : float >= 0, optional (default .0)
         Tolerance for singular values computed by svd_solver == 'arpack'.
@@ -163,11 +161,11 @@ class SVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
     """
     def __init__(self, n_components: int=None, copy: bool=True,
-                 svd_solver: str='auto', tol: float=0.0,
+                 algorithm: str= 'auto', tol: float=0.0,
                  iterated_power: int='auto', random_state: RandomState=None):
         self.n_components: int = n_components
         self.copy: bool = copy
-        self.svd_solver: str = svd_solver
+        self.algorithm: str = algorithm
         self.tol: float = tol
         self.iterated_power: int = iterated_power
         self.random_state: RandomState = random_state
@@ -227,7 +225,7 @@ class SVD(BaseEstimator, TransformerMixin):
 
         # Handle n_components==None
         if self.n_components is None:
-            if self.svd_solver != "arpack":
+            if self.algorithm != "arpack":
                 n_components = min(X.shape)
             else:
                 n_components = min(X.shape) - 1
@@ -235,7 +233,7 @@ class SVD(BaseEstimator, TransformerMixin):
             n_components = self.n_components
 
         # Handle svd_solver
-        self._fit_svd_solver = self.svd_solver
+        self._fit_svd_solver = self.algorithm
         if self._fit_svd_solver == "auto":
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500:
