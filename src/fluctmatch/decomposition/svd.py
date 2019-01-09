@@ -343,10 +343,10 @@ class SVD(BaseEstimator, TransformerMixin):
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True, random_state=random_state)
-            U = U[:, :self.n_components_]
+            U = U[:, :n_components]
 
             # X_new = X * V = U * S * V^T * V = U * S
-            U *= S[:self.n_components_]
+            U *= S[:n_components]
 
         components_: np.ndarray = V
 
