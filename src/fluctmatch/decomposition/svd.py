@@ -16,8 +16,11 @@
 #
 import logging
 import numbers
+from typing import Tuple
 
 import numpy as np
+from numpy.random import RandomState
+
 from scipy import linalg
 from scipy.sparse import issparse
 
@@ -27,6 +30,8 @@ from sklearn.decomposition.truncated_svd import TruncatedSVD
 from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils.extmath import randomized_svd, stable_cumsum, svd_flip
+
+from ..libs.typing import Random
 
 logger = logging.getLogger(__name__)
 
@@ -157,16 +162,17 @@ class SVD(BaseEstimator, TransformerMixin):
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
     """
-    def __init__(self, n_components=None, copy=True, svd_solver='auto',
-                 tol=0.0, iterated_power='auto', random_state=None):
-        self.n_components = n_components
-        self.copy = copy
-        self.svd_solver = svd_solver
-        self.tol = tol
-        self.iterated_power = iterated_power
-        self.random_state = random_state
+    def __init__(self, n_components: int=None, copy: bool=True,
+                 svd_solver: str='auto', tol: float=0.0,
+                 iterated_power: int='auto', random_state: RandomState=None):
+        self.n_components: int = n_components
+        self.copy: bool = copy
+        self.svd_solver: str = svd_solver
+        self.tol: float = tol
+        self.iterated_power: int = iterated_power
+        self.random_state: RandomState = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X: np.ndarray, y=None) -> "SVD":
         """Fit the model with X.
 
         Parameters
@@ -185,7 +191,7 @@ class SVD(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: np.ndarray, y=None) -> np.ndarray:
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -205,7 +211,7 @@ class SVD(BaseEstimator, TransformerMixin):
 
         return U
 
-    def _fit(self, X):
+    def _fit(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -254,7 +260,8 @@ class SVD(BaseEstimator, TransformerMixin):
         else:
             raise ValueError(f"Unrecognized svd_solver={self._fit_svd_solver}")
 
-    def _fit_full(self, X, n_components):
+    def _fit_full(self, X: np.ndarray,
+                  n_components: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Fit the model by computing full SVD on X"""
         n_samples, n_features = X.shape
 
@@ -288,42 +295,44 @@ class SVD(BaseEstimator, TransformerMixin):
         singular_values_: np.ndarray = S.copy()  # Store the singular values.
 
         if n_components == 'mle':
-            n_components = \
+            n_components: int = \
                 _infer_dimension_(explained_variance_, n_samples, n_features)
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components) + 1
+            ratio_cumsum: np.ndarray = stable_cumsum(explained_variance_ratio_)
+            n_components: int = np.searchsorted(ratio_cumsum, n_components) + 1
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_ = explained_variance_[n_components:].mean()
+            self.noise_variance_: float = explained_variance_[n_components:].mean()
         else:
-            self.noise_variance_ = 0.
+            self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_ = components_[:n_components]
-        self.n_components_ = n_components
-        self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = \
+        self.components_: np.ndarray = components_[:n_components]
+        self.n_components_: int = n_components
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = \
             explained_variance_ratio_[:n_components]
-        self.singular_values_ = singular_values_[:n_components]
+        self.singular_values_: np.ndarray = singular_values_[:n_components]
 
-        U = U[:, :self.n_components_]
+        U: np.ndarray = U[:, :self.n_components_]
 
         # X_new = X * V = U * S * V^T * V = U * S
         U *= S[:self.n_components_]
 
-        return U, S, V
+        return U, singular_values_, components_
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X: np.ndarray,
+                       n_components: int,
+                       svd_solver: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Fit the model by computing truncated SVD (randomized) on X
         """
         n_samples, n_features = X.shape
 
-        random_state = check_random_state(self.random_state)
+        random_state: RandomState = check_random_state(self.random_state)
 
         if svd_solver == 'arpack' and n_components == min(n_samples, n_features):
             raise ValueError("n_components=%r must be strictly less than "
@@ -333,17 +342,17 @@ class SVD(BaseEstimator, TransformerMixin):
                                 svd_solver))
 
         if n_components < min(n_samples, n_features):
-            tsvd = TruncatedSVD(n_components=n_components,
-                                algorithm=svd_solver,
-                                random_state=random_state)
-            U = tsvd.fit_transform(X)
+            tsvd: TruncatedSVD = TruncatedSVD(n_components=n_components,
+                                              algorithm=svd_solver,
+                                              random_state=random_state)
+            : np.ndarray = tsvd.fit_transform(X)
             S, V = tsvd.singular_values_, tsvd.components_
         else:
             # sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True, random_state=random_state)
-            U = U[:, :n_components]
+            U: np.ndarray = U[:, :n_components]
 
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:n_components]
@@ -359,18 +368,18 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_ = explained_variance_[n_components:].mean()
+            self.noise_variance_: float = explained_variance_[n_components:].mean()
         else:
-            self.noise_variance_ = 0.
+            self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_ = components_[:n_components]
-        self.n_components_ = n_components
-        self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
-        self.singular_values_ = singular_values_[:n_components]
+        self.components_: np.ndarray = components_[:n_components]
+        self.n_components_: np.ndarray = n_components
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[:n_components]
+        self.singular_values_: np.ndarray = singular_values_[:n_components]
 
-        return U, S, V
+        return U, singular_values_, components_
 
     def inverse_transform(self, X: np.ndarray) -> np.ndarray:
         """Transform X back to its original space.
@@ -387,5 +396,5 @@ class SVD(BaseEstimator, TransformerMixin):
         X_original : array, shape (n_samples, n_features)
             Note that this is always a dense array.
         """
-        X = check_array(X)
+        X: np.ndarray = check_array(X)
         return np.dot(X, self.components_)

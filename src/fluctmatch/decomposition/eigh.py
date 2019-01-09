@@ -71,10 +71,10 @@ class Eigh(BaseEstimator, TransformerMixin):
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
     """
-    def __init__(self, copy=True):
-        self.copy = copy
+    def __init__(self, copy: bool=True):
+        self.copy: bool = copy
 
-    def fit(self, X: np.ndarray, y=None) -> object:
+    def fit(self, X: np.ndarray, y=None) -> "Eigh":
         """Fit the model with X.
 
         Parameters
@@ -112,7 +112,7 @@ class Eigh(BaseEstimator, TransformerMixin):
         V = self._fit(X)
         return V
 
-    def _fit(self, X: np.ndarray):
+    def _fit(self, X: np.ndarray) -> np.ndarray:
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -126,7 +126,7 @@ class Eigh(BaseEstimator, TransformerMixin):
         total_eigv: float = L.sum()
         self.explained_variance_ratio_: np.ndarray = L / total_eigv
         V: np.ndarray = V[:, idx]
-        self.components_ = V.T
+        self.components_: np.ndarray = V.T
         return V
 
     def inverse_transform(self, X: np.ndarray) -> np.ndarray:
