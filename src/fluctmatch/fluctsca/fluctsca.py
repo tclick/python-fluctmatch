@@ -18,21 +18,23 @@ import numpy as np
 from scipy import linalg
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import scale, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
 
-from ..libs.center import Center2D
-from fluctmatch.decomposition.ica import ICA
+from ..decomposition.ica import ICA
+from ..decomposition.svd import SVD
+
 
 class FluctSCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components: int=None, max_iter: int=1000,
                  whiten: bool=True, stddev: float = 2.0,
                  method: str="extended-infomax"):
         super().__init__()
-        self.n_components_: int= n_components
+        self.n_components: int= n_components
         self.max_iter: int= max_iter
         self.stddev: float= stddev
-        self.whiten = whiten
+        self.whiten: bool= whiten
         self.method: str= method
 
     def _randomize(self, X: np.ndarray) -> np.ndarray:
@@ -49,53 +51,70 @@ class FluctSCA(BaseEstimator, TransformerMixin):
         mean: np.ndarray = np.tile(mean, (1, n_windows)),
         std: np.ndarray = np.std(X, axis=-1)[:, None]
         std: np.ndarray = np.tile(std, (1, n_windows)),
-        positive = np.all(X >= 0.)
+        positive: bool = np.all(X >= 0.)
 
-        Lrand = np.empty((self.max_iter, np.min(X.shape)), dtype=X.dtype)
+        svd: SVD = SVD()
+        Lrand: np.ndarray = np.empty((self.max_iter, np.min(X.shape)), dtype=X.dtype)
         for _ in range(self.max_iter):
-            Y = np.random.normal(mean, std)
+            Y: np.ndarray = np.random.normal(mean, std)
             if positive:
                 Y[Y < 0.] = 0.
             if self.whiten:
-                Y = Center2D().fit_transform(Y)
-            Lrand[_, :] = linalg.svdvals(Y).copy()
+                Y: np.ndarray = scale(Y)
+            Lrand[_, :] = svd.fit(Y).explained_variance_
         return Lrand
 
     def _calculate_maxdims(self, X: np.ndarray):
         """Calculate the significant number of eigenvalues.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X: np.ndarray = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
+                                    warn_on_dtype=True, estimator=self,
+                                    dtype=FLOAT_DTYPES,
+                                    force_all_finite='allow-nan')
         value: float = X[:, 1].mean() + ((self.stddev + 1) * X[:, 1].std())
-        self.n_components_: int = self.singular_values_[self.singular_values_ > value].size
+        self.n_components: int = self.eigenvector_[self.eigenvector_ > value].size
 
     def fit(self, X: np.ndarray) -> "FluctSCA":
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        from sklearn.pipeline import Pipeline
 
-        if self.whiten:
-            X = Center2D().fit_transform(X)
-        self.singular_values_ = linalg.svdvals(X).copy()
-        if self.n_components_ < 1 or self.n_components_ is None:
-            self._randomize(X)
-            self._calculate_maxdims()
+        X: np.ndarray = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
+                                    warn_on_dtype=True,
+                                    estimator=self, dtype=FLOAT_DTYPES,
+                                    force_all_finite='allow-nan')
+
+        svd: SVD = SVD()
+        pipeline: Pipeline = (
+            make_pipeline(StandardScaler(), svd)
+            if self.whiten
+            else make_pipeline(svd)
+        )
+        pipeline.fit(X)
+        self.eigenvector_ = svd.explained_variance_
+
+        if self.n_components < 1 or self.n_components is None:
+            Lrand: np.ndarray= self._randomize(X)
+            self._calculate_maxdims(Lrand)
 
         return self
 
-    def transform(self, X: np.ndarray, copy: bool=True):
+    def transform(self, X: np.ndarray, copy: bool=True) -> np.ndarray:
+        from sklearn.pipeline import Pipeline
+
         check_is_fitted(self, "Lsca")
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
+        X: np.ndarray = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        ica = ICA(n_components=self.n_components_, method=self.method,
-                  whiten=self.whiten)
-        self.sources_ = ica.fit_transform(X)
+        ica: ICA = ICA(n_components=self.n_components, method=self.method,
+                       whiten=self.whiten)
+        self.sources_: np.ndarray = ica.fit_transform(X)
 
         # Perform truncated singular value decomposition
-        truncated = TruncatedSVD(n_components=self.n_components_,
-                                 n_iter=self.max_iter)
-        pipeline = make_pipeline(Center2D(), truncated)
-        self.U_ = pipeline.fit_transform(X)
+        svd: SVD = SVD(n_components=self.n_components)
+        pipeline: Pipeline = (
+            make_pipeline(StandardScaler(), svd)
+            if self.whiten
+            else make_pipeline(svd)
+        )
+        self.U_: np.ndarray = pipeline.fit_transform(X)
+        self.components_: np.ndarray = svd.components_
