@@ -31,8 +31,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils.extmath import randomized_svd, stable_cumsum, svd_flip
 
-from ..libs.typing import Random
-
 logger = logging.getLogger(__name__)
 
 
@@ -256,7 +254,7 @@ class SVD(BaseEstimator, TransformerMixin):
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
-            raise ValueError(f"Unrecognized svd_solver={self._fit_svd_solver}")
+            raise ValueError(f"Unrecognized algorithm={self._fit_svd_solver}")
 
     def _fit_full(self, X: np.ndarray,
                   n_components: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -318,42 +316,30 @@ class SVD(BaseEstimator, TransformerMixin):
 
         U: np.ndarray = U[:, :self.n_components_]
 
-        # X_new = X * V = U * S * V^T * V = U * S
-        U *= S[:self.n_components_]
-
         return U, singular_values_, components_
 
     def _fit_truncated(self, X: np.ndarray,
                        n_components: int,
-                       svd_solver: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                       algorithm: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Fit the model by computing truncated SVD (randomized) on X
         """
         n_samples, n_features = X.shape
 
         random_state: RandomState = check_random_state(self.random_state)
 
-        if svd_solver == 'arpack' and n_components == min(n_samples, n_features):
-            raise ValueError("n_components=%r must be strictly less than "
-                             "min(n_samples, n_features)=%r with "
-                             "svd_solver='%s'"
-                             % (n_components, min(n_samples, n_features),
-                                svd_solver))
-
-        if n_components < min(n_samples, n_features):
+        if n_components < n_features:
             tsvd: TruncatedSVD = TruncatedSVD(n_components=n_components,
-                                              algorithm=svd_solver,
+                                              algorithm=algorithm,
+                                              n_iter=self.iterated_power,
                                               random_state=random_state)
-            : np.ndarray = tsvd.fit_transform(X)
+            U: np.ndarray = tsvd.fit_transform(X)
             S, V = tsvd.singular_values_, tsvd.components_
+            U /= S
         else:
             # sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
-                                     flip_sign=True, random_state=random_state)
-            U: np.ndarray = U[:, :n_components]
-
-            # X_new = X * V = U * S * V^T * V = U * S
-            U *= S[:n_components]
+                                     random_state=random_state)
 
         components_: np.ndarray = V
 
