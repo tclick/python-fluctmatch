@@ -24,53 +24,64 @@ X: np.ndarray = np.array([
     [1, 0, 0, 0, 2],
     [0, 0, 3, 0, 0],
     [0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 0]
+    [0, 2, 0, 0, 0],
+    [0, 0, 0, 0, 0],
 ])
 U: np.ndarray = np.array([
-    [0, 1, 0, 0],
-    [1, 0, 0, 0],
-    [0, 0, 0, -1],
-    [0, 0, 1, 0]
+    [0, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 1, 0]
 ])
-S: np.ndarray = np.array([3, np.sqrt(5), 2, 0])
+S: np.ndarray = np.array([3, np.sqrt(5), 2, 0, 0])
 VT: np.ndarray = np.array([
     [0, 0, 1, 0, 0],
     [np.sqrt(0.2), 0, 0, 0, np.sqrt(0.8)],
     [0, 1, 0, 0, 0],
-    [0, 0, 0, 1, 0]
+    [0, 0, 0, -1, 0],
+    [-np.sqrt(0.8), 0, 0, 0, np.sqrt(0.2)],
+
 ])
 U, VT = svd_flip(U, VT)
-US: np.ndarray = U * S
-N_COMPONENTS_ = 3
+N_COMPONENTS_ = np.min(X.shape) - 1
 
 
 def test_full():
-    svd = SVD(svd_solver="full")
+    svd = SVD(algorithm="full")
     Utest = svd.fit_transform(X)
-    testing.assert_array_almost_equal(Utest, US, decimal=6)
+    testing.assert_array_almost_equal(Utest, U, decimal=6)
     testing.assert_array_almost_equal(svd.singular_values_, S, decimal=6)
     testing.assert_array_almost_equal(svd.components_, VT, decimal=6)
 
 
 def test_randomized():
-    svd = SVD(svd_solver="randomized")
+    svd = SVD(algorithm="randomized", random_state=np.random.RandomState(42))
     Utest = svd.fit_transform(X)
-    testing.assert_array_almost_equal(Utest, US, decimal=6)
+    testing.assert_array_almost_equal(Utest, U, decimal=6)
     testing.assert_array_almost_equal(svd.singular_values_, S, decimal=6)
     testing.assert_array_almost_equal(svd.components_, VT, decimal=6)
 
 
-def test_trunc_randomized():
-    svd = SVD(n_components=N_COMPONENTS_, svd_solver="randomized")
+def test_trunc_full():
+    svd = SVD(n_components=N_COMPONENTS_, algorithm="full")
     Utest = svd.fit_transform(X)
-    testing.assert_array_almost_equal(Utest, US[:, :N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(Utest, U[:, :N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_], decimal=6)
+
+
+def test_trunc_randomized():
+    svd = SVD(n_components=N_COMPONENTS_, algorithm="randomized", random_state=np.random.RandomState(42))
+    Utest = svd.fit_transform(X)
+    testing.assert_array_almost_equal(Utest, U[:, :N_COMPONENTS_], decimal=6)
     testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_], decimal=6)
     testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_], decimal=6)
 
 
 def test_trunc_arpack():
-    svd = SVD(n_components=N_COMPONENTS_, svd_solver="arpack")
+    svd = SVD(n_components=N_COMPONENTS_, algorithm="arpack", random_state=np.random.RandomState(42))
     Utest = svd.fit_transform(X)
-    testing.assert_array_almost_equal(Utest, US[:, :N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(Utest, U[:, :N_COMPONENTS_], decimal=6)
     testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_], decimal=6)
     testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_], decimal=6)
