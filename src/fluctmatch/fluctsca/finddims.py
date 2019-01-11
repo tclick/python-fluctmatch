@@ -30,12 +30,13 @@ class FindDims(BaseEstimator, TransformerMixin):
     """
     def __init__(self, whiten: bool=True, max_iter: int=100,
                  stddev: int=2, random_state: RandomState=None,
-                 algo="auto"):
+                 tol=0.99, algorithm="auto"):
         self.whiten: bool=whiten
         self.max_iter: int= max_iter
         self.stddev: int= stddev
         self.random_state = random_state
-        self.algorithm = algo
+        self.tol = tol
+        self.algorithm = algorithm
 
     def fit(self, X: np.ndarray) -> "FindDims":
         X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
@@ -56,7 +57,7 @@ class FindDims(BaseEstimator, TransformerMixin):
         self.std_: np.ndarray = np.tile(scaler.var_[None, :], (n_samples, 1))
         self.positive_: bool = np.all(X >= 0.)
 
-        self.random_: np.ndarray = np.empty((self.max_iter, np.min(X.shape)),
+        self.random_: np.ndarray = np.empty((self.max_iter, n_features),
                                             dtype=X.dtype)
         for _ in range(self.max_iter):
             Y: np.ndarray = np.random.normal(self.mean_, self.std_)
@@ -77,11 +78,17 @@ class FindDims(BaseEstimator, TransformerMixin):
             else make_pipeline(svd)
         )
         pipeline.fit(X)
-        self.eigenvector_ = svd.explained_variance_.copy()
 
-        mean: np.ndarray = self.random_[:, 1].mean()
-        std: np.ndarray = self.random_[:, 1].std()
-        value: float = mean + ((self.stddev + 1) * std)
-        n_components: int = self.eigenvector_[self.eigenvector_ > value].size
-        self.n_components = n_components
+        self.eigenvector_: np.ndarray = svd.explained_variance_.copy()
+        if self.whiten:
+            eigenvector_: np.ndarray = svd.explained_variance_
+            mean: np.ndarray = self.random_.mean(axis=1)[1]
+            std: np.ndarray = self.random_.std(axis=1)[1]
+            value: float = mean + ((self.stddev + 1) * std)
+            n_components: int = eigenvector_[eigenvector_ > value].size
+        else:
+            explained_ratio: np.ndarray = svd.explained_variance_ratio_.cumsum()
+            n_components: int = explained_ratio[explained_ratio <= self.tol].size
+
+        self.n_components: int = n_components
         return n_components
