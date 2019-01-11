@@ -30,13 +30,13 @@ class FindDims(BaseEstimator, TransformerMixin):
     """
     def __init__(self, whiten: bool=True, max_iter: int=100,
                  stddev: int=2, random_state: RandomState=None,
-                 tol=0.99, algorithm="auto"):
+                 tol: float=0.99, algorithm="auto"):
         self.whiten: bool=whiten
         self.max_iter: int= max_iter
         self.stddev: int= stddev
-        self.random_state = random_state
-        self.tol = tol
-        self.algorithm = algorithm
+        self.random_state: RandomState= random_state
+        self.tol: float= tol
+        self.algorithm: str= algorithm
 
     def fit(self, X: np.ndarray) -> "FindDims":
         X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
