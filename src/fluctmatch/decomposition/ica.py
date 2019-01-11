@@ -589,9 +589,6 @@ class ICA(BaseEstimator, TransformerMixin):
         if hasattr(self, "mixing_"):
             del self.components_
             del self.mixing_
-            del self.pca_components_
-            del self.pca_explained_variance_
-            del self.mean_
 
     def fit(self, data: np.ndarray):
         """Aux function."""
