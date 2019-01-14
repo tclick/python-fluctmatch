@@ -54,9 +54,11 @@ class FluctSCA(BaseEstimator, TransformerMixin):
                                     stddev=self.stddev, tol=self.tol,
                                     algorithm=self.svd_solver,
                                     random_state=self.random_state)
-            self.n_components_ = fd.fit_transform(X)
+            self.n_components_: int = fd.fit_transform(X)
         else:
-            self.n_components_ = self.n_components
+            self.n_components_: int = self.n_components
+
+        self.random_: np.ndarray = fd.random_.copy() if self.whiten else None
 
         # Perform singular value decomposition
         svd: SVD = SVD(n_components=self.n_components_)
@@ -68,6 +70,7 @@ class FluctSCA(BaseEstimator, TransformerMixin):
         pipeline.fit(X)
         self.Vfeatures_: np.ndarray = svd.components_.T
         self.singular_values_: np.ndarray = svd.singular_values_.copy()
+        self.eigenvalue_: np.ndarray = svd.explained_variance_
 
         return self
 
@@ -80,15 +83,19 @@ class FluctSCA(BaseEstimator, TransformerMixin):
                         force_all_finite='allow-nan')
 
         ica: ICA = ICA(n_components=self.n_components, method=self.method,
-                       whiten=self.whiten)
+                       whiten=not self.whiten)
 
-        Usamples_: np.ndarray= X.dot(self.Vfeatures_ / self.singular_values_)
+        self.Usamples_: np.ndarray= X.dot(self.Vfeatures_ / self.singular_values_)
 
         # Perform ICA on SVD feature covariance matrix
         Vfica: np.ndarray = ica.fit_transform(self.Vfeatures_)
         # Project feature matrix onto sample covariance matrix.
-        self.Ufica_: np.ndarray = np.dot(ica.mixing_, Usamples_.T).T
+        self.Wfica_ = ica.mixing_
+        self.Ufica_: np.ndarray = np.dot(ica.mixing_, self.Usamples_.T).T
+        for _ in range(self.n_components_):
+            self.Ufica_ /= np.sqrt(self.Ufica_[:, _].T.dot(self.Ufica_[:, _]))
         # Perform ICA on sample covariance matrix
-        self.Usica_: np.ndarray = ica.fit_transform(Usamples_)
+        self.Usica_: np.ndarray = ica.fit_transform(self.Usamples_)
+        self.Wsica_: np.ndarray = ica.mixing_
 
         return Vfica
