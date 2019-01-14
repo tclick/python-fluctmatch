@@ -16,18 +16,15 @@
 #
 import logging
 import logging.config
-import os
 import pickle
-import sys
 from pathlib import Path
 
 import click
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
 from ..analysis.paramtable import ParamTable
 from ..analysis import fluctsca
-from fluctmatch.decomposition import ica
+from ..fluctsca.fluctsca import FluctSCA
 
 
 @click.command(
@@ -131,6 +128,20 @@ from fluctmatch.decomposition import ica
     default="infomax",
     help="ICA method",
 )
+@click.option(
+    "-w",
+    "--whiten",
+    is_flag=True,
+    help="Standardize data",
+)
+@click.option(
+    "-t",
+    "--tol",
+    default=0.99,
+    show_default=True,
+    type=np.float,
+    help="Tolerance level, if data unstandardized",
+)
 @click.argument(
     "filename",
     type=click.Path(
@@ -139,7 +150,7 @@ from fluctmatch.decomposition import ica
         resolve_path=True,
     ))
 def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
-        transformation, ictype, filename):
+        transformation, ictype, whiten, tol, filename):
     # Setup logger
     logging.config.dictConfig({
         "version": 1,
@@ -182,31 +193,33 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         click.format_filename(filename)))
     table = ParamTable(ressep=ressep)
     table.from_file(click.format_filename(filename))
-    kb = table._separate(table.table)
+    kb: pd.DataFrame = table._separate(table.table)
     _index = kb.index.names
     if transformation == "backbone":
         logger.info("Calculating backbone-backbone interactions.")
         kb.reset_index(inplace=True)
-        kb = kb[(kb["I"] == "N") | (kb["I"] == "CA") | (kb["I"] == "O")]
-        kb = kb[(kb["J"] == "N") | (kb["J"] == "CA") | (kb["J"] == "O")]
-        table.table = kb.set_index(_index)
+        kb: pd.DataFrame = kb[(kb["I"] == "N") | (kb["I"] == "CA") | (kb["I"] == "O")]
+        kb: pd.DataFrame = kb[(kb["J"] == "N") | (kb["J"] == "CA") | (kb["J"] == "O")]
+        table.table: pd.DataFrame = kb.set_index(_index)
     elif transformation == "sidechain":
         logger.info("Calculating sidechain-sidechain interactions.")
         kb.reset_index(inplace=True)
-        kb = kb[(kb["I"] == "CB") & (kb["J"] == "CB")]
-        table.table = kb.set_index(_index)
+        kb: pd.DataFrame = kb[(kb["I"] == "CB") & (kb["J"] == "CB")]
+        table.table: pd.DataFrame = kb.set_index(_index)
     elif transformation == "bbsc":
         logger.info("Calculating backbone-sidechain interactions.")
         kb.reset_index(inplace=True)
-        tmp1 = kb[(kb["I"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
-        tmp2 = kb[(kb["J"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
-        table.table = pd.concat([tmp1, tmp2], axis=0).set_index(_index)
+        tmp1: pd.DataFrame = kb[(kb["I"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
+        tmp2: pd.DataFrame = kb[(kb["J"] == "CB") & ((kb["J"] == "N") | (kb["J"] == "O"))]
+        table.table: pd.DataFrame = pd.concat([tmp1, tmp2], axis=0).set_index(_index)
     else:
         logger.info("Accounting for all interactions.")
-    kb = table.per_residue
+    kb: pd.DataFrame = table.per_residue
 
     D_info = dict(
-        kb=kb,
+        kb=kb.values,
+        residues=kb.index.values,
+        windows=kb.columns.values,
         npos=kb.index.size,
         ressep=ressep,
     )
@@ -215,72 +228,47 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         segid, start, stop = subset[0]
         logger.info("Using a subset of {} between {:d} and {:d}".format(
             segid, start, stop))
-        kb = kb.loc[segid].loc[start:stop]
+        kb: pd.DataFrame = kb.loc[segid].loc[start:stop]
         D_info["kb"] = kb.copy(deep=True)
         D_info["subset"] = subset[0]
         D_info["Npos"] = kb.index.size
 
-    kb: np.ndarray = kb.T.values
-    U: np.ndarray = PCA(whiten=True, svd_solver="full").fit_transform(kb)
     if kpos < 1:
-        logger.info("Using {:d} random trials.".format(ntrials))
-        Lrand: np.ndarray = fluctsca.randomize(kb, n_trials=ntrials)
-
-    Csca: np.ndarray = fluctsca.get_correlation(kb)
+        kpos = None
+    fs: FluctSCA = FluctSCA(n_components=kpos, max_iter=ntrials,
+                                  whiten=whiten, stddev=std, tol=tol,
+                                  method=ictype)
+    Vpica = fs.fit_transform(kb.T)
+    logging.info(f"Using {fs.n_components_:d} sectors.")
     D_sca = dict(
-        U=U,
-        Csca=Csca,
-        Lrand=Lrand if kpos < 1 else None,
+        Csca=fs.Vfeatures_,
+        Lrand=fs.random_ if kpos is None else None,
         ntrials=ntrials
     )
 
-    # Determine the number of eigenmodes if kpos = 0
-    Lsca, Vsca = fluctsca.eigenVect(Csca)
-    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand, stddev=std) if kpos == 0 else kpos
-    logger.info("Selecting {:d} eigenmodes".format(_kpos))
-
-    # Calculate IC sectors
-    logger.info("Calculating the ICA for the residues.")
-    time_info = ica.ICA(n_components=_kpos, method=ictype,
-                        max_iter=ntrials, whiten=False)
-    try:
-        Vpica: np.ndarray = time_info.fit_transform(Vsca[:,:_kpos])
-    except IndexError:
-        logger.error(f"An error occurred while using {ictype}. Exiting...")
-        sys.exit(os.EX_DATAERR)
-
     ics, icsize, sortedpos, cutoff, scaled_pd, pdf = fluctsca.icList(
-        Vpica, _kpos, Csca, p_cut=pcut)
+        Vpica, fs.n_components_, fs.Vfeatures_, p_cut=pcut)
     percentage: float = len(sortedpos) / D_info["npos"] * 100
     logger.info(f"{len(sortedpos):d} residues are within {_kpos:d} "
                 f"sectors: {percentage:.2f}%")
 
     logger.info("Calculating the ICA for the windows.")
-    Usca: np.ndarray = U.dot(Vsca[:,:_kpos]).dot(np.diag(1/np.sqrt(Lsca[:_kpos])))
-    Upica: np.ndarray = time_info.mixing_.dot(Usca.T).T
-    for k in range(Upica.shape[1]):
-        Upica[:, k] /= np.sqrt(Upica[:, k].T.dot(Upica[:, k]))
-
-    res_info = ica.ICA(n_components=_kpos, method=ictype,
-                       max_iter=ntrials, whiten=False)
-    Usica: np.ndarray = res_info.fit_transform(Usca)
-
     D_sector = dict(
-        kpos=_kpos,
-        Vsca=Vsca,
-        Lsca=Lsca,
-        Vpica=Vpica,
-        Wpica=time_info.mixing_,
+        kpos=fs.n_components_,
+        Vsca=fs.Vfeatures_,
+        Lsca=fs.eigenvalue_,
+        Vrica=Vpica,
+        Wrica=fs.Wfica_,
         ics=ics,
         icsize=icsize,
         sortedpos=sortedpos,
         cutoff=cutoff,
         scaled_pd=scaled_pd,
         pdf=pdf,
-        Usca=Usca,
-        Upica=Upica,
-        Usica=Usica,
-        Wsica=res_info.mixing_,
+        Usca=fs.Usamples_,
+        Urica=fs.Ufica_,
+        Uwica=fs.Usica_,
+        Wwica=fs.Wsica_,
     )
 
     D = dict(info=D_info, sca=D_sca, sector=D_sector)
