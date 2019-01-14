@@ -23,7 +23,7 @@ import click
 import numpy as np
 import pandas as pd
 from ..analysis.paramtable import ParamTable
-from ..analysis import fluctsca
+from ..fluctsca import utils
 from ..fluctsca.fluctsca import FluctSCA
 
 
@@ -246,7 +246,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         ntrials=ntrials
     )
 
-    ics, icsize, sortedpos, cutoff, scaled_pd, pdf = fluctsca.icList(
+    ics, icsize, sortedpos, cutoff, scaled_pd, pdf = utils.icList(
         Vpica, fs.n_components_, fs.Vfeatures_, p_cut=pcut)
     percentage: float = len(sortedpos) / D_info["npos"] * 100
     logger.info(f"{len(sortedpos):d} residues are within {_kpos:d} "
