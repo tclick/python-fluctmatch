@@ -158,7 +158,7 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
         u, d, _ = linalg.svd(X, full_matrices=False)
 
         del _
-        K = (u / d).T[:n_components]  # see (6.33) p.140
+        K = (u / d).T  # see (6.33) p.140
         del u, d
         X1 = np.dot(K, X)
         # see (13.6) p.267 Here X1 is white and data
