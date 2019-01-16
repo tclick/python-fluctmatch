@@ -49,7 +49,7 @@ def test_water_from_tip3p_creation():
                        for selection in water._mapping.values())
 
     testing.assert_equal(water.universe.atoms.n_atoms, n_atoms,
-        err_msg="Number of sites don't match.", verbose=True)
+                         err_msg="Number of sites don't match.", verbose=True)
 
 
 def test_water_from_tip3p_positions():
@@ -79,7 +79,7 @@ def test_water_from_tip4p_creation():
                        for selection in water._mapping.values())
 
     testing.assert_equal(water.universe.atoms.n_atoms, n_atoms,
-        err_msg="Number of sites don't match.", verbose=True)
+                         err_msg="Number of sites don't match.", verbose=True)
 
 
 def test_water_from_tip4p_positions():
