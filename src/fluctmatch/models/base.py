@@ -1,34 +1,84 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  All rights reserved.
 #
-# Released under the New BSD license.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
 #
-# The original code is from Richard J. Gowers.
-# https://github.com/richardjgowers/MDAnalysis-coarsegraining
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
 #
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+#
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
+#
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Please cite your use of fluctmatch in published work:
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  doi:10.1016/bs.mie.2016.05.024.
+
 import abc
 import itertools
 import logging
 import string
-import traceback
-from typing import Dict, List
+from collections import OrderedDict
+from typing import List, Mapping
 
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import (
-    Atomids, Atomnames, Atomtypes, Charges, Masses, Radii, Resids,
-    Resnames, Resnums, Segids, TopologyAttr, Angles, Dihedrals, Impropers)
+    Atomids, Atomnames, Atomtypes, Charges, Masses, Radii, Resids, Resnames,
+    Resnums, Segids, TopologyAttr, Angles, Dihedrals, Impropers)
 from MDAnalysis.core.topologyobjects import TopologyGroup
 from MDAnalysis.coordinates.base import ProtoReader
 from MDAnalysis.coordinates.memory import MemoryReader
@@ -36,8 +86,7 @@ from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
 
 from .. import _MODELS, _DESCRIBE
-from ..libs.typing import FileName, MDUniverse
-from . import trajectory
+from ..libs.typing import StrMapping
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -47,83 +96,45 @@ class ModelBase(abc.ABC):
 
     Parameters
     ----------
-    topology : filename or Topology object
-        A CHARMM/XPLOR PSF topology file, PDB file or Gromacs GRO file; used to
-        define the list of atoms. If the file includes bond information,
-        partial charges, atom masses, ... then these data will be available to
-        MDAnalysis. A "structure" file (PSF, PDB or GRO, in the sense of a
-        topology) is always required. Alternatively, an existing
-        :class:`MDAnalysis.core.topology.Topology` instance may also be given.
-    extended
+    extended : bool, optional
         Renames the residues and atoms according to the extended CHARMM PSF
         format. Standard CHARMM PSF limits the residue and atom names to four
         characters, but the extended CHARMM PSF permits eight characters. The
         residues and atoms are renamed according to the number of segments
         (1: A, 2: B, etc.) and then the residue number or atom index number.
-     xplor
+    xplor : bool, optional
         Assigns the atom type as either a numerical or an alphanumerical
         designation. CHARMM normally assigns a numerical designation, but the
         XPLOR version permits an alphanumerical designation with a maximum
         size of 4. The numerical form corresponds to the atom index number plus
         a factor of 100, and the alphanumerical form will be similar the
         standard CHARMM atom name.
-    topology_format
-        Provide the file format of the topology file; ``None`` guesses it from
-        the file extension [``None``] Can also pass a subclass of
-        :class:`MDAnalysis.topology.base.TopologyReaderBase` to define a custom
-        reader to be used on the topology file.
-    format
-        Provide the file format of the coordinate or trajectory file; ``None``
-        guesses it from the file extension. Note that this keyword has no
-        effect if a list of file names is supplied because the "chained" reader
-        has to guess the file format for each individual list member.
-        [``None``] Can also pass a subclass of
-        :class:`MDAnalysis.coordinates.base.ProtoReader` to define a custom
-        reader to be used on the trajectory file.
-    guess_bonds : bool, optional
-        Once Universe has been loaded, attempt to guess the connectivity
-        between atoms.  This will populate the .bonds .angles and .dihedrals
-        attributes of the Universe.
-    vdwradii : Dict, optional
-        For use with *guess_bonds*. Supply a dict giving a vdwradii for each
-        atom type which are used in guessing bonds.
-    is_anchor : bool, optional
-        When unpickling instances of
-        :class:`MDAnalysis.core.groups.AtomGroup` existing Universes are
-        searched for one where to anchor those atoms. Set to ``False`` to
-        prevent this Universe from being considered. [``True``]
-    anchor_name : str, optional
-        Setting to other than ``None`` will cause
-        :class:`MDAnalysis.core.groups.AtomGroup` instances pickled from the
-        Universe to only unpickle if a compatible Universe with matching
-        *anchor_name* is found. Even if *anchor_name* is set *is_anchor* will
-        still be honored when unpickling.
-    in_memory
-        After reading in the trajectory, transfer it to an in-memory
-        representations, which allow for manipulation of coordinates.
-    in_memory_step
-        Only read every nth frame into in-memory representation.
+    com : bool, optional
+        Calculates the bead coordinates using either the center of mass (default)
+        or center of geometry.
+    guess_angles : bool, optional
+        Once Universe has been created, attempt to guess the connectivity
+        between atoms.  This will populate the .angles, .dihedrals, and
+        .impropers attributes of the Universe.
+    cutoff : float, optional
+        Used as a bond distance cutoff for an elastic network model; otherwise,
+        ignored.
 
     Attributes
     ----------
-    trajectory
-        currently loaded trajectory reader;
-    dimensions
-        current system dimensions (simulation unit cell, if set in the
-        trajectory)
-    atoms, residues, segments
-        master Groups for each topology level
-    bonds, angles, dihedrals
-        master ConnectivityGroups for each connectivity type
     """
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         _MODELS[cls.model.upper()]: object = cls
         _DESCRIBE[cls.model.upper()]: str = cls.describe
 
-
-    def __init__(self, xplor: bool=True, extended: bool=True, com: bool=True,
-                 guess_angles: bool=True, cutoff: float=10.0):
+    def __init__(self,
+                 xplor: bool = True,
+                 extended: bool = True,
+                 com: bool = True,
+                 guess_angles: bool = True,
+                 cutoff: float = 10.0):
         """Initialise like a normal MDAnalysis Universe but give the mapping and
         com keywords.
 
@@ -141,40 +152,22 @@ class ModelBase(abc.ABC):
         # Make a blank Universe for myself.
         super().__init__()
 
-        self.xplor: bool = xplor
-        self.extended: bool = extended
-        self.com: bool = com
-        self.guess: bool = guess_angles
-        self.cutoff: float = cutoff
-        self.mapping: dict = {}
-
-    def _initialize(self, *args, **kwargs):
-        try:
-            mapping: Dict = kwargs.pop("mapping")
-        except KeyError:
-            raise ValueError("CG mapping has not been defined.")
-
-        # Fake up some beads
-        self._topology = self._apply_map(mapping)
-        self._generate_from_topology()
-        self._add_bonds()
-        if kwargs.get("guess_angles", True):
-            self._add_angles()
-            self._add_dihedrals()
-            self._add_impropers()
-
-        # This replaces load_new in a traditional Universe
-        try:
-            self.trajectory = trajectory._Trajectory(
-                self.atu, mapping, n_atoms=self.atoms.n_atoms, com=self._com
-            )
-        except (IOError, TypeError) as exc:
-            tb: List[str] = traceback.format_exc()
-            RuntimeError(
-                f"Unable to open {self.atu.trajectory.filename}"
-            ).with_traceback(tb)
+        self.universe: mda.Universe = None
+        self._xplor: bool = xplor
+        self._extended: bool = extended
+        self._com: bool = com
+        self._guess: bool = guess_angles
+        self._cutoff: float = cutoff
+        self._mapping: Mapping[str, StrMapping] = OrderedDict()
 
     def create_topology(self, universe: mda.Universe):
+        """Deteremine the topology attributes and initialize the universe.
+        
+        Parameters
+        ----------
+        universe : :class:`~MDAnalysis.Universe`
+            An all-atom universe
+        """
         # Allocate arrays
         beads: List[mda.AtomGroup] = []
         atomnames: List[str] = []
@@ -187,7 +180,7 @@ class ModelBase(abc.ABC):
 
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: enumerate = enumerate(
-            itertools.product(residues, self.mapping.items()))
+            itertools.product(residues, self._mapping.items()))
         for i, (res, (name, selection)) in select_residues:
             bead: mda.AtomGroup = res.select_atoms(selection)
             if bead:
@@ -203,19 +196,15 @@ class ModelBase(abc.ABC):
                     charges.append(0.)
                 masses.append(bead.total_mass())
 
-        beads: np.ndarray = np.array(beads)
-        n_atoms: int = len(beads)
-
         # Atom
         vdwradii: Radii = Radii(np.zeros_like(atomids))
         atomids: Atomids = Atomids(np.asarray(atomids))
-        atomnames: Atomnames = Atomnames(np.asarray(atomnames, dtype=np.object))
-        atomtypes: Atomtypes = Atomtypes(np.asarray(np.arange(n_atoms) + 100))
+        atomnames: Atomnames = Atomnames(
+            np.asarray(atomnames, dtype=np.object))
         charges: Charges = Charges(np.asarray(charges))
         masses: Masses = Masses(np.asarray(masses))
 
         # Residue
-        # resids, resnames
         segids: np.ndarray = np.asarray(segids, dtype=np.object)
         resids: np.ndarray = np.asarray(resids, dtype=np.int32)
         resnames: np.ndarray = np.asarray(resnames, dtype=np.object)
@@ -232,30 +221,42 @@ class ModelBase(abc.ABC):
         segidx, perseg_segids = topbase.squash_by(perres_segids)[:2]
         segids: Segids = Segids(perseg_segids)
 
-        attrs: List[TopologyAttr] = [atomids, atomnames, atomtypes,
-                                     charges, masses, vdwradii,
-                                     residueids, residuenums, residuenames,
-                                     segids]
+        # Create universe and add attributes
         self.universe: mda.Universe = mda.Universe.empty(
-            len(atomids), n_residues=len(new_resids), n_segments=len(segids),
-            atom_resindex=residx, residue_segindex=segidx, trajectory=True)
+            len(atomids),
+            n_residues=len(new_resids),
+            n_segments=len(segids),
+            atom_resindex=residx,
+            residue_segindex=segidx,
+            trajectory=True)
+        attrs: List[TopologyAttr] = [
+            atomids, atomnames, charges, masses, vdwradii, residueids,
+            residuenums, residuenames, segids
+        ]
         for attr in attrs:
             self.universe.add_TopologyAttr(attr)
+        self._add_atomtypes()
 
-        self._set_masses()
-        self._set_charges()
-
-    def add_bonds(self):
+    def generate_bonds(self):
+        """Generate connectivity information for the new system.
+        """
         if not hasattr(self, "universe"):
             raise AttributeError("Topologies need to be created before bonds "
                                  "can be added.")
         self._add_bonds()
-        if self.guess:
+        if self._guess:
             self._add_angles()
             self._add_dihedrals()
             self._add_impropers()
 
     def add_trajectory(self, universe: mda.Universe):
+        """Add coordinates to the new system.
+        
+        Parameters
+        ----------
+        universe: :class:`~MDAnalysis.Universe`
+            An all-atom universe
+        """
         if not hasattr(self, "universe"):
             raise AttributeError("Topologies need to be created before bonds "
                                  "can be added.")
@@ -265,9 +266,10 @@ class ModelBase(abc.ABC):
                                  "coordinates defined.")
         univ_traj: ProtoReader = universe.trajectory
         univ_traj.rewind()
+        universe.trajectory.rewind()
 
         residue_selection = itertools.product(universe.residues,
-                                              self.mapping.items())
+                                              self._mapping.items())
         beads: List[mda.AtomGroup] = []
         for res, (key, selection) in residue_selection:
             if key != "CB":
@@ -286,16 +288,18 @@ class ModelBase(abc.ABC):
         force_array: List[np.ndarray] = []
         dimensions_array: List[np.ndarray] = []
         for ts in univ_traj:
-            dimensions_array.append(ts.unitcell)
+            dimensions_array.append(ts._unitcell)
+
+            # Positions
             if self.universe.trajectory.ts.has_positions and ts.has_positions:
                 coordinates = [
                     bead.center_of_mass()
-                    if self.com
-                    else bead.center_of_geometry()
+                    if self._com else bead.center_of_geometry()
                     for bead in beads
                 ]
                 coordinate_array.append(np.asarray(coordinates))
 
+            # Velocities
             if self.universe.trajectory.ts.has_velocities and ts.has_velocities:
                 try:
                     velocities = [bead.velocities for bead in beads]
@@ -303,6 +307,7 @@ class ModelBase(abc.ABC):
                 except ValueError:
                     pass
 
+            # Forces
             if self.universe.trajectory.ts.has_forces and ts.has_forces:
                 try:
                     forces = [bead.velocities for bead in beads]
@@ -321,6 +326,32 @@ class ModelBase(abc.ABC):
         if self.universe.trajectory.ts.has_forces:
             self.universe.trajectory.force_array: np.ndarray = np.asarray(
                 force_array)
+        universe.trajectory.rewind()
+
+    def transform(self, universe: mda.Universe) -> mda.Universe:
+        """Convert an all-atom universe to a coarse-grain model.
+
+        Topologies are generated, bead connections are determined, and positions
+        are read. This is a wrapper for the other three methods.
+        
+        Parameters
+        ----------
+        universe: :class:`~MDAnalysis.Universe`
+            An all-atom universe
+
+        Returns
+        -------
+        A coarse-grain model
+        """
+        self.create_topology(universe)
+        self.generate_bonds()
+        self.add_trajectory(universe)
+        return self.universe
+
+    def _add_atomtypes(self):
+        n_atoms: int = self.universe.atoms.n_atoms
+        atomtypes: Atomtypes = Atomtypes(np.arange(n_atoms) + 100)
+        self.universe.add_TopologyAttr(atomtypes)
 
     @abc.abstractmethod
     def _add_bonds(self):
@@ -337,8 +368,7 @@ class ModelBase(abc.ABC):
     def _add_dihedrals(self):
         try:
             dihedrals: TopologyGroup = guessers.guess_dihedrals(
-                self.universe.angles
-            )
+                self.universe.angles)
             self.universe._topology.add_TopologyAttr(Dihedrals(dihedrals))
             self.universe._generate_from_topology()
         except AttributeError:
@@ -347,20 +377,11 @@ class ModelBase(abc.ABC):
     def _add_impropers(self):
         try:
             impropers: TopologyGroup = guessers.guess_improper_dihedrals(
-                self.universe.angles
-            )
+                self.universe.angles)
             self.universe._topology.add_TopologyAttr(Impropers(impropers))
             self.universe._generate_from_topology()
         except AttributeError:
             pass
-
-    @abc.abstractmethod
-    def _set_masses(self):
-        pass
-
-    @abc.abstractmethod
-    def _set_charges(self):
-        pass
 
 
 def Merge(*args: List[mda.Universe]) -> mda.Universe:
@@ -379,7 +400,7 @@ def Merge(*args: List[mda.Universe]) -> mda.Universe:
                    "trajectory frames.")
 
     # Merge universes
-    u: MDUniverse
+    u: mda.Universe
     universe: mda.Universe = mda.Merge(*[u.atoms for u in args])
 
     # Merge coordinates
@@ -389,48 +410,43 @@ def Merge(*args: List[mda.Universe]) -> mda.Universe:
     universe1: mda.Universe = args[0]
     universe.trajectory.ts.has_velocities: bool = universe1.trajectory.ts.has_velocities
     universe.trajectory.ts.has_forces: bool = universe1.trajectory.ts.has_forces
-    frames: np.ndarray = np.fromiter([
-        u.trajectory.n_frames == universe1.trajectory.n_frames
-        for u in args], dtype=bool)
+    frames: np.ndarray = np.fromiter(
+        [u.trajectory.n_frames == universe1.trajectory.n_frames for u in args],
+        dtype=bool)
     if not all(frames):
         msg: str = "The trajectories are not the same length."
         logger.error(msg)
         raise ValueError(msg)
 
-    dimensions_array: np.ndarray = (
-        np.mean(universe1.trajectory.dimensions_array, axis=0)
-        if hasattr(universe1.trajectory, "dimensions_array")
-        else np.asarray([ts.triclinic_dimensions for ts in universe1.trajectory]))
+    dimensions_array: np.ndarray = (np.mean(
+        universe1.trajectory.dimensions_array, axis=0) if hasattr(
+            universe1.trajectory, "dimensions_array") else np.asarray(
+                [ts.triclinic_dimensions for ts in universe1.trajectory]))
 
     universe1.universe.trajectory.rewind()
     if universe1.universe.trajectory.n_frames > 1:
-        coordinates: List[np.ndarray] = []
-        velocities: List[np.ndarray] = []
-        forces: List[np.ndarray] = []
+        coordinates: List[List[np.ndarray]] = []
+        velocities: List[List[np.ndarray]] = []
+        forces: List[List[np.ndarray]] = []
 
         # Accumulate coordinates, velocities, and forces.
         for u in args:
-            coordinates.append([
-                ts.positions
-                for ts in u.trajectory
-                if ts.has_positions])
-            velocities.append([
-                ts.velocities
-                for ts in u.trajectory
-                if ts.has_velocities])
-            forces.append([
-                ts.forces
-                for ts in u.trajectory
-                if ts.has_forces])
+            coordinates.append(
+                [ts.positions for ts in u.trajectory if ts.has_positions])
+            velocities.append(
+                [ts.velocities for ts in u.trajectory if ts.has_velocities])
+            forces.append([ts.forces for ts in u.trajectory if ts.has_forces])
 
         if universe.trajectory.ts.has_positions:
             coordinates: np.ndarray = np.concatenate(coordinates, axis=1)
             if universe.atoms.n_atoms != coordinates.shape[1]:
-                msg = "The number of sites does not match the number of coordinates."
+                msg = ("The number of sites does not match the number of "
+                       "coordinates.")
                 logger.error(msg)
                 raise RuntimeError(msg)
-            logger.info("The new universe has {1} beads in {0} frames.".format(
-                *coordinates.shape))
+            n_frames, n_beads, _ = coordinates.shape
+            logger.info(f"The new universe has {n_beads:d} beads in "
+                        f"{n_frames:d} frames.")
 
             universe.load_new(coordinates, format=MemoryReader)
             universe.trajectory.dimensions_array = dimensions_array.copy()
@@ -444,7 +460,7 @@ def Merge(*args: List[mda.Universe]) -> mda.Universe:
     return universe
 
 
-def rename_universe(universe: mda.Universe) -> mda.Universe:
+def rename_universe(universe: mda.Universe):
     """Rename the atoms and residues within a universe.
 
     Standardizes naming of the universe by renaming atoms and residues based
@@ -457,11 +473,6 @@ def rename_universe(universe: mda.Universe) -> mda.Universe:
     ----------
     universe : :class:`~MDAnalysis.Universe`
         A collection of atoms in a universe.
-
-    Returns
-    -------
-    :class:`~MDAnalysis.Universe`
-        The universe with renamed residues and atoms.
     """
     logger.info("Renaming atom names and atom types within the universe.")
     atomnames: np.ndarray = np.array([
@@ -480,4 +491,3 @@ def rename_universe(universe: mda.Universe) -> mda.Universe:
     if not np.issubdtype(universe.atoms.types.dtype, np.int64):
         universe._topology.add_TopologyAttr(Atomtypes(atomnames))
     universe._generate_from_topology()
-    return universe
