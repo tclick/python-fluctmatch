@@ -31,10 +31,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from typing import List
-
 import MDAnalysis as mda
 from numpy import testing
+
 from fluctmatch.models import solvent
 from fluctmatch.models.selection import *
 from ..datafiles import TIP3P, TIP4P, DMA
@@ -57,11 +56,11 @@ def test_water_from_tip3p_positions():
     water: solvent.Water = solvent.Water()
     cg_universe: mda.Universe = water.transform(aa_universe)
 
-    positions: List[np.ndarray] = [
+    positions: np.ndarray = np.asarray([
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
-    ]
+    ])
 
     testing.assert_allclose(
         np.asarray(positions),
@@ -87,11 +86,11 @@ def test_water_from_tip4p_positions():
     water: solvent.Water = solvent.Water()
     cg_universe: mda.Universe = water.transform(aa_universe)
 
-    positions: List[np.ndarray] = [
+    positions: np.ndarray = np.asarray([
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
-    ]
+    ])
 
     testing.assert_allclose(
         np.asarray(positions),
@@ -117,11 +116,11 @@ def test_tip3p_positions():
     water: solvent.Water = solvent.Water()
     cg_universe: mda.Universe = water.transform(aa_universe)
 
-    positions: List[np.ndarray] = [
+    positions: np.ndarray = np.asarray([
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
-    ]
+    ])
 
     testing.assert_allclose(
         np.asarray(positions),
