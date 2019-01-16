@@ -55,9 +55,9 @@ class Water(ModelBase):
                  guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
-        self._mapping["OW"]: str = "water"
 
-        self.guess: bool = False
+        self._mapping["OW"]: str = "water"
+        self._guess: bool = False
 
     def _add_atomtypes(self):
         n_atoms: int = self.universe.atoms.n_atoms
