@@ -42,7 +42,7 @@ import itertools
 import logging
 import string
 from collections import OrderedDict
-from typing import List, MutableMapping
+from typing import Generator, List, MutableMapping
 
 import numpy as np
 import MDAnalysis as mda
@@ -145,8 +145,6 @@ class ModelBase(abc.ABC):
         resids: List[int] = []
         resnames: List[str] = []
         segids: List[str] = []
-        charges: List[float] = []
-        masses: List[float] = []
 
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: enumerate = enumerate(
@@ -160,19 +158,12 @@ class ModelBase(abc.ABC):
                 resids.append(bead.resids[0])
                 resnames.append(bead.resnames[0])
                 segids.append(bead.segids[0].split("_")[-1])
-                try:
-                    charges.append(bead.total_charge())
-                except AttributeError:
-                    charges.append(0.)
-                masses.append(bead.total_mass())
 
         # Atom
         vdwradii: Radii = Radii(np.zeros_like(atomids))
         atomids: Atomids = Atomids(np.asarray(atomids))
         atomnames: Atomnames = Atomnames(
             np.asarray(atomnames, dtype=np.object))
-        charges: Charges = Charges(np.asarray(charges))
-        masses: Masses = Masses(np.asarray(masses))
 
         # Residue
         segids: np.ndarray = np.asarray(segids, dtype=np.object)
@@ -206,6 +197,8 @@ class ModelBase(abc.ABC):
         for attr in attrs:
             self.universe.add_TopologyAttr(attr)
         self._add_atomtypes()
+        self._add_masses()
+        self._add_charges()
 
     def generate_bonds(self):
         """Generate connectivity information for the new system.
@@ -322,6 +315,35 @@ class ModelBase(abc.ABC):
         n_atoms: int = self.universe.atoms.n_atoms
         atomtypes: Atomtypes = Atomtypes(np.arange(n_atoms) + 100)
         self.universe.add_TopologyAttr(atomtypes)
+
+    def _add_masses(self, universe: mda.Universe):
+        residues: List[mda.AtomGroup] = universe.atoms.split("residue")
+        select_residues: Generator = itertools.product(residues,
+                                                       self._mapping.values())
+
+        masses: np.ndarray = np.fromiter([
+            res.select_atoms(selection).total_mass()
+            for res, selection in select_residues
+            if res.select_atoms(selection)
+        ], dtype=np.float32)
+        self.universe.add_TopologyAttr(Masses(masses))
+
+    def _add_charges(self, universe: mda.Universe):
+        residues: List[mda.AtomGroup] = universe.atoms.split("residue")
+        select_residues: Generator = itertools.product(residues,
+                                                       self._mapping.values())
+
+        try:
+            charges: np.ndarray = np.fromiter([
+                res.select_atoms(selection).total_charge()
+                for res, selection in select_residues
+                if res.select_atoms(selection)
+            ], dtype=np.float32)
+        except AttributeError:
+            charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
+                                           dtype=np.float32)
+
+        self.universe.add_TopologyAttr(Charges(charges))
 
     @abc.abstractmethod
     def _add_bonds(self):
