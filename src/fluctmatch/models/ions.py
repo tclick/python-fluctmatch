@@ -39,18 +39,23 @@
 from typing import List, MutableMapping
 
 from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+
 from .base import ModelBase
 from .selection import *
 
 
 class SolventIons(ModelBase):
-    """Include ions within the solvent.
-    """
+    """Include ions within the solvent."""
     model: str = "SOLVENTIONS"
     describe: str = "Common ions within solvent (Li K Na F Cl Br I)"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 xplor: bool = True,
+                 extended: bool = True,
+                 com: bool = True,
+                 guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
         self._guess: bool = False
@@ -73,13 +78,17 @@ class SolventIons(ModelBase):
 
 
 class BioIons(ModelBase):
-    """Select ions normally found within biological systems.
-    """
+    """Select ions normally found within biological systems."""
     model: str = "BIOIONS"
     describe: str = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 xplor: bool = True,
+                 extended: bool = True,
+                 com: bool = True,
+                 guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["ions"]: str = "bioion"
         self._guess: bool = False
@@ -102,13 +111,17 @@ class BioIons(ModelBase):
 
 
 class NobleAtoms(ModelBase):
-    """Select atoms column VIII of the periodic table.
-    """
+    """Select atoms column VIII of the periodic table."""
     model: str = "NOBLE"
     describe: str = "Noble gases (He Ne Kr Xe)"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 xplor: bool = True,
+                 extended: bool = True,
+                 com: bool = True,
+                 guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["noble"]: str = "name HE NE KR XE"
         self._guess: bool = False
