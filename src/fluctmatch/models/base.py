@@ -191,7 +191,7 @@ class ModelBase(abc.ABC):
             residue_segindex=segidx,
             trajectory=True)
         attrs: List[TopologyAttr] = [
-            atomids, atomnames, charges, masses, vdwradii, residueids,
+            atomids, atomnames, vdwradii, residueids,
             residuenums, residuenames, segids
         ]
         for attr in attrs:
