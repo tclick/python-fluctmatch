@@ -37,6 +37,8 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
 
+from typing import List
+
 import MDAnalysis as mda
 from numpy import testing
 from fluctmatch.models import ions
@@ -45,28 +47,30 @@ from ..datafiles import IONS
 
 
 def test_ions_creation():
-    aa_universe = mda.Universe(IONS)
-    cg_universe = ions.SolventIons(IONS)
-    cg_natoms = (
-        aa_universe.select_atoms("name LI LIT K NA F CL BR I").n_atoms)
-    testing.assert_equal(
-        cg_universe.atoms.n_atoms,
-        cg_natoms,
-        err_msg="Number of sites don't match.",
-        verbose=True,
-    )
+    aa_universe: mda.Universe = mda.Universe(IONS)
+    solvent: ions.SolventIons = ions.SolventIons()
+    solvent.create_topology(aa_universe)
+
+    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
+                       for selection in solvent._mapping.values())
+
+    testing.assert_equal(solvent.universe.atoms.n_atoms, n_atoms,
+                         err_msg="Number of sites don't match.", verbose=True)
 
 
 def test_ions_positions():
-    positions = []
-    aa_universe = mda.Universe(IONS)
-    cg_universe = ions.SolventIons(IONS)
-    for _ in aa_universe.select_atoms("name LI LIT K NA F CL BR I").residues:
-        positions.append(
-            _.atoms.select_atoms("name LI LIT K NA F CL BR I")
-            .center_of_mass())
+    aa_universe: mda.Universe = mda.Universe(IONS)
+    solvent: ions.SolventIons = ions.SolventIons()
+    cg_universe: mda.Universe = solvent.transform(aa_universe)
+
+    positions: List[np.ndarray] = [
+        _.atoms.select_atoms(selection).center_of_mass()
+        for _ in aa_universe.select_atoms("name LI LIT K NA F CL BR I").residues
+        for selection in solvent._mapping.values()
+    ]
+
     testing.assert_allclose(
-        np.array(positions),
+        np.asarray(positions),
         cg_universe.atoms.positions,
         err_msg="The coordinates do not match.",
     )

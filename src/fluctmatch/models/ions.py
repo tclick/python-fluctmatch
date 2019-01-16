@@ -1,23 +1,44 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from collections import OrderedDict
-from typing import Dict, Generator
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  doi:10.1016/bs.mie.2016.05.024.
 
-from MDAnalysis.core import topologyattrs
+
+from typing import List, MutableMapping
+
+from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 from .base import ModelBase
 from .selection import *
 
@@ -27,27 +48,28 @@ class SolventIons(ModelBase):
     """
     model: str = "SOLVENTIONS"
     describe: str = "Common ions within solvent (Li K Na F Cl Br I)"
-    _mapping: Dict = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
 
-        kwargs["guess_bonds"]: bool = False
-        kwargs["mapping"]: Dict[str, str] = self._mapping
-        self._initialize(*args, **kwargs)
-        resnames: np.ndarray = np.unique(self.residues.resnames)
-        restypes: Dict[str, int] = {
+        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
+        self._guess: bool = False
+
+    def _add_atomtypes(self):
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
             k: v
             for k, v in zip(resnames, np.arange(resnames.size) + 10)
         }
-        self.atoms.types: np.ndarray = np.asarray(
-            [restypes[atom.resname] for atom in self.atoms]
-        )
+
+        atomtypes: List[int] = [
+            restypes[residue.resname] for residue in self.universe.residues
+        ]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self._topology.add_TopologyAttr(topologyattrs.Bonds([]))
-        self._generate_from_topology()
+        self.universe._topology.add_TopologyAttr(Bonds([]))
+        self.universe._generate_from_topology()
 
 
 class BioIons(ModelBase):
@@ -55,28 +77,28 @@ class BioIons(ModelBase):
     """
     model: str = "BIOIONS"
     describe: str = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
-    _mapping: Dict[str, str] = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._mapping["ions"]: str = "bioion"
 
-        kwargs["guess_bonds"]: bool = False
-        kwargs["mapping"]: Dict[str, str] = self._mapping
-        self._initialize(*args, **kwargs)
-        resnames: np.ndarray = np.unique(self.residues.resnames)
-        restypes: Dict[str, int] = {
+        self._mapping["ions"]: str = "bioion"
+        self._guess: bool = False
+
+    def _add_atomtypes(self):
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
             k: v
-            for k, v in zip(resnames,
-                            np.arange(resnames.size) + 20)
+            for k, v in zip(resnames, np.arange(resnames.size) + 20)
         }
-        self.atoms.types: np.ndarray = np.asarray(
-            [restypes[atom.resname] for atom in self.atoms]
-        )
+
+        atomtypes: List[int] = [
+            restypes[atom.name] for atom in self.universe.atoms
+        ]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self._topology.add_TopologyAttr(topologyattrs.Bonds([]))
-        self._generate_from_topology()
+        self.universe._topology.add_TopologyAttr(Bonds([]))
+        self.universe._generate_from_topology()
 
 
 class NobleAtoms(ModelBase):
@@ -84,25 +106,25 @@ class NobleAtoms(ModelBase):
     """
     model: str = "NOBLE"
     describe: str = "Noble gases (He Ne Kr Xe)"
-    _mapping: Dict[str, str] = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._mapping["noble"]: str = "name HE NE KR XE"
 
-        kwargs["guess_bonds"]: bool = False
-        kwargs["mapping"]: Dict[str, str] = self._mapping
-        self._initialize(*args, **kwargs)
-        resnames: np.ndarray = np.unique(self.residues.resnames)
-        restypes: Dict[str, int] = {
+        self._mapping["noble"]: str = "name HE NE KR XE"
+        self._guess: bool = False
+
+    def _add_atomtypes(self):
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
             k: v
-            for k, v in zip(resnames,
-                            np.arange(resnames.size) + 40)
+            for k, v in zip(resnames, np.arange(resnames.size) + 40)
         }
-        self.atoms.types: np.ndarray = np.asarray(
-            [restypes[atom.resname] for atom in self.atoms]
-        )
+
+        atomtypes: List[int] = [
+            restypes[atom.name] for atom in self.universe.atoms
+        ]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self._topology.add_TopologyAttr(topologyattrs.Bonds([]))
-        self._generate_from_topology()
+        self.universe._topology.add_TopologyAttr(Bonds([]))
+        self.universe._generate_from_topology()
