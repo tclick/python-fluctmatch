@@ -197,8 +197,8 @@ class ModelBase(abc.ABC):
         for attr in attrs:
             self.universe.add_TopologyAttr(attr)
         self._add_atomtypes()
-        self._add_masses()
-        self._add_charges()
+        self._add_masses(universe)
+        self._add_charges(universe)
 
     def generate_bonds(self):
         """Generate connectivity information for the new system.
