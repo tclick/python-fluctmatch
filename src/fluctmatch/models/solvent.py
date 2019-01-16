@@ -132,7 +132,11 @@ class Dma(ModelBase):
         self._mapping["N"]: str = "resname DMA and name C N O"
         self._mapping["C2"]: str = "resname DMA and name C2 H2*"
         self._mapping["C3"]: str = "resname DMA and name C3 H3*"
-        self._types: Mapping[str, int] = dict(C1=4, N=5, C2=6, C3=7)
+        self._types: Mapping[str, int] = {
+            key : value + 4
+            for key, value in zip(self._mapping.keys(),
+                                  range(len(self._mapping)))
+        }
 
     def _add_atomtypes(self):
         atomtypes: List[int] = [
