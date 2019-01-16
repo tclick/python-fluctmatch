@@ -1,6 +1,6 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 #
-#  python-fluctmatch -
+#  python-fluctmatch - Fluctuation matching library for Python
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
 #  All rights reserved.
@@ -37,18 +37,38 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
 
-import logging
-from pathlib import Path
-from typing import Mapping, TypeVar
-
 import MDAnalysis as mda
-import numpy as np
-import pandas as pd
+from numpy import testing
+from fluctmatch.models import ions
+from fluctmatch.models.selection import *
+from ..datafiles import IONS
 
-logger = logging.getLogger(__name__)
 
-# Define a type checker
-Array = TypeVar("Array", np.ndarray, np.matrix, pd.DataFrame)
-FileName = TypeVar("FileName", str, Path)
-MDUniverse = TypeVar("MDUniverse", mda.Universe, mda.AtomGroup)
-StrMapping = TypeVar("StrMapping", str, Mapping[str, str])
+def test_ions_creation():
+    aa_universe = mda.Universe(IONS)
+    cg_universe = ions.SolventIons(IONS)
+    cg_natoms = (
+        aa_universe.select_atoms("name LI LIT K NA F CL BR I").n_atoms)
+    testing.assert_equal(
+        cg_universe.atoms.n_atoms,
+        cg_natoms,
+        err_msg="Number of sites don't match.",
+        verbose=True,
+    )
+
+
+def test_ions_positions():
+    positions = []
+    aa_universe = mda.Universe(IONS)
+    cg_universe = ions.SolventIons(IONS)
+    for _ in aa_universe.select_atoms("name LI LIT K NA F CL BR I").residues:
+        positions.append(
+            _.atoms.select_atoms("name LI LIT K NA F CL BR I")
+            .center_of_mass())
+    testing.assert_allclose(
+        np.array(positions),
+        cg_universe.atoms.positions,
+        err_msg="The coordinates do not match.",
+    )
+
+
