@@ -1,30 +1,39 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict,
-    zip,
-)
-from future.utils import viewitems
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
 
 import itertools
 from collections import OrderedDict
@@ -34,8 +43,9 @@ from MDAnalysis.core import (
     topologyattrs,
 )
 from MDAnalysis.topology import base as topbase
-from fluctmatch.models.base import ModelBase
-from fluctmatch.models.selection import *
+
+from .base import ModelBase
+from .selection import *
 
 
 class Calpha(ModelBase):
@@ -43,42 +53,28 @@ class Calpha(ModelBase):
     """
     model = "CALPHA"
     describe = "C-alpha of a protein"
-    _mapping = OrderedDict()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 xplor: bool = True,
+                 extended: bool = True,
+                 com: bool = True,
+                 guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
+
         self._mapping["CA"] = "calpha"
         self._mapping["ions"] = "bioion"
-
-        kwargs["mapping"] = self._mapping
-        self._initialize(*args, **kwargs)
-        self._set_masses()
-        self._set_charges()
-
-        # Update the masses and charges
 
     def _add_bonds(self):
         bonds = []
         bonds.extend([
-            _ for s in self.segments for _ in zip(
+            _
+            for s in self.universe.segments for _ in zip(
                 s.atoms.select_atoms("calpha").ix,
                 s.atoms.select_atoms("calpha").ix[1:])
         ])
-        self._topology.add_TopologyAttr(topologyattrs.Bonds(bonds))
-        self._generate_from_topology()
-
-    def _set_masses(self):
-        ca_atu = self.atu.select_atoms("protein").split("residue")
-        self.atoms.select_atoms("calpha").masses = np.array(
-            [_.total_mass() for _ in ca_atu])
-
-    def _set_charges(self):
-        ca_atu = self.atu.select_atoms("protein").split("residue")
-        try:
-            self.atoms.select_atoms("calpha").charges = np.array(
-                [_.total_charge() for _ in ca_atu])
-        except AttributeError:
-            pass
+        self.universe._topology.add_TopologyAttr(topologyattrs.Bonds(bonds))
+        self.universe._generate_from_topology()
 
 
 class Caside(ModelBase):

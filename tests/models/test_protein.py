@@ -1,32 +1,46 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.utils import native_str
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
 
 import MDAnalysis as mda
 from numpy import testing
+
 from fluctmatch.models import protein
 from fluctmatch.models.selection import *
-from tests.datafiles import (
+from ..datafiles import (
     PDB_prot,
     TPR,
     XTC,
@@ -34,30 +48,33 @@ from tests.datafiles import (
 
 
 def test_calpha_creation():
-    aa_universe = mda.Universe(PDB_prot)
-    cg_universe = protein.Calpha(PDB_prot)
-    cg_natoms = (aa_universe.select_atoms("calpha").n_atoms +
-                 aa_universe.select_atoms("bioion").n_atoms)
-    testing.assert_equal(
-        cg_universe.atoms.n_atoms,
-        cg_natoms,
-        err_msg=native_str("Number of sites not equal."),
-        verbose=True,
-    )
+    aa_universe: mda.Universe = mda.Universe(PDB_prot)
+    system: protein.Calpha = protein.Calpha()
+    system.create_topology(aa_universe)
+
+    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
+                       for selection in system._mapping.values())
+
+    testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                         err_msg="Number of sites don't match.", verbose=True)
 
 
 def test_calpha_positions():
-    positions = []
-    aa_universe = mda.Universe(PDB_prot)
-    cg_universe = protein.Calpha(PDB_prot)
-    for _ in aa_universe.select_atoms("protein").residues:
-        positions.append(_.atoms.select_atoms("calpha").center_of_mass())
-    for _ in aa_universe.select_atoms("bioion").residues:
-        positions.append(_.atoms.select_atoms("bioion").center_of_mass())
+    aa_universe: mda.Universe = mda.Universe(PDB_prot)
+    system: protein.Calpha = protein.Calpha()
+    cg_universe: mda.Universe = system.transform(aa_universe)
+
+    positions: np.ndarray = np.asarray([
+        _.atoms.select_atoms(selection).center_of_mass()
+        for _ in aa_universe.select_atoms("calpha or bioion").residues
+        for selection in system._mapping.values()
+        if _.atoms.select_atoms(selection)
+    ])
+
     testing.assert_allclose(
-        np.array(positions),
+        np.asarray(positions),
         cg_universe.atoms.positions,
-        err_msg=native_str("The coordinates do not match."),
+        err_msg="The coordinates do not match.",
     )
 
 
