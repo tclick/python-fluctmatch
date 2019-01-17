@@ -128,7 +128,13 @@ class ModelBase(abc.ABC):
         self._com: bool = com
         self._guess: bool = guess_angles
         self._cutoff: float = cutoff
+
+        # Dictionary for specific bead selection
         self._mapping: MutableMapping[str, StrMapping] = OrderedDict()
+
+        # Dictionary for all-atom to bead selection. This is particularly useful
+        # for mass and charge topology attributes.
+        self._selection: MutableMapping[str, StrMapping] = {}
 
     def create_topology(self, universe: mda.Universe):
         """Deteremine the topology attributes and initialize the universe.
@@ -190,6 +196,8 @@ class ModelBase(abc.ABC):
             atom_resindex=residx,
             residue_segindex=segidx,
             trajectory=True)
+
+        # Add additonal attributes
         attrs: List[TopologyAttr] = [
             atomids, atomnames, vdwradii, residueids,
             residuenums, residuenames, segids
@@ -319,7 +327,7 @@ class ModelBase(abc.ABC):
     def _add_masses(self, universe: mda.Universe):
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: Generator = itertools.product(residues,
-                                                       self._mapping.values())
+                                                       self._selection.values())
 
         masses: np.ndarray = np.fromiter([
             res.select_atoms(selection).total_mass()
@@ -331,7 +339,7 @@ class ModelBase(abc.ABC):
     def _add_charges(self, universe: mda.Universe):
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: Generator = itertools.product(residues,
-                                                       self._mapping.values())
+                                                       self._selection.values())
 
         try:
             charges: np.ndarray = np.fromiter([
@@ -352,8 +360,7 @@ class ModelBase(abc.ABC):
     def _add_angles(self):
         try:
             angles: TopologyGroup = guessers.guess_angles(self.universe.bonds)
-            self.universe._topology.add_TopologyAttr(Angles(angles))
-            self.universe._generate_from_topology()
+            self.universe.add_TopologyAttr(Angles(angles))
         except AttributeError:
             pass
 
@@ -361,8 +368,7 @@ class ModelBase(abc.ABC):
         try:
             dihedrals: TopologyGroup = guessers.guess_dihedrals(
                 self.universe.angles)
-            self.universe._topology.add_TopologyAttr(Dihedrals(dihedrals))
-            self.universe._generate_from_topology()
+            self.universe.add_TopologyAttr(Dihedrals(dihedrals))
         except AttributeError:
             pass
 
