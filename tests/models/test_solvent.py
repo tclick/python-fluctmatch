@@ -70,6 +70,15 @@ def test_water_from_tip3p_positions():
     )
 
 
+def test_water_from_tip3p_bonds():
+    aa_universe: mda.Universe = mda.Universe(TIP3P)
+    water: solvent.Water = solvent.Water()
+    cg_universe: mda.Universe = water.transform(aa_universe)
+
+    testing.assert_equal(len(cg_universe.bonds), 0,
+                         err_msg="No bonds should exist.")
+
+
 def test_water_from_tip4p_creation():
     aa_universe: mda.Universe = mda.Universe(TIP4P)
     water: solvent.Water = solvent.Water()
@@ -101,6 +110,15 @@ def test_water_from_tip4p_positions():
     )
 
 
+def test_water_from_tip4p_bonds():
+    aa_universe: mda.Universe = mda.Universe(TIP4P)
+    water: solvent.Water = solvent.Water()
+    cg_universe: mda.Universe = water.transform(aa_universe)
+
+    testing.assert_equal(len(cg_universe.bonds), 0,
+                         err_msg="No bonds should exist.")
+
+
 def test_tip3p_creation():
     aa_universe: mda.Universe = mda.Universe(TIP3P)
     water: solvent.Water = solvent.Tip3p()
@@ -115,7 +133,7 @@ def test_tip3p_creation():
 
 def test_tip3p_positions():
     aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Water()
+    water: solvent.Water = solvent.Tip3p()
     cg_universe: mda.Universe = water.transform(aa_universe)
 
     positions: np.ndarray = np.asarray([
@@ -132,9 +150,26 @@ def test_tip3p_positions():
     )
 
 
+def test_tip3p_bonds():
+    aa_universe: mda.Universe = mda.Universe(TIP4P)
+    water: solvent.Water = solvent.Tip3p()
+    cg_universe: mda.Universe = water.transform(aa_universe)
+
+    testing.assert_equal(len(cg_universe.bonds),
+                         water.universe.residues.n_residues * 3,
+                         err_msg="Expected and actual number of bonds not equal")
+    testing.assert_equal(len(cg_universe.angles),
+                         water.universe.residues.n_residues * 3,
+                         err_msg="Expected and actual number of angles not equal")
+    testing.assert_equal(len(cg_universe.dihedrals), 0,
+                         err_msg="No dihedral angles should exist.")
+    testing.assert_equal(len(cg_universe.impropers), 0,
+                         err_msg="No improper dihedral angles should exist.")
+
+
 def test_dma_creation():
     aa_universe: mda.Universe = mda.Universe(DMA)
-    dma: solvent.Water = solvent.Dma()
+    dma: solvent.Dma = solvent.Dma()
     dma.create_topology(aa_universe)
 
     n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
@@ -146,7 +181,7 @@ def test_dma_creation():
 
 def test_dma_positions():
     aa_universe: mda.Universe = mda.Universe(DMA)
-    dma: solvent.Water = solvent.Dma()
+    dma: solvent.Dma = solvent.Dma()
     cg_universe: mda.Universe = dma.transform(aa_universe)
 
     positions: np.ndarray = np.asarray([
@@ -160,3 +195,22 @@ def test_dma_positions():
         positions, cg_universe.atoms.positions,
         err_msg="The coordinates do not match.",
     )
+
+
+def test_dma_bonds():
+    aa_universe: mda.Universe = mda.Universe(DMA)
+    dma: solvent.Water = solvent.Dma()
+    cg_universe: mda.Universe = dma.transform(aa_universe)
+
+    testing.assert_equal(len(cg_universe.bonds),
+                         dma.universe.residues.n_residues * 3,
+                         err_msg="Expected and actual number of bonds not equal")
+    testing.assert_equal(len(cg_universe.angles),
+                         dma.universe.residues.n_residues * 3,
+                         err_msg="Expected and actual number of angles not equal")
+    testing.assert_equal(len(cg_universe.dihedrals), 0,
+                         err_msg="No dihedral angles should exist.")
+    testing.assert_equal(len(cg_universe.impropers),
+                         dma.universe.residues.n_residues * 3,
+                         err_msg=("Expected and actual number of improper "
+                                  "dihedral angles not equal."))

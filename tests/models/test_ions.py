@@ -77,3 +77,10 @@ def test_ions_positions():
     )
 
 
+def test_ion_bonds():
+    aa_universe: mda.Universe = mda.Universe(IONS)
+    solvent: ions.SolventIons = ions.SolventIons()
+    cg_universe: mda.Universe = solvent.transform(aa_universe)
+
+    testing.assert_equal(len(cg_universe.bonds), 0,
+                         err_msg="No bonds should exist.")
