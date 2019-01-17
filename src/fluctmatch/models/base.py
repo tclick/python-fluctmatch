@@ -147,34 +147,34 @@ class ModelBase(abc.ABC):
         # Allocate arrays
         beads: List[mda.AtomGroup] = []
         atomnames: List[str] = []
-        atomids: List[int] = []
-        resids: List[int] = []
-        resnames: List[str] = []
-        segids: List[str] = []
+        selections: Generator = itertools.product(universe.residues,
+                                                  self._mapping.items())
 
-        residues: List[mda.AtomGroup] = universe.atoms.split("residue")
-        select_residues: enumerate = enumerate(
-            itertools.product(residues, self._mapping.items()))
-        for i, (res, (name, selection)) in select_residues:
-            bead: mda.AtomGroup = res.select_atoms(selection)
+        for residue, (name, selection) in selections:
+            if isinstance(selection, dict):
+                value: mda.AtomGroup = selection.get(
+                    residue.resname, "hsidechain and not name H*")
+                bead: mda.AtomGroup = residue.atoms.select_atoms(value)
+            else:
+                bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
             if bead:
                 beads.append(bead)
                 atomnames.append(name)
-                atomids.append(i)
-                resids.append(bead.resids[0])
-                resnames.append(bead.resnames[0])
-                segids.append(bead.segids[0].split("_")[-1])
+
+        atomids: np.ndarray = np.arange(len(beads), dtype=int)
 
         # Atom
-        vdwradii: Radii = Radii(np.zeros_like(atomids))
-        atomids: Atomids = Atomids(np.asarray(atomids))
-        atomnames: Atomnames = Atomnames(
-            np.asarray(atomnames, dtype=np.object))
+        vdwradii: Radii = Radii(np.zeros_like(atomids, dtype=np.float32))
+        atomids: Atomids = Atomids(atomids)
+        atomnames: Atomnames = Atomnames(atomnames)
 
         # Residue
-        segids: np.ndarray = np.asarray(segids, dtype=np.object)
-        resids: np.ndarray = np.asarray(resids, dtype=np.int32)
-        resnames: np.ndarray = np.asarray(resnames, dtype=np.object)
+        resids: np.ndarray = np.asarray([bead.resids[0] for bead in beads],
+                                        dtype=int)
+        resnames: np.ndarray = np.asarray([bead.resnames[0] for bead in beads],
+                                          dtype=object)
+        segids: np.ndarray = np.asarray([bead.segids[0].split("_")[-1]
+                                         for bead in beads], dtype=object)
         residx, (new_resids, new_resnames,
                  perres_segids) = topbase.change_squash(
                      (resids, resnames, segids), (resids, resnames, segids))
@@ -239,20 +239,17 @@ class ModelBase(abc.ABC):
         univ_traj.rewind()
         universe.trajectory.rewind()
 
-        residue_selection = itertools.product(universe.residues,
-                                              self._mapping.items())
+        selections: Generator = itertools.product(universe.residues,
+                                                  self._mapping.values())
         beads: List[mda.AtomGroup] = []
-        for res, (key, selection) in residue_selection:
-            if key != "CB":
-                beads.append(res.atoms.select_atoms(selection))
-            elif key == "CB":
-                if isinstance(selection, dict):
-                    value = selection.get(res.resname,
-                                          "hsidechain and not name H*")
-                    beads.append(res.atoms.select_atoms(value))
-                else:
-                    beads.append(res.atoms.select_atoms(selection))
-            beads = [_ for _ in beads if _]
+        for residue, selection in selections:
+            if isinstance(selection, dict):
+                value: mda.AtomGroup = selection.get(
+                    residue.resname, "hsidechain and not name H*")
+                bead: mda.AtomGroup = residue.atoms.select_atoms(value)
+            else:
+                bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
+            beads.append(bead)
 
         coordinate_array: List[np.ndarray] = []
         velocity_array: List[np.ndarray] = []
@@ -265,15 +262,17 @@ class ModelBase(abc.ABC):
             if self.universe.trajectory.ts.has_positions and ts.has_positions:
                 coordinates = [
                     bead.center_of_mass()
-                    if self._com else bead.center_of_geometry()
+                    if self._com
+                    else bead.center_of_geometry()
                     for bead in beads
+                    if bead
                 ]
                 coordinate_array.append(np.asarray(coordinates))
 
             # Velocities
             if self.universe.trajectory.ts.has_velocities and ts.has_velocities:
                 try:
-                    velocities = [bead.velocities for bead in beads]
+                    velocities = [bead.velocities for bead in beads if bead]
                     velocity_array.append(np.asarray(velocities))
                 except ValueError:
                     pass
@@ -281,7 +280,7 @@ class ModelBase(abc.ABC):
             # Forces
             if self.universe.trajectory.ts.has_forces and ts.has_forces:
                 try:
-                    forces = [bead.velocities for bead in beads]
+                    forces = [bead.velocities for bead in beads if bead]
                     force_array.append(np.asarray(forces))
                 except ValueError:
                     pass
