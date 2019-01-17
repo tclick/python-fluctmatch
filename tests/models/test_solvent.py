@@ -79,6 +79,32 @@ def test_water_from_tip3p_bonds():
                          err_msg="No bonds should exist.")
 
 
+def test_water_mass():
+    aa_universe: mda.Universe = mda.Universe(TIP3P)
+    water: solvent.Water = solvent.Water()
+    cg_universe: mda.Universe = water.transform(aa_universe)
+
+    masses: np.ndarray = np.fromiter([
+        _.atoms.select_atoms(selection).total_mass()
+        for _ in aa_universe.select_atoms("water").residues
+        for selection in water._selection.values()
+        if _.atoms.select_atoms(selection)
+    ], dtype=np.float32)
+
+    testing.assert_allclose(cg_universe.atoms.masses, masses,
+                            err_msg="The masses do not match.")
+
+
+def test_water_charges():
+    aa_universe: mda.Universe = mda.Universe(TIP3P)
+    water: solvent.Water = solvent.Water()
+    cg_universe: mda.Universe = water.transform(aa_universe)
+
+    testing.assert_allclose(cg_universe.atoms.charges,
+                            np.zeros(cg_universe.atoms.n_atoms),
+                            err_msg="The masses do not match.")
+
+
 def test_water_from_tip4p_creation():
     aa_universe: mda.Universe = mda.Universe(TIP4P)
     water: solvent.Water = solvent.Water()

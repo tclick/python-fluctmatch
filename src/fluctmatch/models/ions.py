@@ -57,8 +57,9 @@ class SolventIons(ModelBase):
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
         self._guess: bool = False
+        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
+        self._selection.update(self._mapping)
 
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
@@ -73,7 +74,7 @@ class SolventIons(ModelBase):
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self.universe._topology.add_TopologyAttr(Bonds([]))
+        self.universe.add_TopologyAttr(Bonds([]))
         self.universe._generate_from_topology()
 
 
@@ -90,8 +91,9 @@ class BioIons(ModelBase):
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["ions"]: str = "bioion"
         self._guess: bool = False
+        self._mapping["ions"]: str = "bioion"
+        self._selection.update(self._mapping)
 
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
@@ -106,8 +108,7 @@ class BioIons(ModelBase):
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self.universe._topology.add_TopologyAttr(Bonds([]))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds([]))
 
 
 class NobleAtoms(ModelBase):
@@ -123,8 +124,9 @@ class NobleAtoms(ModelBase):
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["noble"]: str = "name HE NE KR XE"
         self._guess: bool = False
+        self._mapping["noble"]: str = "name HE NE KR XE"
+        self._selection.update(self._mapping)
 
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
@@ -139,5 +141,4 @@ class NobleAtoms(ModelBase):
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
-        self.universe._topology.add_TopologyAttr(Bonds([]))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds([]))

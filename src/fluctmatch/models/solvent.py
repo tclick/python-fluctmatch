@@ -56,8 +56,9 @@ class Water(ModelBase):
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["OW"]: str = "water"
         self._guess: bool = False
+        self._mapping["OW"]: str = "water"
+        self._selection.update(self._mapping)
 
     def _add_atomtypes(self):
         n_atoms: int = self.universe.atoms.n_atoms
@@ -65,8 +66,7 @@ class Water(ModelBase):
         self.universe.add_TopologyAttr(atomtypes)
 
     def _add_bonds(self):
-        self.universe._topology.add_TopologyAttr(Bonds([]))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds([]))
 
 
 class Tip3p(ModelBase):
@@ -84,7 +84,12 @@ class Tip3p(ModelBase):
         self._mapping["OW"]: str = "name OW MW"
         self._mapping["HW1"]: str = "name HW1"
         self._mapping["HW2"]: str = "name HW2"
-        self._types: Mapping[str, int] = dict(OW=1, HW1=2, HW2=3)
+        self._selection.update(self._mapping)
+        self._types: Mapping[str, int] = {
+            key : value + 1
+            for key, value in zip(self._mapping.keys(),
+                                  range(len(self._mapping)))
+        }
 
     def _add_atomtypes(self):
         atomtypes: List[int] = [
@@ -112,8 +117,7 @@ class Tip3p(ModelBase):
             for _ in zip(s.atoms.select_atoms("name HW1").ix,
                          s.atoms.select_atoms("name HW2").ix)
         ])
-        self.universe._topology.add_TopologyAttr(Bonds(bonds))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Dma(ModelBase):
@@ -132,6 +136,7 @@ class Dma(ModelBase):
         self._mapping["N"]: str = "resname DMA and name C N O"
         self._mapping["C2"]: str = "resname DMA and name C2 H2*"
         self._mapping["C3"]: str = "resname DMA and name C3 H3*"
+        self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
             key : value + 4
             for key, value in zip(self._mapping.keys(),
@@ -164,5 +169,4 @@ class Dma(ModelBase):
             for _ in zip(s.atoms.select_atoms("name C3").ix,
                          s.atoms.select_atoms("name N").ix)
         ])
-        self.universe._topology.add_TopologyAttr(Bonds(bonds))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds(bonds))
