@@ -67,6 +67,7 @@ def test_ions_positions():
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("name LI LIT K NA F CL BR I").residues
         for selection in solvent._mapping.values()
+        if _.atoms.select_atoms(selection)
     ]
 
     testing.assert_allclose(

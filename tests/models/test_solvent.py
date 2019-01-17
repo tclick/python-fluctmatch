@@ -60,6 +60,7 @@ def test_water_from_tip3p_positions():
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
+        if _.atoms.select_atoms(selection)
     ])
 
     testing.assert_allclose(
@@ -90,6 +91,7 @@ def test_water_from_tip4p_positions():
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
+        if _.atoms.select_atoms(selection)
     ])
 
     testing.assert_allclose(
@@ -120,6 +122,7 @@ def test_tip3p_positions():
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("water").residues
         for selection in water._mapping.values()
+        if _.atoms.select_atoms(selection)
     ])
 
     testing.assert_allclose(
@@ -150,6 +153,7 @@ def test_dma_positions():
         _.atoms.select_atoms(selection).center_of_mass()
         for _ in aa_universe.select_atoms("resname DMA").residues
         for selection in dma._mapping.values()
+        if _.atoms.select_atoms(selection)
     ])
 
     testing.assert_allclose(
