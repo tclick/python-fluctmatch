@@ -63,13 +63,12 @@ class Calpha(ModelBase):
     def _add_bonds(self):
         bonds: List[Iterable[int, int]] = []
         bonds.extend([
-            _
-            for s in self.universe.segments for _ in zip(
-                s.atoms.select_atoms("calpha").ix,
-                s.atoms.select_atoms("calpha").ix[1:])
+            idx
+            for segment in self.universe.segments for idx in zip(
+                segment.atoms.select_atoms("calpha").ix,
+                segment.atoms.select_atoms("calpha").ix[1:])
         ])
-        self.universe._topology.add_TopologyAttr(Bonds(bonds))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Caside(ModelBase):
@@ -96,20 +95,18 @@ class Caside(ModelBase):
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("calpha").ix,
-                         s.atoms.select_atoms("calpha").ix[1:])
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("calpha").ix,
+                           segment.atoms.select_atoms("calpha").ix[1:])
         ])
         bonds.extend([(
-            r.atoms.select_atoms("calpha").ix[0],
-            r.atoms.select_atoms("cbeta").ix[0])
-            for r in self.universe.residues
-            if (r.resname != "GLY"
-                and r.resname in selection.ProteinSelection.prot_res)
+            residue.atoms.select_atoms("calpha").ix[0],
+            residue.atoms.select_atoms("cbeta").ix[0])
+            for residue in self.universe.select_atoms("protein").residues
+            if residue.resname != "GLY"
         ])
-        self.universe._topology.add_TopologyAttr(Bonds(bonds))
-        self.universe._generate_from_topology()
+        self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Ncsc(ModelBase):
@@ -138,29 +135,28 @@ class Ncsc(ModelBase):
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name N").ix,
-                         s.atoms.select_atoms("name O").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name N").ix,
+                           segment.atoms.select_atoms("name O").ix)
         ])
         bonds.extend([(
-            r.atoms.select_atoms("name N").ix[0],
-            r.atoms.select_atoms("cbeta").ix[0])
-            for r in self.universe.residues
-            if (r.resname != "GLY"
-                and r.resname in selection.ProteinSelection.prot_res)
+            residue.atoms.select_atoms("name N").ix[0],
+            residue.atoms.select_atoms("cbeta").ix[0])
+            for residue in self.universe.select_atoms("protein").residues
+            if residue.resname != "GLY"
         ])
         bonds.extend([(
-            r.atoms.select_atoms("cbeta").ix[0],
-            r.atoms.select_atoms("name O").ix[0])
-            for r in self.universe.residues
-            if (r.resname != "GLY"
-                and r.resname in selection.ProteinSelection.prot_res)])
+            residue.atoms.select_atoms("cbeta").ix[0],
+            residue.atoms.select_atoms("name O").ix[0])
+            for residue in self.universe.select_atoms("protein").residues
+            if residue.resname != "GLY"
+        ])
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name O").ix,
-                         s.atoms.select_atoms("name N").ix[1:])
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name O").ix,
+                           segment.atoms.select_atoms("name N").ix[1:])
         ])
         self.universe.add_TopologyAttr(Bonds(bonds))
 

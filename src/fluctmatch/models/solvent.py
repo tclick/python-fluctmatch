@@ -152,21 +152,21 @@ class Dma(ModelBase):
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name C1").ix,
-                         s.atoms.select_atoms("name N").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C1").ix,
+                           segment.atoms.select_atoms("name N").ix)
         ])
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name C2").ix,
-                         s.atoms.select_atoms("name N").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C2").ix,
+                           segment.atoms.select_atoms("name N").ix)
         ])
         bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name C3").ix,
-                         s.atoms.select_atoms("name N").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C3").ix,
+                           segment.atoms.select_atoms("name N").ix)
         ])
         self.universe.add_TopologyAttr(Bonds(bonds))
