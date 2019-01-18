@@ -34,6 +34,7 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Tests for solvent ion model."""
 
 from typing import List, Mapping, Tuple
 
@@ -81,12 +82,13 @@ class Tip3p(ModelBase):
                  guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
+
         self._mapping["OW"]: str = "name OW MW"
         self._mapping["HW1"]: str = "name HW1"
         self._mapping["HW2"]: str = "name HW2"
         self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
-            key : value + 1
+            key: value + 1
             for key, value in zip(self._mapping.keys(),
                                   range(len(self._mapping)))
         }
@@ -132,13 +134,14 @@ class Dma(ModelBase):
                  guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
+
         self._mapping["C1"]: str = "resname DMA and name C1 H1*"
         self._mapping["N"]: str = "resname DMA and name C N O"
         self._mapping["C2"]: str = "resname DMA and name C2 H2*"
         self._mapping["C3"]: str = "resname DMA and name C3 H3*"
         self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
-            key : value + 4
+            key: value + 4
             for key, value in zip(self._mapping.keys(),
                                   range(len(self._mapping)))
         }

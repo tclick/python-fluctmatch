@@ -36,6 +36,7 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Tests for various ion combinations."""
 
 from typing import List
 
@@ -51,11 +52,11 @@ def test_ions_creation():
     solvent: ions.SolventIons = ions.SolventIons()
     solvent.create_topology(aa_universe)
 
-    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
-                       for selection in solvent._mapping.values())
+    n_atoms: int = sum(aa_universe.select_atoms(sel).residues.n_residues
+                       for sel in solvent._mapping.values())
 
     testing.assert_equal(solvent.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
+                         err_msg="Number of sites don't match.")
 
 
 def test_ions_positions():
@@ -64,10 +65,10 @@ def test_ions_positions():
     cg_universe: mda.Universe = solvent.transform(aa_universe)
 
     positions: List[np.ndarray] = [
-        _.atoms.select_atoms(selection).center_of_mass()
+        _.atoms.select_atoms(sel).center_of_mass()
         for _ in aa_universe.select_atoms("name LI LIT K NA F CL BR I").residues
-        for selection in solvent._mapping.values()
-        if _.atoms.select_atoms(selection)
+        for sel in solvent._mapping.values()
+        if _.atoms.select_atoms(sel)
     ]
 
     testing.assert_allclose(

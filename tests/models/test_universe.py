@@ -13,6 +13,7 @@
 # Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
+"""Tests for the model base module."""
 
 from typing import Tuple
 
@@ -34,7 +35,7 @@ def test_merge_creation():
 
     n_atoms: int = universe.atoms.n_atoms * 2
     testing.assert_equal(new_universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
+                         err_msg="Number of sites don't match.")
 
 
 def test_merge_positions():
@@ -43,18 +44,20 @@ def test_merge_positions():
     univ_tuple: Tuple[mda.Universe, mda.Universe] = (universe, universe)
     new_universe = Merge(*univ_tuple)
 
-    positions = np.concatenate([u.atoms.positions for u in univ_tuple], axis=0)
+    positions = np.concatenate([u.atoms.positions for u in univ_tuple])
     testing.assert_allclose(new_universe.atoms.positions, positions,
-        err_msg="Coordinates don't match.")
+                            err_msg="Coordinates don't match.")
     testing.assert_allclose(new_universe.atoms.positions[0],
                             new_universe.atoms.positions[n_atoms],
-                            err_msg=f"Coordinates 0 and {n_atoms:d} don't match.")
+                            err_msg=(f"Coordinates 0 and {n_atoms:d} "
+                                     f"don't match."))
 
 
 def test_merge_topology():
     universe: mda.Universe = mda.Universe(TPR, XTC)
     new_universe = Merge(universe)
 
+    testing.assert_equal(universe.atoms.n_atoms, new_universe.atoms.n_atoms)
     assert new_universe.bonds == universe.bonds
     assert new_universe.angles == universe.angles
     assert new_universe.dihedrals == universe.dihedrals
@@ -62,7 +65,6 @@ def test_merge_topology():
 
 def test_rename_universe():
     universe: mda.Universe = mda.Universe(TPR, XTC)
-    n_atoms: int = universe.atoms.n_atoms
     rename_universe(universe)
     testing.assert_string_equal(universe.atoms[0].name, "A001")
     testing.assert_string_equal(universe.atoms[-1].name, "F001")

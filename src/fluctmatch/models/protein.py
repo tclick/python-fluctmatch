@@ -34,6 +34,7 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Classes for various protein models."""
 
 from typing import List, Tuple, Mapping
 
@@ -44,7 +45,7 @@ from .selection import *
 
 
 class Calpha(ModelBase):
-    """Create a universe defined by the protein C-alpha."""
+    """Universe defined by the protein C-alpha."""
     model: str = "CALPHA"
     describe: str = "C-alpha of a protein"
 
@@ -61,7 +62,7 @@ class Calpha(ModelBase):
         self._selection: Mapping[str, str] = dict(CA="protein", ions="bioion")
 
     def _add_bonds(self):
-        bonds: List[Iterable[int, int]] = []
+        bonds: List[Tuple[int, int]] = []
         bonds.extend([
             idx
             for segment in self.universe.segments for idx in zip(
@@ -72,8 +73,7 @@ class Calpha(ModelBase):
 
 
 class Caside(ModelBase):
-    """Create a universe consisting of the C-alpha and sidechains of a protein.
-    """
+    """Universe consisting of the C-alpha and sidechains of a protein."""
     model: str = "CASIDE"
     describe: str = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
@@ -110,8 +110,7 @@ class Caside(ModelBase):
 
 
 class Ncsc(ModelBase):
-    """Create a universe consisting of the amine, carboxyl, and sidechain regions.
-    """
+    """Universe consisting of the amine, carboxyl, and sidechain regions."""
     model: str = "NCSC"
     describe: str = "c.o.m./c.o.g. of N, O, and sidechain of protein"
 
@@ -162,8 +161,7 @@ class Ncsc(ModelBase):
 
 
 class Polar(Ncsc):
-    """Create a universe consisting of the amine, carboxyl, and polar regions.
-    """
+    """Universe consisting of the amine, carboxyl, and polar regions."""
     model: str = "POLAR"
     describe: str = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
 

@@ -36,13 +36,14 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Base class for all models."""
 
 import abc
 import itertools
 import logging
 import string
 from collections import OrderedDict
-from typing import Generator, List, MutableMapping
+from typing import Generator, Iterable, List, MutableMapping, TypeVar
 
 import numpy as np
 import MDAnalysis as mda
@@ -59,6 +60,7 @@ from .. import _MODELS, _DESCRIBE
 from ..libs.typing import StrMapping
 
 logger: logging.Logger = logging.getLogger(__name__)
+MDUniverse = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
 
 
 class ModelBase(abc.ABC):
@@ -80,8 +82,8 @@ class ModelBase(abc.ABC):
         a factor of 100, and the alphanumerical form will be similar the
         standard CHARMM atom name.
     com : bool, optional
-        Calculates the bead coordinates using either the center of mass (default)
-        or center of geometry.
+        Calculates the bead coordinates using either the center of mass
+        (default) or center of geometry.
     guess_angles : bool, optional
         Once Universe has been created, attempt to guess the connectivity
         between atoms.  This will populate the .angles, .dihedrals, and
@@ -375,18 +377,17 @@ class ModelBase(abc.ABC):
         try:
             impropers: TopologyGroup = guessers.guess_improper_dihedrals(
                 self.universe.angles)
-            self.universe._topology.add_TopologyAttr(Impropers(impropers))
-            self.universe._generate_from_topology()
+            self.universe.add_TopologyAttr(Impropers(impropers))
         except AttributeError:
             pass
 
 
-def Merge(*args: List[mda.Universe]) -> mda.Universe:
+def Merge(*args: MDUniverse) -> mda.Universe:
     """Combine multiple coarse-grain systems into one.
 
     Parameters
     ----------
-    args : iterable of either :class:`~MDAnalysis.Universe` or :class:`~MDAnalysis.AtomGroup`
+    args : iterable of :class:`~MDAnalysis.Universe`
 
     Returns
     -------
@@ -397,7 +398,6 @@ def Merge(*args: List[mda.Universe]) -> mda.Universe:
                    "trajectory frames.")
 
     # Merge universes
-    u: mda.Universe
     universe: mda.Universe = mda.Merge(*[u.atoms for u in args])
 
     # Merge coordinates
@@ -405,7 +405,9 @@ def Merge(*args: List[mda.Universe]) -> mda.Universe:
         u.trajectory.rewind()
 
     universe1: mda.Universe = args[0]
-    universe.trajectory.ts.has_velocities: bool = universe1.trajectory.ts.has_velocities
+    universe.trajectory.ts.has_velocities: bool = (
+        universe1.trajectory.ts.has_velocities
+    )
     universe.trajectory.ts.has_forces: bool = universe1.trajectory.ts.has_forces
     frames: np.ndarray = np.fromiter(
         [u.trajectory.n_frames == universe1.trajectory.n_frames for u in args],
@@ -483,8 +485,7 @@ def rename_universe(universe: mda.Universe):
         for i, _ in enumerate(segment.residues, 1)
     ])
 
-    universe._topology.add_TopologyAttr(Atomnames(atomnames))
-    universe._topology.add_TopologyAttr(Resnames(resnames))
+    universe.add_TopologyAttr(Atomnames(atomnames))
+    universe.add_TopologyAttr(Resnames(resnames))
     if not np.issubdtype(universe.atoms.types.dtype, np.int64):
-        universe._topology.add_TopologyAttr(Atomtypes(atomnames))
-    universe._generate_from_topology()
+        universe.add_TopologyAttr(Atomtypes(atomnames))

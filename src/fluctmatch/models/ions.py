@@ -34,7 +34,7 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
-
+"""Classes defining various ion types."""
 
 from typing import List, MutableMapping
 
@@ -45,7 +45,7 @@ from .selection import *
 
 
 class SolventIons(ModelBase):
-    """Include ions within the solvent."""
+    """Select ions within the solvent."""
     model: str = "SOLVENTIONS"
     describe: str = "Common ions within solvent (Li K Na F Cl Br I)"
 
@@ -75,7 +75,6 @@ class SolventIons(ModelBase):
 
     def _add_bonds(self):
         self.universe.add_TopologyAttr(Bonds([]))
-        self.universe._generate_from_topology()
 
 
 class BioIons(ModelBase):

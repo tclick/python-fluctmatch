@@ -34,6 +34,7 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Tests for various protein models."""
 
 from typing import List
 
@@ -44,6 +45,7 @@ from fluctmatch.models import protein
 from fluctmatch.models.selection import *
 from ..datafiles import TPR, XTC
 
+
 def test_calpha_creation():
     aa_universe: mda.Universe = mda.Universe(TPR, XTC)
     system: protein.Calpha = protein.Calpha()
@@ -51,7 +53,7 @@ def test_calpha_creation():
 
     n_atoms = aa_universe.select_atoms("calpha or bioion").n_atoms
     testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
+                         err_msg="Number of sites don't match.")
 
 
 def test_calpha_positions():
@@ -60,10 +62,10 @@ def test_calpha_positions():
     cg_universe: mda.Universe = system.transform(aa_universe)
 
     positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("protein or bioion").residues
-        for selection in system._mapping.values()
-        if _.atoms.select_atoms(selection)
+        residue.atoms.select_atoms(sel).center_of_mass()
+        for residue in aa_universe.select_atoms("protein or bioion").residues
+        for sel in system._mapping.values()
+        if residue.atoms.select_atoms(sel)
     ])
 
     testing.assert_allclose(
@@ -99,10 +101,10 @@ def test_caside_positions():
     cg_universe: mda.Universe = system.transform(aa_universe)
 
     positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("protein or bioion").residues
-        for selection in system._mapping.values()
-        if _.atoms.select_atoms(selection)
+        residue.atoms.select_atoms(sel).center_of_mass()
+        for residue in aa_universe.select_atoms("protein or bioion").residues
+        for sel in system._mapping.values()
+        if residue.atoms.select_atoms(sel)
     ])
 
     testing.assert_allclose(
@@ -138,10 +140,10 @@ def test_ncsc_positions():
     cg_universe: mda.Universe = system.transform(aa_universe)
 
     positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("protein or bioion").residues
-        for selection in system._mapping.values()
-        if _.atoms.select_atoms(selection)
+        residue.atoms.select_atoms(sel).center_of_mass()
+        for residue in aa_universe.select_atoms("protein or bioion").residues
+        for sel in system._mapping.values()
+        if residue.atoms.select_atoms(sel)
     ])
 
     testing.assert_allclose(
@@ -178,13 +180,13 @@ def test_polar_positions():
     beads: List[mda.AtomGroup] = []
 
     for residue in aa_universe.select_atoms("protein or bioion").residues:
-        for selection in system._mapping.values():
-            if isinstance(selection, dict):
-                value: mda.AtomGroup = selection.get(
+        for sel in system._mapping.values():
+            if isinstance(sel, dict):
+                value: mda.AtomGroup = sel.get(
                     residue.resname, "hsidechain and not name H*")
                 bead: mda.AtomGroup = residue.atoms.select_atoms(value)
             else:
-                bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
+                bead: mda.AtomGroup = residue.atoms.select_atoms(sel)
             if bead:
                 beads.append(bead)
 
