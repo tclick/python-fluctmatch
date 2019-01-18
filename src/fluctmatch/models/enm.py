@@ -117,7 +117,8 @@ class Enm(ModelBase):
         try:
             self.universe = universe.copy()
         except TypeError:
-            self.universe = universe
+            self.universe = mda.Universe(universe.filename,
+                                         universe.trajectory.filename)
 
         rename_universe(self.universe)
 
