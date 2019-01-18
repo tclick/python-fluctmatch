@@ -94,8 +94,9 @@ class ModelBase(abc.ABC):
 
     Attributes
     ----------
+    universe : :class:`~MDAnalysis.Universe`
+        The transformed universe
     """
-
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         _MODELS[cls.model.upper()]: object = cls
