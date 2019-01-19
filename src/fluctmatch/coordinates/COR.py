@@ -34,9 +34,11 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""CHARMM coordinate file reader and writer for viewing in VMD."""
 
 import itertools
 import logging
+import warnings
 from typing import Mapping, Optional, Any, List, Generator
 
 import numpy as np
@@ -56,7 +58,23 @@ class CORReader(CRD.CRDReader):
        Frames now 0-based instead of 1-based.
     """
     format: str = "COR"
-    units: Mapping[str, Optional[str]]  = {"time": None, "length": "Angstrom"}
+    units: Mapping[str, Optional[str]] = {"time": None, "length": "Angstrom"}
+
+    def __init__(self, filename, convert_units=None, n_atoms=None, **kwargs):
+        super().__init__(filename, convert_units, n_atoms, **kwargs)
+
+    @staticmethod
+    def parse_n_atoms(filename, **kwargs):
+        with open(filename, "r") as crdfile:
+            for linenum, line in enumerate(crdfile):
+                if line.strip().startswith('*') or line.strip() == "":
+                    continue  # ignore TITLE and empty lines
+                fields = line.split()
+                if len(fields) <= 2:
+                    # should be the natoms line
+                    n_atoms: int = int(fields[0])
+                    break
+        return n_atoms
 
 
 class CORWriter(CRD.CRDWriter):
@@ -84,15 +102,15 @@ class CORWriter(CRD.CRDWriter):
         # fortran_format = "(2I10,2X,A8,2X,A8,3F20.10,2X,A8,2X,A8,F20.10)"
         ATOM_EXT=("{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
                   "{pos[0]:20.10f}{pos[1]:20.10f}{pos[2]:20.10f}  "
-                  "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}\n"),
-        NUMATOMS_EXT="{0:10d} EXT\n",
+                  "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}"),
+        NUMATOMS_EXT="{0:10d}  EXT",
         # crdtype = "standard"
         # fortran_format = "(2I5,1X,A4,1X,A4,3F10.5,1X,A4,1X,A4,F10.5)"
         ATOM=("{serial:5d}{totRes:5d} {resname:<4.4s} {name:<4.4s}"
               "{pos[0]:10.5f}{pos[1]:10.5f}{pos[2]:10.5f} "
-              "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}\n"),
+              "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}"),
         TITLE="* FRAME {frame} FROM {where}",
-        NUMATOMS="{0:5d}\n",
+        NUMATOMS="{0:5d}",
     )
 
     def __init__(self, filename: str, **kwargs):
@@ -103,6 +121,7 @@ class CORWriter(CRD.CRDWriter):
              name of the output file or a stream
         """
         super().__init__(filename, **kwargs)
+
         self.filename: str = util.filename(filename, ext="cor")
         self.crd: Optional[str] = None
 
@@ -121,12 +140,12 @@ class CORWriter(CRD.CRDWriter):
             try:
                 frame = u.trajectory.ts.frame
             except AttributeError:
-                frame = 0  # should catch cases when we are analyzing a single PDB (?)
+                frame = 0
 
-        atoms: mda.AtomGroup = selection.atoms  # make sure to use atoms (Issue 46)
-        coor: np.ndarray = atoms.positions  # can write from selection == Universe (Issue 49)
+        atoms: mda.AtomGroup = selection.atoms
+        coor: np.ndarray = atoms.positions
 
-        n_atoms: int = len(atoms)
+        n_atoms: int = atoms.n_atoms
         # Detect which format string we"re using to output (EXT or not)
         # *len refers to how to truncate various things,
         # depending on output format!
@@ -139,11 +158,11 @@ class CORWriter(CRD.CRDWriter):
         attrs: Mapping[str, Any] = {}
         missing_topology: List[Any] = []
         for attr, default in (
-            ("resnames", itertools.cycle(("UNK", ))),
+            ("resnames", itertools.cycle(("UNK",))),
                 # Resids *must* be an array because we index it later
             ("resids", np.ones(n_atoms, dtype=np.int)),
             ("names", itertools.cycle(("X", ))),
-            ("tempfactors", itertools.cycle((0.0, ))),
+            ("tempfactors", itertools.cycle((0.0,))),
         ):
             try:
                 attrs[attr]: Any = getattr(atoms, attr)
@@ -161,24 +180,26 @@ class CORWriter(CRD.CRDWriter):
                 attrs["chainIDs"]: Generator = itertools.cycle(("", ))
                 missing_topology.append(attr)
         if missing_topology:
-            logger.warn(
-                "Supplied AtomGroup was missing the following attributes: "
-                "{miss}. These will be written with default values. "
-                "".format(miss=", ".join(missing_topology)))
+            miss: str = ", ".join(missing_topology)
+            warnings.warn("Supplied AtomGroup was missing the following "
+                          "attributes: {miss}. These will be written with "
+                          "default values.".format(miss=miss))
+            logger.warning("Supplied AtomGroup was missing the following "
+                           "attributes: {miss}. These will be written with "
+                           "default values.".format(miss=miss))
 
         with open(self.filename, "w") as crd:
             # Write Title
             logger.info(f"Writing {self.filename}")
-            crd.write(self.fmt["TITLE"].format(
-                frame=frame, where=u.trajectory.filename))
-            crd.write("\n")
-            crd.write("*\n")
+            print(self.fmt["TITLE"].format(frame=frame,
+                                           where=u.trajectory.filename),
+                  file=crd)
+            print("*", file=crd)
 
             # Write NUMATOMS
-            crd.write(self.fmt["NUMATOMS_EXT"].format(n_atoms))
+            print(self.fmt["NUMATOMS_EXT"].format(n_atoms), file=crd)
 
             # Write all atoms
-
             current_resid: int = 1
             resids: List[int] = attrs["resids"]
             for i, pos, resname, name, chainID, resid, tempfactor in zip(
@@ -192,13 +213,8 @@ class CORWriter(CRD.CRDWriter):
                 resid: int = int(str(resid)[-resid_len:])
                 current_resid: int = int(str(current_resid)[-totres_len:])
 
-                crd.write(at_fmt.format(
-                    serial=serial,
-                    totRes=current_resid,
-                    resname=resname,
-                    name=name,
-                    pos=pos,
-                    chainID=chainID,
-                    resSeq=resid,
-                    tempfactor=tempfactor))
+                print(at_fmt.format(serial=serial, totRes=current_resid,
+                                    resname=resname, name=name, pos=pos,
+                                    chainID=chainID, resSeq=resid,
+                                    tempfactor=tempfactor), file=crd)
             logger.info("Coordinate file successfully written.")

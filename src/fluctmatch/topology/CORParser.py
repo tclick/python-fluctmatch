@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-#  python-fluctmatch -
-#  Copyright (c) 2019 Timothy H. Click, Ph.D.
-#
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -34,18 +31,12 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Topology parser for CHARMM extended coordinate files."""
 
-import logging
+from MDAnalysis.topology import CRDParser
 
-__version__: str = "3.4.1"
 
-_MODELS: dict = {}
-_DESCRIBE: dict = {}
+class CORParser(CRDParser.CRDParser):
+    """Topology parser for CHARMM extended coordinate files."""
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-from .coordinates import COR
-from .intcor import IC
-from .parameter import PRM
-from .topology import CORParser, PSFParser, RTF, STR
+    format = "COR"

@@ -31,6 +31,7 @@ __all__ = [
     "TIP4P",
     "IONS",
     "DMA",
+    "CRD",
     "TPR",
     "XTC",  # Gromacs
     "NCSC",
@@ -48,3 +49,4 @@ TIP4P = resource_filename(__name__, path.join("data", "tip4p.gro"))
 IONS = resource_filename(__name__, path.join("data", "ions.pdb"))
 DMA = resource_filename(__name__, path.join("data", "dma.gro"))
 NCSC = resource_filename(__name__, path.join("data", "ncsc.pdb"))
+CRD = resource_filename(__name__, path.join("data", "pdz3.cor"))
