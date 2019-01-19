@@ -34,6 +34,8 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+#
+#  Borrowed the test code from MDAnalysisTests.
 
 from collections import OrderedDict
 
