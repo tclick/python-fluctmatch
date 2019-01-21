@@ -38,26 +38,43 @@
 #  Borrowed the test code from MDAnalysisTests.
 
 from collections import OrderedDict
+from typing import List
 
 import pytest
 from numpy.testing import assert_equal
 
 import MDAnalysis as mda
 
-from ..datafiles import CRD
+from ..datafiles import CGCRD
 from MDAnalysisTests import make_Universe
+from MDAnalysisTests.topology.base import ParserBase
 
-import fluctmatch
+from fluctmatch.topology.CORParser import CORParser
 
 
 class TestCORWriter(object):
     @pytest.fixture()
     def u(self):
-        return mda.Universe(CRD)
+        return mda.Universe(CGCRD)
 
     @pytest.fixture()
     def outfile(self, tmpdir):
         return str(tmpdir) + '/out.cor'
+
+    def test_roundtrip(self, u, outfile):
+        # Write out a copy of the Universe, and compare this against the original
+        # This is more rigorous than simply checking the coordinates as it checks
+        # all formatting
+        u.atoms.write(outfile)
+
+        def CRD_iter(fn):
+            with open(fn, 'r') as inf:
+                for line in inf:
+                    if not line.startswith('*'):
+                        yield line
+
+        for ref, other in zip(CRD_iter(CGCRD), CRD_iter(outfile)):
+            assert ref == other
 
     def test_write_atoms(self, u, outfile):
         # Test that written file when read gives same coordinates
@@ -104,3 +121,14 @@ class TestCORWriterMissingAttrs(object):
         # Check missing attr is as expected
         assert_equal(getattr(u2.atoms, missing_attr),
                      self.req_attrs[missing_attr])
+
+
+class TestCRDParser(ParserBase):
+    parser: CORParser = CORParser
+    ref_filename: str = CGCRD
+    expected_attrs: List[str] = ['ids', 'names', 'tempfactors', 'resids',
+                                 'resnames', 'resnums', 'segids']
+    guessed_attrs: List[str] = ['masses', 'types']
+    expected_n_atoms: int = 330
+    expected_n_residues: int = 115
+    expected_n_segments: int = 1
