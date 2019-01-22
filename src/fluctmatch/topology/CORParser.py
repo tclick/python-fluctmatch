@@ -33,10 +33,12 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Topology parser for CHARMM extended coordinate files."""
 
+from typing import ClassVar
+
 from MDAnalysis.topology import CRDParser
 
 
 class CORParser(CRDParser.CRDParser):
     """Topology parser for CHARMM extended coordinate files."""
 
-    format = "COR"
+    format: ClassVar[str] = "COR"

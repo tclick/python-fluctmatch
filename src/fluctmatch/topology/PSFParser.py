@@ -39,14 +39,14 @@
 import logging
 import time
 from os import environ
+from pathlib import Path
 from typing import (Callable, ClassVar, List, Mapping,
                     Optional, TextIO, Tuple, Union)
 
 import numpy as np
 import pandas as pd
 import MDAnalysis as mda
-from MDAnalysis.lib import util
-from MDAnalysis.lib.util import FORTRANReader
+from MDAnalysis.lib.util import FORTRANReader, iterable, asiterable
 from MDAnalysis.topology import PSFParser
 from MDAnalysis.topology.base import change_squash
 from MDAnalysis.core.topologyattrs import (
@@ -81,7 +81,7 @@ class PSF36Parser(PSFParser.PSFParser):
     """
     format: ClassVar[str] = "PSF"
 
-    def parse(self, **kwargs) -> Topology:
+    def parse(self, **kwargs: Mapping) -> Topology:
         """Parse PSF file into Topology
 
         Returns
@@ -326,10 +326,10 @@ class PSFWriter(base.TopologyWriterBase):
         EXT_XPLOR="%10d %-8s %-8d %-8s %-8s %-6s %14.6f%14.6f%8d",
         EXT_XPLOR_C35="%10d %-8s %-8d %-8s %-8s %-4s %14.6f%14.6f%8d")
 
-    def __init__(self, filename: str, **kwargs: Mapping):
+    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
         super().__init__()
         
-        self.filename: str = util.filename(filename, ext="psf")
+        self.filename: Path = Path(filename).with_suffix(".psf")
         self._extended: bool = kwargs.get("extended", True)
         self._cmap: bool = kwargs.get("cmap", True)
         self._cheq: bool = kwargs.get("cheq", True)
@@ -342,8 +342,8 @@ class PSFWriter(base.TopologyWriterBase):
         self._title: str = kwargs.get(
             "title", (f"* Created by fluctmatch on {date}",
                       f"* User: {user}",))
-        if not util.iterable(self._title):
-            self._title = util.asiterable(self._title)
+        if not iterable(self._title):
+            self._title = asiterable(self._title)
 
         self.col_width: int = 10 if self._extended else 8
         self.sect_hdr: str = "{:>10d} !{}" if self._extended else "{:>8d} !{}"

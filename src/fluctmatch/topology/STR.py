@@ -39,12 +39,13 @@
 import textwrap
 import time
 from os import environ
-from typing import ClassVar, Dict, Optional, Tuple, Union
+from pathlib import Path
+from typing import ClassVar, Dict, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import MDAnalysis as mda
-from MDAnalysis.lib import util
+from MDAnalysis.lib.util import iterable, asiterable 
 from . import base as topbase
 
 
@@ -64,9 +65,10 @@ class STRWriter(topbase.TopologyWriterBase):
     format: ClassVar[str] = "STREAM"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
         super().__init__()
-        self.filename: str = util.filename(filename, ext="stream")
+
+        self.filename: Path = Path(filename).with_suffix(".stream")
         self._version: int = kwargs.get("charmm_version", 41)
 
         w: int = 4 if self._version < 36 else 8
@@ -90,8 +92,8 @@ class STRWriter(topbase.TopologyWriterBase):
                 f"* Created by fluctmatch on {date}",
                 f"* User: {user}",
             ))
-        if not util.iterable(self._title):
-            self._title: str = util.asiterable(self._title)
+        if not iterable(self._title):
+            self._title: str = asiterable(self._title)
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.

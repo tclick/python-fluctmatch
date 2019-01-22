@@ -37,7 +37,7 @@
 
 import os
 import time
-from typing import Union
+from typing import Mapping, Union
 
 import MDAnalysis as mda
 from MDAnalysis.coordinates.base import _Readermeta, _Writermeta, IOBase
@@ -46,7 +46,7 @@ from ..libs.register import register_reader, register_writer
 
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
         register_reader(cls)
 
@@ -56,7 +56,7 @@ class TopologyReaderBase(IOBase, metaclass=_Readermeta):
 
 
 class TopologyWriterBase(IOBase, metaclass=_Writermeta):
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
         register_writer(cls)
 
