@@ -1,42 +1,53 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict,
-    open,
-)
-from future.utils import (
-    native_str, )
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
+"""Write CHARMM residue topology file (RTF)."""
 
 import logging
 import time
 from os import environ
+from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import MDAnalysis as mda
 from MDAnalysis.lib import util
-from fluctmatch.topology import base as topbase
+from . import base as topbase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class RTFWriter(topbase.TopologyWriterBase):
@@ -54,77 +65,83 @@ class RTFWriter(topbase.TopologyWriterBase):
     charmm_version
         Version of CHARMM for formatting (default: 41)
     """
-    format = "RTF"
-    units = dict(time=None, length=None)
-    fmt = dict(
-        HEADER="{:>5d}{:>5d}\n",
+    format: ClassVar[str] = "RTF"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length=None)
+    fmt: ClassVar[Dict[str, str]] = dict(
+        HEADER="{:>5d}{:>5d}",
         MASS="MASS %5d %-6s%12.5f",
         DECL="DECL +%s\nDECL -%s",
-        RES="RESI {:<4s} {:>12.4f}\nGROUP\n",
+        RES="RESI {:<4s} {:>12.4f}\nGROUP",
         ATOM="ATOM %-6s %-6s %7.4f",
         IC="IC %-4s %-4s %-4s %-4s %7.4f %8.4f %9.4f %8.4f %7.4f",
     )
-    bonds = (
+    bonds: ClassVar[Tuple[str, Tuple[str, int]]] = (
         ("BOND", ("bonds", 8)),
         ("IMPH", ("impropers", 8)),
     )
 
-    def __init__(self, filename, **kwargs):
-        self.filename = util.filename(filename, ext="rtf")
-        self._version = kwargs.get("charmm_version", 41)
-        self._atoms = None
+    def __init__(self, filename: str, **kwargs: Mapping):
+        super().__init__()
+        self.filename: str = util.filename(filename, ext="rtf")
+        self._version: int = kwargs.get("charmm_version", 41)
+        self._atoms: mda.AtomGroup = None
+        self.rtffile: TextIO = None
 
-        date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user = environ["USER"]
-        self._title = kwargs.get(
+        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
+        user: str = environ["USER"]
+        self._title: str = kwargs.get(
             "title", (
                 "* Created by fluctmatch on {date}".format(date=date),
                 "* User: {user}".format(user=user),
             ))
         if not util.iterable(self._title):
-            self._title = util.asiterable(self._title)
+            self._title: str = util.asiterable(self._title)
 
     def _write_mass(self):
         _, idx = np.unique(self._atoms.names, return_index=True)
         try:
-            atomtypes = self._atoms.types.astype(np.int)
+            atomtypes: np.ndarray = self._atoms.types.astype(np.int)
         except ValueError:
-            atomtypes = np.arange(self._atoms.n_atoms, dtype=np.int) + 1
-        columns = (atomtypes, self._atoms.names, self._atoms.masses)
-        columns = pd.concat([pd.DataFrame(_[idx]) for _ in columns], axis=1)
-        columns.columns = ["itype", "stype", "mass"]
+            atomtypes: np.ndarray = np.arange(
+                self._atoms.n_atoms, dtype=np.int) + 1
+        columns: Tuple[np.ndarray, ...] = (atomtypes, self._atoms.names,
+                                           self._atoms.masses)
+        columns: pd.DataFrame = pd.concat([
+            pd.DataFrame(_[idx]) for _ in columns], axis=1)
+        columns.columns: List[str] = ["itype", "stype", "mass"]
 
         if self._version >= 39:
-            columns["itype"] = -1
-        np.savetxt(
-            self.rtffile,
-            columns,
-            fmt=native_str(self.fmt["MASS"]),
-            delimiter=native_str(""))
+            columns["itype"]: int = -1
+        np.savetxt(self.rtffile, columns, fmt=self.fmt["MASS"], delimiter="")
 
     def _write_decl(self):
-        names = np.unique(self._atoms.names)[:, np.newaxis]
-        decl = np.concatenate((names, names), axis=1)
-        np.savetxt(self.rtffile, decl, fmt=native_str(self.fmt["DECL"]))
-        self.rtffile.write("\n".encode())
+        names: np.ndarray = np.unique(self._atoms.names)[:, np.newaxis]
+        decl: np.ndarray = np.concatenate((names, names), axis=1)
+        np.savetxt(self.rtffile, decl, fmt=self.fmt["DECL"])
+        print(file=self.rtffile)
 
-    def _write_residues(self, residue):
-        self.rtffile.write(self.fmt["RES"].format(residue.resname,
-                                                  residue.charge).encode())
+    def _write_residues(self, residue: mda.core.groups.Residue):
+        atoms: mda.AtomGroup = residue.atoms
+        atoms.charges[atoms.charges == -0.] = 0.
+
+        print(self.fmt["RES"].format(residue.resname, residue.charge),
+              file=self.rtffile)
 
         # Write the atom lines with site name, type, and charge.
-        key = "ATOM"
-        atoms = residue.atoms
-        lines = ((atoms.names, atoms.types, atoms.charges)
-                 if not np.issubdtype(atoms.types.dtype, np.signedinteger) else
-                 (atoms.names, atoms.names, atoms.charges))
-        lines = pd.concat([pd.Series(_) for _ in lines], axis=1)
-        np.savetxt(self.rtffile, lines, fmt=native_str(self.fmt[key]))
+        key: str = "ATOM"
+        lines: Tuple[np.ndarray, ...] = ((atoms.names, atoms.types,
+                                          atoms.charges)
+                                         if not np.issubdtype(atoms.types.dtype,
+                                                              np.signedinteger)
+                                         else (atoms.names, atoms.names,
+                                               atoms.charges))
+        lines: pd.DataFrame = pd.concat([pd.Series(_) for _ in lines], axis=1)
+        np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
 
         # Write the bond, angle, dihedral, and improper dihedral lines.
         for key, value in self.bonds:
             attr, n_perline = value
-            fmt = key + n_perline * "%10s"
+            fmt: str = key + n_perline * "%10s"
             try:
                 bonds = getattr(atoms, attr)
                 if len(bonds) == 0:
@@ -132,45 +149,45 @@ class RTFWriter(topbase.TopologyWriterBase):
 
                 # Create list of atom names and include "+" for atoms not
                 # within the residue.
-                names = np.concatenate(
-                    [_.atoms.names[np.newaxis, :] for _ in bonds],
-                    axis=0).astype(np.object)
-                idx = np.any(
+                names: np.ndarray = np.concatenate(
+                    [_.atoms.names[None, :] for _ in bonds]).astype(np.object)
+                idx: np.ndarray = np.any(
                     [np.isin(_.atoms, atoms, invert=True) for _ in bonds],
                     axis=1)
-                pos_names = np.where(
+                pos_names: np.ndarray = np.where(
                     np.isin(bonds[idx], atoms, invert=True), "+", "").astype(
                         np.object)
                 if pos_names.size == 0:
-                    logger.warning(
-                        "Please check that all bond definitions are valid. "
-                        "You may have some missing or broken bonds.")
+                    logger.warning("Please check that all bond definitions are "
+                                   "valid. You may have some missing or broken "
+                                   "bonds.")
                 else:
-                    names[idx] = pos_names + names[idx]
-                names = names.astype(np.unicode)
+                    names[idx]: str = pos_names + names[idx]
+                names: np.ndarray = names.astype(np.unicode)
 
                 # Eliminate redundancies.
                 # Code courtesy of Daniel F on
                 # https://stackoverflow.com/questions/45005477/eliminating-redundant-numpy-rows/45006131?noredirect=1#comment76988894_45006131
-                b = np.ascontiguousarray(np.sort(names, -1)).view(
+                b: np.ndarray = np.ascontiguousarray(np.sort(names)).view(
                     np.dtype((np.void, names.dtype.itemsize * names.shape[1])))
                 _, idx = np.unique(b, return_index=True)
-                names = names[idx]
+                names: np.ndarray = names[idx]
 
                 # Add padding for missing columns.
                 n_rows, n_cols = names.shape
-                n_values = n_perline // n_cols
+                n_values: int = n_perline // n_cols
                 if n_rows % n_values > 0:
-                    n_extra = n_values - (n_rows % n_values)
-                    extras = np.full((n_extra, n_cols), native_str(""))
-                    names = np.concatenate((names, extras), axis=0)
-                names = names.reshape((names.shape[0] // n_values, n_perline))
-                np.savetxt(self.rtffile, names, fmt=native_str(fmt))
+                    n_extra: int = n_values - (n_rows % n_values)
+                    extras: np.ndarray = np.full((n_extra, n_cols), "")
+                    names: np.ndarray = np.concatenate((names, extras))
+                names: np.ndarray = names.reshape((names.shape[0] // n_values,
+                                                   n_perline))
+                np.savetxt(self.rtffile, names, fmt=fmt)
             except (AttributeError, ):
                 continue
-        self.rtffile.write("\n".encode())
+        print(file=self.rtffile)
 
-    def write(self, universe, decl=True):
+    def write(self, universe: Union[mda.Universe, mda.AtomGroup], decl=True):
         """Write a CHARMM-formatted RTF topology file.
 
         Parameters
@@ -181,26 +198,25 @@ class RTFWriter(topbase.TopologyWriterBase):
         decl : boolean
             Include the declaration (DECL) statements
         """
-        self._atoms = universe.atoms
-        with open(self.filename, "wb") as self.rtffile:
+        self._atoms: mda.AtomGroup = universe.atoms
+        with open(self.filename, "w") as self.rtffile:
             # Write the title and header information.
             for _ in self._title:
-                self.rtffile.write(_.encode())
-                self.rtffile.write("\n".encode())
-            self.rtffile.write(self.fmt["HEADER"].format(36, 1).encode())
-            self.rtffile.write("\n".encode())
+                print(_, file=self.rtffile)
+            print(self.fmt["HEADER"].format(36, 1), file=self.rtffile)
+            print(file=self.rtffile)
 
             # Write the atom mass and declaration sections
             self._write_mass()
-            self.rtffile.write("\n".encode())
+            print(file=self.rtffile)
             if decl:
                 self._write_decl()
-            self.rtffile.write("DEFA FIRS NONE LAST NONE\n".encode())
-            self.rtffile.write("AUTOGENERATE ANGLES DIHEDRAL\n\n".encode())
+            print("DEFA FIRS NONE LAST NONE", file=self.rtffile)
+            print("AUTOGENERATE ANGLES DIHEDRAL\n", file=self.rtffile)
 
             # Write out the residue information
             _, idx = np.unique(
                 self._atoms.residues.resnames, return_index=True)
             for residue in self._atoms.residues[idx]:
                 self._write_residues(residue)
-            self.rtffile.write("END\n".encode())
+            print("END", file=self.rtffile)
