@@ -1,0 +1,1719 @@
+* Created by fluctmatch on Sat, 01 Sep 2018 10:26:15
+* User: tclick
+IC EDIT
+DIST PDZ3          301 N        PDZ3          301 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          301 N        PDZ3          301 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          301 CB       PDZ3          301 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          301 O        PDZ3          302 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          302 N        PDZ3          302 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          302 N        PDZ3          302 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          302 CB       PDZ3          302 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          302 O        PDZ3          303 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          303 N        PDZ3          303 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          303 O        PDZ3          304 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          304 N        PDZ3          304 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          304 N        PDZ3          304 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          304 CB       PDZ3          304 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          304 O        PDZ3          305 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          305 N        PDZ3          305 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          305 N        PDZ3          305 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          305 CB       PDZ3          305 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          305 O        PDZ3          306 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          306 N        PDZ3          306 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          306 N        PDZ3          306 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          306 CB       PDZ3          306 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          306 O        PDZ3          307 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          307 N        PDZ3          307 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          307 N        PDZ3          307 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          307 CB       PDZ3          307 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          307 O        PDZ3          308 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          308 N        PDZ3          308 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          308 N        PDZ3          308 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          308 CB       PDZ3          308 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          308 O        PDZ3          309 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          309 N        PDZ3          309 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          309 N        PDZ3          309 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          309 CB       PDZ3          309 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          309 O        PDZ3          310 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          310 N        PDZ3          310 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          310 N        PDZ3          310 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          310 CB       PDZ3          310 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          310 O        PDZ3          311 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          311 N        PDZ3          311 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          311 N        PDZ3          311 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          311 CB       PDZ3          311 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          311 O        PDZ3          312 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          312 N        PDZ3          312 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          312 N        PDZ3          312 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          312 CB       PDZ3          312 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          312 O        PDZ3          313 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          313 N        PDZ3          313 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          313 N        PDZ3          313 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          313 CB       PDZ3          313 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          313 O        PDZ3          314 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          314 N        PDZ3          314 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          314 N        PDZ3          314 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          314 CB       PDZ3          314 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          314 O        PDZ3          315 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          315 N        PDZ3          315 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          315 N        PDZ3          315 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          315 CB       PDZ3          315 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          315 O        PDZ3          316 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          316 N        PDZ3          316 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          316 N        PDZ3          316 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          316 CB       PDZ3          316 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          316 O        PDZ3          317 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          317 N        PDZ3          317 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          317 N        PDZ3          317 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          317 CB       PDZ3          317 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          317 O        PDZ3          318 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          318 N        PDZ3          318 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          318 N        PDZ3          318 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          318 CB       PDZ3          318 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          318 O        PDZ3          319 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          319 N        PDZ3          319 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          319 O        PDZ3          320 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          320 N        PDZ3          320 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          320 N        PDZ3          320 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          320 CB       PDZ3          320 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          320 O        PDZ3          321 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          321 N        PDZ3          321 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          321 N        PDZ3          321 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          321 CB       PDZ3          321 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          321 O        PDZ3          322 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          322 N        PDZ3          322 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          322 O        PDZ3          323 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          323 N        PDZ3          323 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          323 N        PDZ3          323 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          323 CB       PDZ3          323 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          323 O        PDZ3          324 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          324 N        PDZ3          324 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          324 O        PDZ3          325 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          325 N        PDZ3          325 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          325 N        PDZ3          325 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          325 CB       PDZ3          325 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          325 O        PDZ3          326 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          326 N        PDZ3          326 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          326 N        PDZ3          326 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          326 CB       PDZ3          326 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          326 O        PDZ3          327 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          327 N        PDZ3          327 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          327 N        PDZ3          327 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          327 CB       PDZ3          327 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          327 O        PDZ3          328 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          328 N        PDZ3          328 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          328 N        PDZ3          328 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          328 CB       PDZ3          328 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          328 O        PDZ3          329 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          329 N        PDZ3          329 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          329 O        PDZ3          330 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          330 N        PDZ3          330 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          330 O        PDZ3          331 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          331 N        PDZ3          331 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          331 N        PDZ3          331 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          331 CB       PDZ3          331 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          331 O        PDZ3          332 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          332 N        PDZ3          332 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          332 N        PDZ3          332 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          332 CB       PDZ3          332 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          332 O        PDZ3          333 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          333 N        PDZ3          333 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          333 O        PDZ3          334 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          334 N        PDZ3          334 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          334 N        PDZ3          334 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          334 CB       PDZ3          334 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          334 O        PDZ3          335 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          335 N        PDZ3          335 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          335 O        PDZ3          336 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          336 N        PDZ3          336 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          336 N        PDZ3          336 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          336 CB       PDZ3          336 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          336 O        PDZ3          337 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          337 N        PDZ3          337 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          337 N        PDZ3          337 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          337 CB       PDZ3          337 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          337 O        PDZ3          338 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          338 N        PDZ3          338 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          338 N        PDZ3          338 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          338 CB       PDZ3          338 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          338 O        PDZ3          339 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          339 N        PDZ3          339 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          339 N        PDZ3          339 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          339 CB       PDZ3          339 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          339 O        PDZ3          340 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          340 N        PDZ3          340 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          340 N        PDZ3          340 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          340 CB       PDZ3          340 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          340 O        PDZ3          341 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          341 N        PDZ3          341 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          341 N        PDZ3          341 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          341 CB       PDZ3          341 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          341 O        PDZ3          342 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          342 N        PDZ3          342 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          342 N        PDZ3          342 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          342 CB       PDZ3          342 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          342 O        PDZ3          343 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          343 N        PDZ3          343 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          343 N        PDZ3          343 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          343 CB       PDZ3          343 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          343 O        PDZ3          344 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          344 N        PDZ3          344 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          344 O        PDZ3          345 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          345 N        PDZ3          345 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          345 O        PDZ3          346 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          346 N        PDZ3          346 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          346 N        PDZ3          346 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          346 CB       PDZ3          346 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          346 O        PDZ3          347 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          347 N        PDZ3          347 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          347 N        PDZ3          347 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          347 CB       PDZ3          347 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          347 O        PDZ3          348 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          348 N        PDZ3          348 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          348 N        PDZ3          348 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          348 CB       PDZ3          348 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          348 O        PDZ3          349 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          349 N        PDZ3          349 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          349 N        PDZ3          349 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          349 CB       PDZ3          349 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          349 O        PDZ3          350 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          350 N        PDZ3          350 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          350 N        PDZ3          350 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          350 CB       PDZ3          350 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          350 O        PDZ3          351 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          351 N        PDZ3          351 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          351 O        PDZ3          352 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          352 N        PDZ3          352 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          352 N        PDZ3          352 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          352 CB       PDZ3          352 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          352 O        PDZ3          353 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          353 N        PDZ3          353 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          353 N        PDZ3          353 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          353 CB       PDZ3          353 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          353 O        PDZ3          354 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          354 N        PDZ3          354 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          354 N        PDZ3          354 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          354 CB       PDZ3          354 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          354 O        PDZ3          355 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          355 N        PDZ3          355 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          355 N        PDZ3          355 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          355 CB       PDZ3          355 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          355 O        PDZ3          356 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          356 N        PDZ3          356 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          356 O        PDZ3          357 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          357 N        PDZ3          357 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          357 N        PDZ3          357 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          357 CB       PDZ3          357 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          357 O        PDZ3          358 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          358 N        PDZ3          358 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          358 N        PDZ3          358 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          358 CB       PDZ3          358 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          358 O        PDZ3          359 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          359 N        PDZ3          359 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          359 N        PDZ3          359 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          359 CB       PDZ3          359 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          359 O        PDZ3          360 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          360 N        PDZ3          360 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          360 N        PDZ3          360 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          360 CB       PDZ3          360 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          360 O        PDZ3          361 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          361 N        PDZ3          361 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          361 N        PDZ3          361 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          361 CB       PDZ3          361 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          361 O        PDZ3          362 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          362 N        PDZ3          362 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          362 N        PDZ3          362 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          362 CB       PDZ3          362 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          362 O        PDZ3          363 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          363 N        PDZ3          363 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          363 N        PDZ3          363 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          363 CB       PDZ3          363 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          363 O        PDZ3          364 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          364 N        PDZ3          364 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          364 O        PDZ3          365 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          365 N        PDZ3          365 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          365 N        PDZ3          365 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          365 CB       PDZ3          365 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          365 O        PDZ3          366 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          366 N        PDZ3          366 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          366 N        PDZ3          366 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          366 CB       PDZ3          366 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          366 O        PDZ3          367 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          367 N        PDZ3          367 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          367 N        PDZ3          367 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          367 CB       PDZ3          367 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          367 O        PDZ3          368 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          368 N        PDZ3          368 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          368 N        PDZ3          368 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          368 CB       PDZ3          368 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          368 O        PDZ3          369 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          369 N        PDZ3          369 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          369 N        PDZ3          369 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          369 CB       PDZ3          369 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          369 O        PDZ3          370 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          370 N        PDZ3          370 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          370 N        PDZ3          370 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          370 CB       PDZ3          370 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          370 O        PDZ3          371 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          371 N        PDZ3          371 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          371 N        PDZ3          371 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          371 CB       PDZ3          371 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          371 O        PDZ3          372 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          372 N        PDZ3          372 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          372 N        PDZ3          372 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          372 CB       PDZ3          372 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          372 O        PDZ3          373 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          373 N        PDZ3          373 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          373 N        PDZ3          373 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          373 CB       PDZ3          373 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          373 O        PDZ3          374 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          374 N        PDZ3          374 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          374 N        PDZ3          374 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          374 CB       PDZ3          374 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          374 O        PDZ3          375 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          375 N        PDZ3          375 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          375 N        PDZ3          375 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          375 CB       PDZ3          375 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          375 O        PDZ3          376 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          376 N        PDZ3          376 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          376 N        PDZ3          376 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          376 CB       PDZ3          376 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          376 O        PDZ3          377 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          377 N        PDZ3          377 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          377 N        PDZ3          377 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          377 CB       PDZ3          377 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          377 O        PDZ3          378 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          378 N        PDZ3          378 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          378 N        PDZ3          378 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          378 CB       PDZ3          378 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          378 O        PDZ3          379 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          379 N        PDZ3          379 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          379 N        PDZ3          379 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          379 CB       PDZ3          379 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          379 O        PDZ3          380 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          380 N        PDZ3          380 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          380 N        PDZ3          380 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          380 CB       PDZ3          380 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          380 O        PDZ3          381 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          381 N        PDZ3          381 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          381 N        PDZ3          381 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          381 CB       PDZ3          381 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          381 O        PDZ3          382 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          382 N        PDZ3          382 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          382 N        PDZ3          382 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          382 CB       PDZ3          382 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          382 O        PDZ3          383 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          383 N        PDZ3          383 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          383 O        PDZ3          384 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          384 N        PDZ3          384 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          384 N        PDZ3          384 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          384 CB       PDZ3          384 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          384 O        PDZ3          385 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          385 N        PDZ3          385 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          385 N        PDZ3          385 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          385 CB       PDZ3          385 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          385 O        PDZ3          386 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          386 N        PDZ3          386 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          386 N        PDZ3          386 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          386 CB       PDZ3          386 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          386 O        PDZ3          387 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          387 N        PDZ3          387 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          387 N        PDZ3          387 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          387 CB       PDZ3          387 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          387 O        PDZ3          388 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          388 N        PDZ3          388 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          388 N        PDZ3          388 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          388 CB       PDZ3          388 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          388 O        PDZ3          389 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          389 N        PDZ3          389 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          389 N        PDZ3          389 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          389 CB       PDZ3          389 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          389 O        PDZ3          390 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          390 N        PDZ3          390 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          390 N        PDZ3          390 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          390 CB       PDZ3          390 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          390 O        PDZ3          391 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          391 N        PDZ3          391 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          391 N        PDZ3          391 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          391 CB       PDZ3          391 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          391 O        PDZ3          392 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          392 N        PDZ3          392 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          392 N        PDZ3          392 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          392 CB       PDZ3          392 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          392 O        PDZ3          393 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          393 N        PDZ3          393 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          393 N        PDZ3          393 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          393 CB       PDZ3          393 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          393 O        PDZ3          394 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          394 N        PDZ3          394 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          394 N        PDZ3          394 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          394 CB       PDZ3          394 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          394 O        PDZ3          395 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          395 N        PDZ3          395 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          395 N        PDZ3          395 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          395 CB       PDZ3          395 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          395 O        PDZ3          396 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          396 N        PDZ3          396 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          396 N        PDZ3          396 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          396 CB       PDZ3          396 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          396 O        PDZ3          397 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          397 N        PDZ3          397 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          397 N        PDZ3          397 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          397 CB       PDZ3          397 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          397 O        PDZ3          398 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          398 N        PDZ3          398 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          398 N        PDZ3          398 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          398 CB       PDZ3          398 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          398 O        PDZ3          399 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          399 N        PDZ3          399 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          399 N        PDZ3          399 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          399 CB       PDZ3          399 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          399 O        PDZ3          400 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          400 N        PDZ3          400 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          400 N        PDZ3          400 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          400 CB       PDZ3          400 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          400 O        PDZ3          401 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          401 N        PDZ3          401 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          401 N        PDZ3          401 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          401 CB       PDZ3          401 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          401 O        PDZ3          402 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          402 N        PDZ3          402 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          402 N        PDZ3          402 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          402 CB       PDZ3          402 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          402 O        PDZ3          403 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          403 N        PDZ3          403 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          403 N        PDZ3          403 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          403 CB       PDZ3          403 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          403 O        PDZ3          404 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          404 N        PDZ3          404 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          404 N        PDZ3          404 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          404 CB       PDZ3          404 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          404 O        PDZ3          405 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          405 N        PDZ3          405 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          405 N        PDZ3          405 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          405 CB       PDZ3          405 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          405 O        PDZ3          406 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          406 N        PDZ3          406 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          406 N        PDZ3          406 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          406 CB       PDZ3          406 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          406 O        PDZ3          407 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          407 N        PDZ3          407 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          407 N        PDZ3          407 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          407 CB       PDZ3          407 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          407 O        PDZ3          408 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          408 N        PDZ3          408 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          408 N        PDZ3          408 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          408 CB       PDZ3          408 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          408 O        PDZ3          409 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          409 N        PDZ3          409 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          409 N        PDZ3          409 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          409 CB       PDZ3          409 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          409 O        PDZ3          410 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          410 N        PDZ3          410 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          410 O        PDZ3          411 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          411 N        PDZ3          411 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          411 N        PDZ3          411 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          411 CB       PDZ3          411 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          411 O        PDZ3          412 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          412 N        PDZ3          412 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          412 N        PDZ3          412 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          412 CB       PDZ3          412 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          412 O        PDZ3          413 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          413 N        PDZ3          413 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          413 N        PDZ3          413 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          413 CB       PDZ3          413 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          413 O        PDZ3          414 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          414 N        PDZ3          414 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          414 N        PDZ3          414 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          414 CB       PDZ3          414 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          414 O        PDZ3          415 N            0.0
+END
+
+IC EDIT
+DIST PDZ3          415 N        PDZ3          415 CB           0.0
+END
+
+IC EDIT
+DIST PDZ3          415 N        PDZ3          415 O            0.0
+END
+
+IC EDIT
+DIST PDZ3          415 CB       PDZ3          415 O            0.0
+END
+
+RETURN

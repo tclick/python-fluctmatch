@@ -1,42 +1,51 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict,
-    open,
-)
-from future.utils import (
-    native_str,
-    raise_with_traceback,
-)
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
+"""Write CHARMM stream file."""
 
 import textwrap
 import time
 from os import environ
+from typing import ClassVar, Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import MDAnalysis as mda
 from MDAnalysis.lib import util
-from fluctmatch.topology import base as topbase
+from . import base as topbase
 
 
 class STRWriter(topbase.TopologyWriterBase):
@@ -52,38 +61,39 @@ class STRWriter(topbase.TopologyWriterBase):
         A header section written at the beginning of the stream file.
         If no title is given, a default title will be written.
     """
-    format = "STREAM"
-    units = dict(time=None, length="Angstrom")
+    format: ClassVar[str] = "STREAM"
+    units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
     def __init__(self, filename, **kwargs):
-        self.filename = util.filename(filename, ext=native_str("stream"))
-        self._version = kwargs.get("charmm_version", 41)
+        super().__init__()
+        self.filename: str = util.filename(filename, ext="stream")
+        self._version: int = kwargs.get("charmm_version", 41)
 
-        width = 4 if self._version < 36 else 8
+        w: int = 4 if self._version < 36 else 8
         if self._version >= 36:
-            self.fmt = ("""
+            self.fmt: str = f"""
                 IC EDIT
-                DIST %-{width}s %{width}d %-{width}s %-{width}s %{width}d %-{width}s%{width}.1f
+                DIST %-{w}s %{w}d %-{w}s %-{w}s %{w}d %-{w}s%{w}.1f
                 END
-                """.format(width=width))
+                """
         else:
-            self.fmt = ("""
+            self.fmt = f"""
                 IC EDIT
-                DIST BYNUM %{width}d BYNUM %{width}d %{width}.1f
+                DIST BYNUM %{w}d BYNUM %{w}d %{w}.1f
                 END
-                """.format(width=width))
+                """
 
-        date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user = environ["USER"]
-        self._title = kwargs.get(
+        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
+        user: str = environ["USER"]
+        self._title: str = kwargs.get(
             "title", (
-                "* Created by fluctmatch on {date}".format(date=date),
-                "* User: {user}".format(user=user),
+                f"* Created by fluctmatch on {date}",
+                f"* User: {user}",
             ))
         if not util.iterable(self._title):
-            self._title = util.asiterable(self._title)
+            self._title: str = util.asiterable(self._title)
 
-    def write(self, universe):
+    def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.
 
         Parameters
@@ -93,33 +103,27 @@ class STRWriter(topbase.TopologyWriterBase):
             definitions.
         """
         # Create the table
+        data: Union[pd.DataFrame, np.ndarray]
         try:
-            dist = np.zeros_like(universe.atoms.bonds.bonds(), dtype=np.float)
+            dist: np.ndarray = np.zeros_like(universe.atoms.bonds.bonds(), 
+                                             dtype=np.float)
             if self._version >= 36:
                 a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data = (
-                    a1.segids,
-                    a1.resids,
-                    a1.names,
-                    a2.segids,
-                    a2.resids,
-                    a2.names,
-                    dist,
-                )
-                data = pd.concat([pd.DataFrame(_) for _ in data], axis=1)
+                data: Tuple[np.ndarray, ...] = (a1.segids, a1.resids, a1.names,
+                                                a2.segids, a2.resids, a2.names,
+                                                dist)
+                data: pd.DataFrame = pd.concat([pd.DataFrame(_) for _ in data], 
+                                               axis=1)
             else:
-                data = universe._topology.bonds.values
-                data = np.concatenate((data, dist[:, np.newaxis]), axis=1)
+                data: np.ndarray = universe._topology.bonds.values
+                data: np.ndarray = np.concatenate((data, dist[:, np.newaxis]), 
+                                                  axis=1)
         except AttributeError:
-            raise_with_traceback(AttributeError("No bonds were found."))
+            AttributeError("No bonds were found.")
 
         # Write the data to the file.
-        with open(self.filename, "wb") as stream_file:
-            for _ in self._title:
-                stream_file.write(_.encode())
-                stream_file.write("\n".encode())
-            np.savetxt(
-                stream_file,
-                data,
-                fmt=native_str(textwrap.dedent(self.fmt[1:])))
-            stream_file.write("RETURN\n".encode())
+        with open(self.filename, "w") as stream_file:
+            for title in self._title:
+                print(title, file=stream_file)
+            np.savetxt(stream_file, data, fmt=textwrap.dedent(self.fmt[1:]))
+            print("RETURN", file=stream_file)
