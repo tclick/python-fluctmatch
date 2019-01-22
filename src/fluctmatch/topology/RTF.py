@@ -43,8 +43,8 @@ from pathlib import Path
 from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import MDAnalysis as mda
+from MDAnalysis.core.topologyobjects import TopologyObject
 from MDAnalysis.lib.util import iterable, asiterable
 
 from . import base as topbase
@@ -102,23 +102,20 @@ class RTFWriter(topbase.TopologyWriterBase):
     def _write_mass(self):
         _, idx = np.unique(self._atoms.names, return_index=True)
         try:
-            atomtypes: np.ndarray = self._atoms.types.astype(np.int)
+            atomtypes: np.ndarray = self._atoms[idx].types.astype(np.int)
         except ValueError:
-            atomtypes: np.ndarray = np.arange(
-                self._atoms.n_atoms, dtype=np.int) + 1
-        columns: Tuple[np.ndarray, ...] = (atomtypes, self._atoms.names,
-                                           self._atoms.masses)
-        columns: pd.DataFrame = pd.concat([
-            pd.DataFrame(_[idx]) for _ in columns], axis=1)
-        columns.columns: List[str] = ["itype", "stype", "mass"]
+            atomtypes: np.ndarray = np.arange(idx.size, dtype=np.int) + 1
+        columns: np.ndarray = np.hstack((atomtypes[:, np.newaxis],
+                                         self._atoms.names[idx, np.newaxis],
+                                         self._atoms.masses[idx, np.newaxis]))
 
         if self._version >= 39:
-            columns["itype"]: int = -1
+            columns[:, 0] = -1
         np.savetxt(self.rtffile, columns, fmt=self.fmt["MASS"], delimiter="")
 
     def _write_decl(self):
         names: np.ndarray = np.unique(self._atoms.names)[:, np.newaxis]
-        decl: np.ndarray = np.concatenate((names, names), axis=1)
+        decl: np.ndarray = np.hstack((names, names))
         np.savetxt(self.rtffile, decl, fmt=self.fmt["DECL"])
         print(file=self.rtffile)
 
@@ -131,13 +128,12 @@ class RTFWriter(topbase.TopologyWriterBase):
 
         # Write the atom lines with site name, type, and charge.
         key: str = "ATOM"
-        lines: Tuple[np.ndarray, ...] = ((atoms.names, atoms.types,
-                                          atoms.charges)
-                                         if not np.issubdtype(atoms.types.dtype,
-                                                              np.signedinteger)
-                                         else (atoms.names, atoms.names,
-                                               atoms.charges))
-        lines: pd.DataFrame = pd.concat([pd.Series(_) for _ in lines], axis=1)
+        lines: np.ndarray = np.hstack(
+            (atoms.names[:, np.newaxis], atoms.types[:, np.newaxis],
+             atoms.charges[:, np.newaxis])
+            if not np.issubdtype(atoms.types.dtype, np.signedinteger)
+            else (atoms.names[:, np.newaxis], atoms.names[:, np.newaxis],
+                  atoms.charges[:, np.newaxis]))
         np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
 
         # Write the bond, angle, dihedral, and improper dihedral lines.
@@ -145,33 +141,36 @@ class RTFWriter(topbase.TopologyWriterBase):
             attr, n_perline = value
             fmt: str = key + n_perline * "%10s"
             try:
-                bonds = getattr(atoms, attr)
+                bonds: TopologyObject = getattr(atoms, attr)
                 if len(bonds) == 0:
                     continue
 
                 # Create list of atom names and include "+" for atoms not
                 # within the residue.
-                names: np.ndarray = np.concatenate(
-                    [_.atoms.names[None, :] for _ in bonds]).astype(np.object)
-                idx: np.ndarray = np.any(
-                    [np.isin(_.atoms, atoms, invert=True) for _ in bonds],
-                    axis=1)
+                names: np.ndarray = np.vstack(
+                    [_.atoms.names[np.newaxis, :] for _ in bonds])
+
+                idx: List[np.ndarray] = [
+                    np.isin(_.atoms, atoms, invert=True)
+                    for _ in bonds]
+                idx: np.ndarray = np.any(idx, axis=1)
+
                 pos_names: np.ndarray = np.where(
-                    np.isin(bonds[idx], atoms, invert=True), "+", "").astype(
-                        np.object)
+                    np.isin(bonds[idx], atoms, invert=True), "+", "")
                 if pos_names.size == 0:
                     logger.warning("Please check that all bond definitions are "
                                    "valid. You may have some missing or broken "
                                    "bonds.")
                 else:
                     names[idx]: str = pos_names + names[idx]
-                names: np.ndarray = names.astype(np.unicode)
+                names: np.ndarray = names.astype(str)
 
                 # Eliminate redundancies.
                 # Code courtesy of Daniel F on
                 # https://stackoverflow.com/questions/45005477/eliminating-redundant-numpy-rows/45006131?noredirect=1#comment76988894_45006131
-                b: np.ndarray = np.ascontiguousarray(np.sort(names)).view(
-                    np.dtype((np.void, names.dtype.itemsize * names.shape[1])))
+                dtype: np.dtype = np.dtype(
+                    (np.void, names.dtype.itemsize * names.shape[1]))
+                b: np.ndarray = np.ascontiguousarray(np.sort(names)).view(dtype)
                 _, idx = np.unique(b, return_index=True)
                 names: np.ndarray = names[idx]
 

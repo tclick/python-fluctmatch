@@ -111,15 +111,15 @@ class STRWriter(topbase.TopologyWriterBase):
                                              dtype=np.float)
             if self._version >= 36:
                 a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: Tuple[np.ndarray, ...] = (a1.segids, a1.resids, a1.names,
-                                                a2.segids, a2.resids, a2.names,
-                                                dist)
-                data: pd.DataFrame = pd.concat([pd.DataFrame(_) for _ in data], 
-                                               axis=1)
+                data: np.ndarray = np.hstack((
+                    a1.segids[:, np.newaxis], a1.resids[:, np.newaxis],
+                    a1.names[:, np.newaxis], a2.segids[:, np.newaxis],
+                    a2.resids[:, np.newaxis], a2.names[:, np.newaxis],
+                    dist[:, np.newaxis]))
+                data: pd.DataFrame = pd.DataFrame(data)
             else:
-                data: np.ndarray = universe._topology.bonds.values
-                data: np.ndarray = np.concatenate((data, dist[:, np.newaxis]), 
-                                                  axis=1)
+                data: np.ndarray = pd.DataFrame(universe._topology.bonds.values)
+                data: np.ndarray = pd.concat((data, dist[:, np.newaxis]))
         except AttributeError:
             AttributeError("No bonds were found.")
 

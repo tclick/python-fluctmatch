@@ -433,22 +433,21 @@ class PSFWriter(base.TopologyWriterBase):
               file=psffile)
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.] = 0.
-        lines: Tuple[np.ndarray, ...] = (np.arange(atoms.n_atoms) + 1,
-                                         atoms.segids, atoms.resids,
-                                         atoms.resnames, atoms.names,
-                                         atoms.types, atoms.charges,
-                                         atoms.masses, np.zeros_like(atoms.ids))
-        lines: pd.DataFrame = pd.concat([pd.DataFrame(_) for _ in lines],
-                                        axis=1)
+        lines: np.ndarray = np.hstack((
+            np.arange(atoms.n_atoms)[:, np.newaxis] + 1,
+            atoms.segids[:, np.newaxis], atoms.resids[:, np.newaxis],
+            atoms.resnames[:, np.newaxis], atoms.names[:, np.newaxis],
+            atoms.types[:, np.newaxis], atoms.charges[:, np.newaxis],
+            atoms.masses[:, np.newaxis],
+            np.zeros_like(atoms.ids[:, np.newaxis])))
+        lines: pd.DataFrame = pd.DataFrame(lines)
 
         if self._cheq:
             fmt += "%10.6f%18s"
-            cheq: Tuple[np.ndarray, ...] = (np.zeros_like(atoms.masses),
-                                            np.full_like(
-                                                atoms.names.astype(object),
-                                                "-0.301140E-02"))
-            cheq: pd.DataFrame = pd.concat([pd.DataFrame(_) for _ in cheq],
-                                           axis=1)
+            cheq: np.ndarray = np.hstack((
+                np.zeros_like(atoms.masses[:, np.newaxis]),
+                np.full_like(atoms.names[:, np.newaxis], "-0.301140E-02")))
+            cheq: pd.DataFrame = pd.DataFrame(cheq)
             lines: pd.DataFrame = pd.concat([lines, cheq], axis=1)
         np.savetxt(psffile, lines, fmt=fmt)
         print(file=psffile)
