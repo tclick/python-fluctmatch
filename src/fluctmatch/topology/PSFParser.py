@@ -326,7 +326,7 @@ class PSFWriter(base.TopologyWriterBase):
         EXT_XPLOR="%10d %-8s %-8d %-8s %-8s %-6s %14.6f%14.6f%8d",
         EXT_XPLOR_C35="%10d %-8s %-8d %-8s %-8s %-4s %14.6f%14.6f%8d")
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename: str, **kwargs: Mapping):
         super().__init__()
         
         self.filename: str = util.filename(filename, ext="psf")
@@ -432,6 +432,7 @@ class PSFWriter(base.TopologyWriterBase):
         print(self.sect_hdr.format(self._universe.atoms.n_atoms, "NATOM"),
               file=psffile)
         atoms: mda.AtomGroup = self._universe.atoms
+        atoms.charges[atoms.charges == -0.] = 0.
         lines: Tuple[np.ndarray, ...] = (np.arange(atoms.n_atoms) + 1,
                                          atoms.segids, atoms.resids,
                                          atoms.resnames, atoms.names,
