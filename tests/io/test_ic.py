@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,12 +28,45 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
 
-import logging
+from pathlib import Path
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+import pandas as pd
+import pytest
+import MDAnalysis as mda
+from numpy.testing import assert_allclose
+
+from fluctmatch.intcor.IC import IntcorReader, IntcorWriter
+from ..datafiles import IC
+
+
+class TestRTFWriter(object):
+    @pytest.fixture()
+    def u(self) -> pd.DataFrame:
+        return IntcorReader(IC).read()
+
+    @pytest.fixture()
+    def outfile(self, tmpdir: str) -> Path:
+        return Path(tmpdir) / "out.ic"
+
+    def test_bond_distances(self, u, outfile):
+        with mda.Writer(outfile) as ofile:
+            ofile.write(u)
+
+        u2 = IntcorReader(outfile).read()
+        assert_allclose(u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match.")
+
+    def test_roundtrip(self, u, outfile):
+        # Write out a copy of the internal coordinates, and compare this against
+        # the original. This is more rigorous as it checks all formatting.
+        with mda.Writer(outfile) as ofile:
+            ofile.write(u)
+
+        def IC_iter(fn: str):
+            with open(fn) as inf:
+                for line in inf:
+                    if not line.startswith('*'):
+                        yield line
+
+        for ref, other in zip(IC_iter(IC), IC_iter(outfile)):
+            assert ref == other

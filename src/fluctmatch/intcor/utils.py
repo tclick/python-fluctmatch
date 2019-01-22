@@ -1,29 +1,48 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
+
 import logging
 import traceback
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import MDAnalysis as mda
 import pandas as pd
 from MDAnalysis.core.topologyobjects import TopologyGroup
-
-from ..libs.typing import MDUniverse
 
 _HEADER: List[str] = [
     "segidI", "resI", "I", "segidJ", "resJ", "J", "segidK", "resK", "K",
@@ -33,7 +52,8 @@ _HEADER: List[str] = [
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def create_empty_table(universe: MDUniverse) -> pd.DataFrame:
+def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
+                       ) -> pd.DataFrame:
     """Create an empty table of internal coordinates from an atomgroup
 
     Parameters
@@ -82,7 +102,8 @@ def create_empty_table(universe: MDUniverse) -> pd.DataFrame:
         else:
             n_angles: int = len(angles)
             atom1, atom2, atom3 = angles.atom1, angles.atom2, angles.atom3
-            zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_angles, 5), dtype=np.float))
+            zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_angles, 5),
+                                                        dtype=np.float))
             cols: pd.DataFrame = pd.DataFrame([
                 atom1.segids, atom1.resnums, atom1.names, atom2.segids,
                 atom2.resnums, atom2.names, atom3.segids, atom3.resnums,
@@ -95,7 +116,8 @@ def create_empty_table(universe: MDUniverse) -> pd.DataFrame:
         atom1, atom2, atom3, atom4 = (
             dihedrals.atom1, dihedrals.atom2,dihedrals.atom3, dihedrals.atom4
         )
-        zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_dihedrals, 5), dtype=np.float))
+        zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_dihedrals, 5),
+                                                    dtype=np.float))
         cols: pd.DataFrame = pd.DataFrame([
             atom1.segids, atom1.resnums, atom1.names, atom2.segids,
             atom2.resnums, atom2.names, atom3.segids, atom3.resnums,

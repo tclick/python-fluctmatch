@@ -37,7 +37,8 @@ __all__ = [
     "XTC",  # Gromacs
     "NCSC",
     "RTF",
-    "STR"
+    "STR",
+    "IC"
 ]
 
 from pkg_resources import resource_filename
@@ -56,3 +57,4 @@ CGCRD = resource_filename(__name__, path.join("data", "cg.cor"))
 CGPSF = resource_filename(__name__, path.join("data", "cg.xplor.psf"))
 RTF = resource_filename(__name__, path.join("data", "cg.rtf"))
 STR = resource_filename(__name__, path.join("data", "cg.stream"))
+IC = resource_filename(__name__, path.join("data", "fluct.ic"))
