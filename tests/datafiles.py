@@ -38,7 +38,8 @@ __all__ = [
     "NCSC",
     "RTF",
     "STR",
-    "IC"
+    "IC",
+    "PRM"
 ]
 
 from pkg_resources import resource_filename
@@ -58,3 +59,4 @@ CGPSF = resource_filename(__name__, path.join("data", "cg.xplor.psf"))
 RTF = resource_filename(__name__, path.join("data", "cg.rtf"))
 STR = resource_filename(__name__, path.join("data", "cg.stream"))
 IC = resource_filename(__name__, path.join("data", "fluct.ic"))
+PRM = resource_filename(__name__, path.join("data", "fluctmatch.prm"))

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,12 +28,49 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
 
-import logging
+from pathlib import Path
+from typing import Dict
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+import pytest
+import MDAnalysis as mda
+from numpy.testing import assert_allclose
+
+from fluctmatch.parameter.PRM import ParamReader
+from ..datafiles import PRM
+
+
+class TestPRMWriter(object):
+    @pytest.fixture()
+    def u(self) -> Dict:
+        return ParamReader(PRM).read()
+
+    @pytest.fixture()
+    def outfile(self, tmpdir: str) -> Path:
+        return Path(tmpdir) / "out.prm"
+
+    def test_parameters(self, u, outfile):
+        with mda.Writer(outfile, nonbonded=True) as ofile:
+            ofile.write(u)
+
+        u2 = ParamReader(outfile).read()
+        assert_allclose(u["ATOMS"]["mass"], u2["ATOMS"]["mass"],
+                        err_msg="The atomic masses don't match.")
+        assert_allclose(u["BONDS"]["Kb"], u2["BONDS"]["Kb"],
+                        err_msg="The force constants don't match.")
+
+    def test_roundtrip(self, u, outfile):
+        # Write out a copy of the internal coordinates, and compare this against
+        # the original. This is more rigorous as it checks all formatting.
+        with mda.Writer(outfile, nonbonded=True) as ofile:
+            ofile.write(u)
+
+        def PRM_iter(fn: str):
+            with open(fn) as inf:
+                for line in inf:
+                    if not line.startswith('*'):
+                        yield line
+
+        for ref, other in zip(PRM_iter(PRM), PRM_iter(outfile)):
+            assert ref == other
+
