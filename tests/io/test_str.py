@@ -29,8 +29,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import pytest
+from pathlib import Path
 
+import pytest
 import MDAnalysis as mda
 
 import fluctmatch
@@ -43,8 +44,8 @@ class TestSTRWriter(object):
         return mda.Universe(CGPSF, CGCRD)
 
     @pytest.fixture()
-    def outfile(self, tmpdir: str):
-        return str(tmpdir) + "/out.stream"
+    def outfile(self, tmpdir: str) -> Path:
+        return Path(tmpdir) / "out.stream"
 
     def test_roundtrip(self, u, outfile):
         # Write out a copy of the Universe, and compare this against the original

@@ -38,18 +38,17 @@
 #  Borrowed the test code from MDAnalysisTests.
 
 from collections import OrderedDict
+from pathlib import Path
 from typing import List
 
-import pytest
-from numpy.testing import assert_equal
-
 import MDAnalysis as mda
-
-from ..datafiles import CGCRD
+import pytest
 from MDAnalysisTests import make_Universe
 from MDAnalysisTests.topology.base import ParserBase
+from numpy.testing import assert_equal
 
 from fluctmatch.topology.CORParser import CORParser
+from ..datafiles import CGCRD
 
 
 class TestCORWriter(object):
@@ -58,8 +57,8 @@ class TestCORWriter(object):
         return mda.Universe(CGCRD)
 
     @pytest.fixture()
-    def outfile(self, tmpdir):
-        return str(tmpdir) + '/out.cor'
+    def outfile(self, tmpdir) -> Path:
+        return Path(tmpdir) / 'out.cor'
 
     def test_roundtrip(self, u, outfile):
         # Write out a copy of the Universe, and compare this against the original
