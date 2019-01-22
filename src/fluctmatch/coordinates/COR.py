@@ -39,13 +39,13 @@
 import itertools
 import logging
 import warnings
-from typing import Mapping, Optional, Any, List, Generator
+from pathlib import Path
+from typing import ClassVar, Dict, Mapping, Optional, Any, List, Generator, Union
 
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.coordinates import CRD
 from MDAnalysis.exceptions import NoDataError
-from MDAnalysis.lib import util
 
 logger = logging.getLogger(__name__)
 
@@ -57,19 +57,22 @@ class CORReader(CRD.CRDReader):
        Now returns a ValueError instead of FormatError.
        Frames now 0-based instead of 1-based.
     """
-    format: str = "COR"
-    units: Mapping[str, Optional[str]] = {"time": None, "length": "Angstrom"}
+    format: ClassVar[str] = "COR"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(time=None,
+                                                        length="Angstrom")
 
-    def __init__(self, filename, convert_units=None, n_atoms=None, **kwargs):
+    def __init__(self, filename: Union[str, Path], convert_units: bool=None,
+                 n_atoms: int=None, **kwargs: Mapping):
         super().__init__(filename, convert_units, n_atoms, **kwargs)
 
     @staticmethod
-    def parse_n_atoms(filename, **kwargs):
-        with open(filename, "r") as crdfile:
+    def parse_n_atoms(filename: Union[str, Path], **kwargs: Mapping) -> int:
+        n_atoms: int
+        with open(filename) as crdfile:
             for linenum, line in enumerate(crdfile):
                 if line.strip().startswith('*') or line.strip() == "":
                     continue  # ignore TITLE and empty lines
-                fields = line.split()
+                fields: List[str] = line.split()
                 if len(fields) <= 2:
                     # should be the natoms line
                     n_atoms: int = int(fields[0])
@@ -94,10 +97,10 @@ class CORWriter(CRD.CRDWriter):
     .. versionchanged:: 0.11.0
        Frames now 0-based instead of 1-based
     """
-    format: str = "COR"
-    units: Mapping[str, Optional[str]] = {"time": None, "length": "Angstrom"}
+    format: ClassVar[str] = "COR"
+    units: ClassVar[Dict[str, Optional[str]]] = {"time": None, "length": "Angstrom"}
 
-    fmt: Mapping[str, str] = dict(
+    fmt: Dict[str, str] = dict(
         # crdtype = "extended"
         # fortran_format = "(2I10,2X,A8,2X,A8,3F20.10,2X,A8,2X,A8,F20.10)"
         ATOM_EXT=("{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
@@ -113,7 +116,7 @@ class CORWriter(CRD.CRDWriter):
         NUMATOMS="{0:5d}",
     )
 
-    def __init__(self, filename: str, **kwargs):
+    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
         """
         Parameters
         ----------
@@ -122,10 +125,11 @@ class CORWriter(CRD.CRDWriter):
         """
         super().__init__(filename, **kwargs)
 
-        self.filename: str = util.filename(filename, ext="cor")
+        self.filename: Path = Path(filename).with_suffix(".cor")
         self.crd: Optional[str] = None
 
-    def write(self, selection: mda.Universe, frame: Optional[int]=None):
+    def write(self, selection: Union[mda.Universe, mda.AtomGroup],
+              frame: Optional[int]=None):
         """Write selection at current trajectory frame to file.
 
         write(selection,frame=FRAME)
@@ -138,9 +142,9 @@ class CORWriter(CRD.CRDWriter):
             u.trajectory[frame]  # advance to frame
         else:
             try:
-                frame = u.trajectory.ts.frame
+                frame: int = u.trajectory.ts.frame
             except AttributeError:
-                frame = 0
+                frame: int = 0
 
         atoms: mda.AtomGroup = selection.atoms
         coor: np.ndarray = atoms.positions
@@ -155,7 +159,7 @@ class CORWriter(CRD.CRDWriter):
         totres_len: int = 10
 
         # Check for attributes, use defaults for missing ones
-        attrs: Mapping[str, Any] = {}
+        attrs: Dict[str, Any] = {}
         missing_topology: List[Any] = []
         for attr, default in (
             ("resnames", itertools.cycle(("UNK",))),
@@ -175,18 +179,18 @@ class CORWriter(CRD.CRDWriter):
         except (NoDataError, AttributeError):
             # try looking for segids instead
             try:
-                attrs["chainIDs"]: str = atoms.chainIDs
+                attrs["chainIDs"]: np.ndarray = atoms.chainIDs
             except (NoDataError, AttributeError):
                 attrs["chainIDs"]: Generator = itertools.cycle(("", ))
                 missing_topology.append(attr)
         if missing_topology:
             miss: str = ", ".join(missing_topology)
-            warnings.warn("Supplied AtomGroup was missing the following "
-                          "attributes: {miss}. These will be written with "
-                          "default values.".format(miss=miss))
-            logger.warning("Supplied AtomGroup was missing the following "
-                           "attributes: {miss}. These will be written with "
-                           "default values.".format(miss=miss))
+            warnings.warn(f"Supplied AtomGroup was missing the following "
+                          f"attributes: {miss}. These will be written with "
+                          f"default values.")
+            logger.warning(f"Supplied AtomGroup was missing the following "
+                           f"attributes: {miss}. These will be written with "
+                           f"default values.")
 
         with open(self.filename, "w") as crd:
             # Write Title
