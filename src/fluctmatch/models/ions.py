@@ -36,7 +36,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes defining various ion types."""
 
-from typing import List, MutableMapping
+from typing import ClassVar, List, MutableMapping
 
 from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
@@ -46,14 +46,11 @@ from .selection import *
 
 class SolventIons(ModelBase):
     """Select ions within the solvent."""
-    model: str = "SOLVENTIONS"
-    describe: str = "Common ions within solvent (Li K Na F Cl Br I)"
+    model: ClassVar[str] = "SOLVENTIONS"
+    describe: ClassVar[str] = "Common ions within solvent (Li K Na F Cl Br I)"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -79,14 +76,11 @@ class SolventIons(ModelBase):
 
 class BioIons(ModelBase):
     """Select ions normally found within biological systems."""
-    model: str = "BIOIONS"
-    describe: str = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
+    model: ClassVar[str] = "BIOIONS"
+    describe: ClassVar[str] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -112,14 +106,11 @@ class BioIons(ModelBase):
 
 class NobleAtoms(ModelBase):
     """Select atoms column VIII of the periodic table."""
-    model: str = "NOBLE"
-    describe: str = "Noble gases (He Ne Kr Xe)"
+    model: ClassVar[str] = "NOBLE"
+    describe: ClassVar[str] = "Noble gases (He Ne Kr Xe)"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 

@@ -36,7 +36,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes for various protein models."""
 
-from typing import List, Tuple, Mapping
+from typing import ClassVar, List, Tuple, Mapping
 
 from MDAnalysis.core.topologyattrs import Bonds
 
@@ -46,14 +46,11 @@ from .selection import *
 
 class Calpha(ModelBase):
     """Universe defined by the protein C-alpha."""
-    model: str = "CALPHA"
-    describe: str = "C-alpha of a protein"
+    model: ClassVar[str] = "CALPHA"
+    describe: ClassVar[str] = "C-alpha of a protein"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -74,14 +71,11 @@ class Calpha(ModelBase):
 
 class Caside(ModelBase):
     """Universe consisting of the C-alpha and sidechains of a protein."""
-    model: str = "CASIDE"
-    describe: str = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
+    model: ClassVar[str] = "CASIDE"
+    describe: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -111,14 +105,11 @@ class Caside(ModelBase):
 
 class Ncsc(ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
-    model: str = "NCSC"
-    describe: str = "c.o.m./c.o.g. of N, O, and sidechain of protein"
+    model: ClassVar[str] = "NCSC"
+    describe: ClassVar[str] = "c.o.m./c.o.g. of N, O, and sidechain of protein"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -162,14 +153,11 @@ class Ncsc(ModelBase):
 
 class Polar(Ncsc):
     """Universe consisting of the amine, carboxyl, and polar regions."""
-    model: str = "POLAR"
-    describe: str = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
+    model: ClassVar[str] = "POLAR"
+    describe: ClassVar[str] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 

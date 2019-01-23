@@ -33,6 +33,7 @@
 """Tests for different solvent models."""
 
 import MDAnalysis as mda
+import pytest
 from numpy import testing
 
 from fluctmatch.models import solvent
@@ -40,204 +41,199 @@ from fluctmatch.models.selection import *
 from ..datafiles import TIP3P, TIP4P, DMA
 
 
-def test_water_from_tip3p_creation():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Water()
-    water.create_topology(aa_universe)
+class TestWater:
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(TIP3P)
 
-    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
-                       for selection in water._mapping.values())
+    @pytest.fixture()
+    def system(self) -> solvent.Water:
+        return solvent.Water()
 
-    testing.assert_equal(water.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
+    def test_creation(self, u: mda.Universe, system: solvent.Water):
+        system.create_topology(u)
 
+        n_atoms: int = sum(u.select_atoms(select).residues.n_residues
+                           for select in system._mapping.values())
 
-def test_water_from_tip3p_positions():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
+        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                             err_msg="Number of sites don't match.")
 
-    positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("water").residues
-        for selection in water._mapping.values()
-        if _.atoms.select_atoms(selection)
-    ])
+    def test_positions(self, u: mda.Universe, system: solvent.Water):
+        cg_universe: mda.Universe = system.transform(u)
 
-    testing.assert_allclose(
-        np.asarray(positions),
-        cg_universe.atoms.positions,
-        err_msg="The coordinates do not match.",
-    )
+        positions: np.ndarray = np.asarray([
+            _.atoms.select_atoms(select).center_of_mass()
+            for _ in u.select_atoms("water").residues
+            for select in system._mapping.values()
+            if _.atoms.select_atoms(select)
+        ])
 
+        testing.assert_allclose(
+            np.asarray(positions),
+            cg_universe.atoms.positions,
+            err_msg="The coordinates do not match.",
+        )
 
-def test_water_from_tip3p_bonds():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
+    def test_bonds(self, u: mda.Universe, system: solvent.Water):
+        aa_universe: mda.Universe = mda.Universe(TIP3P)
+        water: solvent.Water = solvent.Water()
+        cg_universe: mda.Universe = water.transform(aa_universe)
 
-    testing.assert_equal(len(cg_universe.bonds), 0,
-                         err_msg="No bonds should exist.")
+        testing.assert_equal(len(cg_universe.bonds), 0,
+                             err_msg="No bonds should exist.")
 
+    def test_mass(self, u: mda.Universe, system: solvent.Water):
+        cg_universe: mda.Universe = system.transform(u)
 
-def test_water_mass():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
+        masses: np.ndarray = np.fromiter([
+            _.atoms.select_atoms(select).total_mass()
+            for _ in u.select_atoms("water").residues
+            for select in system._selection.values()
+            if _.atoms.select_atoms(select)
+        ], dtype=np.float32)
 
-    masses: np.ndarray = np.fromiter([
-        _.atoms.select_atoms(selection).total_mass()
-        for _ in aa_universe.select_atoms("water").residues
-        for selection in water._selection.values()
-        if _.atoms.select_atoms(selection)
-    ], dtype=np.float32)
+        testing.assert_allclose(cg_universe.atoms.masses, masses,
+                                err_msg="The masses do not match.")
 
-    testing.assert_allclose(cg_universe.atoms.masses, masses,
-                            err_msg="The masses do not match.")
+    def test_charges(self, u: mda.Universe, system: solvent.Water):
+        cg_universe: mda.Universe = system.transform(u)
 
+        testing.assert_allclose(cg_universe.atoms.charges,
+                                np.zeros(cg_universe.atoms.n_atoms),
+                                err_msg="The masses do not match.")
 
-def test_water_charges():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
+    def test_creation_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+        system.create_topology(u)
 
-    testing.assert_allclose(cg_universe.atoms.charges,
-                            np.zeros(cg_universe.atoms.n_atoms),
-                            err_msg="The masses do not match.")
+        n_atoms: int = sum(u.select_atoms(select).residues.n_residues
+                           for select in system._mapping.values())
 
+        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                             err_msg="Number of sites don't match.")
 
-def test_water_from_tip4p_creation():
-    aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Water()
-    water.create_topology(aa_universe)
+    def test_positions_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+        cg_universe: mda.Universe = system.transform(u)
 
-    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
-                       for selection in water._mapping.values())
+        positions: np.ndarray = np.asarray([
+            _.atoms.select_atoms(select).center_of_mass()
+            for _ in u.select_atoms("water").residues
+            for select in system._mapping.values()
+            if _.atoms.select_atoms(select)
+        ])
 
-    testing.assert_equal(water.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
+        testing.assert_allclose(
+            np.asarray(positions),
+            cg_universe.atoms.positions,
+            err_msg="The coordinates do not match.",
+        )
 
+    def test_bonds_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+        cg_universe: mda.Universe = system.transform(u)
 
-def test_water_from_tip4p_positions():
-    aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
-
-    positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("water").residues
-        for selection in water._mapping.values()
-        if _.atoms.select_atoms(selection)
-    ])
-
-    testing.assert_allclose(
-        np.asarray(positions),
-        cg_universe.atoms.positions,
-        err_msg="The coordinates do not match.",
-    )
+        testing.assert_equal(len(cg_universe.bonds), 0,
+                             err_msg="No bonds should exist.")
 
 
-def test_water_from_tip4p_bonds():
-    aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Water()
-    cg_universe: mda.Universe = water.transform(aa_universe)
+class TestTip3p:
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(TIP3P)
 
-    testing.assert_equal(len(cg_universe.bonds), 0,
-                         err_msg="No bonds should exist.")
+    @pytest.fixture()
+    def system(self) -> solvent.Tip3p:
+        return solvent.Tip3p()
 
-
-def test_tip3p_creation():
-    aa_universe: mda.Universe = mda.Universe(TIP3P)
-    water: solvent.Water = solvent.Tip3p()
-    water.create_topology(aa_universe)
-
-    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
-                       for selection in water._mapping.values())
-
-    testing.assert_equal(water.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
-
-
-def test_tip3p_positions():
-    aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Tip3p()
-    cg_universe: mda.Universe = water.transform(aa_universe)
-
-    positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("water").residues
-        for selection in water._mapping.values()
-        if _.atoms.select_atoms(selection)
-    ])
-
-    testing.assert_allclose(
-        np.asarray(positions),
-        cg_universe.atoms.positions,
-        err_msg="The coordinates do not match.",
-    )
-
-
-def test_tip3p_bonds():
-    aa_universe: mda.Universe = mda.Universe(TIP4P)
-    water: solvent.Water = solvent.Tip3p()
-    cg_universe: mda.Universe = water.transform(aa_universe)
-
-    testing.assert_equal(len(cg_universe.bonds),
-                         water.universe.residues.n_residues * 3,
-                         err_msg="Expected and actual number of bonds not equal")
-    testing.assert_equal(len(cg_universe.angles),
-                         water.universe.residues.n_residues * 3,
-                         err_msg="Expected and actual number of angles not equal")
-    testing.assert_equal(len(cg_universe.dihedrals), 0,
-                         err_msg="No dihedral angles should exist.")
-    testing.assert_equal(len(cg_universe.impropers), 0,
-                         err_msg="No improper dihedral angles should exist.")
+    def test_creation(self, u: mda.Universe, system: solvent.Tip3p):
+        system.create_topology(u)
+    
+        n_atoms: int = sum(u.select_atoms(select).residues.n_residues
+                           for select in system._mapping.values())
+    
+        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                             err_msg="Number of sites don't match.")
+    
+    def test_tip3p_positions(self, u: mda.Universe, system: solvent.Tip3p):
+        cg_universe: mda.Universe = system.transform(u)
+    
+        positions: np.ndarray = np.asarray([
+            _.atoms.select_atoms(select).center_of_mass()
+            for _ in u.select_atoms("water").residues
+            for select in system._mapping.values()
+            if _.atoms.select_atoms(select)
+        ])
+    
+        testing.assert_allclose(
+            np.asarray(positions),
+            cg_universe.atoms.positions,
+            err_msg="The coordinates do not match.",
+        )
+    
+    def test_tip3p_bonds(self, u: mda.Universe, system: solvent.Tip3p):
+        cg_universe: mda.Universe = system.transform(u)
+    
+        testing.assert_equal(len(cg_universe.bonds),
+                             system.universe.residues.n_residues * 3,
+                             err_msg=("Expected and actual number of bonds "
+                                      "not equal"))
+        testing.assert_equal(len(cg_universe.angles),
+                             system.universe.residues.n_residues * 3,
+                             err_msg=("Expected and actual number of angles "
+                                      "not equal"))
+        testing.assert_equal(len(cg_universe.dihedrals), 0,
+                             err_msg="No dihedral angles should exist.")
+        testing.assert_equal(len(cg_universe.impropers), 0,
+                             err_msg=("No improper dihedral angles "
+                                      "should exist."))
 
 
-def test_dma_creation():
-    aa_universe: mda.Universe = mda.Universe(DMA)
-    dma: solvent.Dma = solvent.Dma()
-    dma.create_topology(aa_universe)
+class TestDma:
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(DMA)
 
-    n_atoms: int = sum(aa_universe.select_atoms(selection).residues.n_residues
-                       for selection in dma._mapping.values())
+    @pytest.fixture()
+    def system(self) -> solvent.Dma:
+        return solvent.Dma()
 
-    testing.assert_equal(dma.universe.atoms.n_atoms, n_atoms,
-                         err_msg="Number of sites don't match.", verbose=True)
-
-
-def test_dma_positions():
-    aa_universe: mda.Universe = mda.Universe(DMA)
-    dma: solvent.Dma = solvent.Dma()
-    cg_universe: mda.Universe = dma.transform(aa_universe)
-
-    positions: np.ndarray = np.asarray([
-        _.atoms.select_atoms(selection).center_of_mass()
-        for _ in aa_universe.select_atoms("resname DMA").residues
-        for selection in dma._mapping.values()
-        if _.atoms.select_atoms(selection)
-    ])
-
-    testing.assert_allclose(
-        positions, cg_universe.atoms.positions,
-        err_msg="The coordinates do not match.",
-    )
-
-
-def test_dma_bonds():
-    aa_universe: mda.Universe = mda.Universe(DMA)
-    dma: solvent.Water = solvent.Dma()
-    cg_universe: mda.Universe = dma.transform(aa_universe)
-
-    testing.assert_equal(len(cg_universe.bonds),
-                         dma.universe.residues.n_residues * 3,
-                         err_msg="Expected and actual number of bonds not equal")
-    testing.assert_equal(len(cg_universe.angles),
-                         dma.universe.residues.n_residues * 3,
-                         err_msg="Expected and actual number of angles not equal")
-    testing.assert_equal(len(cg_universe.dihedrals), 0,
-                         err_msg="No dihedral angles should exist.")
-    testing.assert_equal(len(cg_universe.impropers),
-                         dma.universe.residues.n_residues * 3,
-                         err_msg=("Expected and actual number of improper "
-                                  "dihedral angles not equal."))
+    def test_creation(self, u: mda.Universe, system: solvent.Dma):
+        system.create_topology(u)
+    
+        n_atoms: int = sum(u.select_atoms(select).residues.n_residues
+                           for select in system._mapping.values())
+    
+        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                             err_msg="Number of sites don't match.")
+    
+    def test_positions(self, u: mda.Universe, system: solvent.Dma):
+        cg_universe: mda.Universe = system.transform(u)
+    
+        positions: np.ndarray = np.asarray([
+            _.atoms.select_atoms(select).center_of_mass()
+            for _ in u.select_atoms("resname DMA").residues
+            for select in system._mapping.values()
+            if _.atoms.select_atoms(select)
+        ])
+    
+        testing.assert_allclose(
+            positions, cg_universe.atoms.positions,
+            err_msg="The coordinates do not match.",
+        )
+    
+    def test_bonds(self, u: mda.Universe, system: solvent.Dma):
+        cg_universe: mda.Universe = system.transform(u)
+    
+        testing.assert_equal(len(cg_universe.bonds),
+                             system.universe.residues.n_residues * 3,
+                             err_msg=("Expected and actual number of bonds "
+                                      "not equal"))
+        testing.assert_equal(len(cg_universe.angles),
+                             system.universe.residues.n_residues * 3,
+                             err_msg=("Expected and actual number of angles "
+                                      "not equal"))
+        testing.assert_equal(len(cg_universe.dihedrals), 0,
+                             err_msg="No dihedral angles should exist.")
+        testing.assert_equal(len(cg_universe.impropers),
+                             system.universe.residues.n_residues * 3,
+                             err_msg=("Expected and actual number of improper "
+                                      "dihedral angles not equal."))

@@ -36,7 +36,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes for various nucleic acid models."""
 
-from typing import List, Tuple, Mapping
+from typing import ClassVar, List, Tuple, Mapping
 
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds, Charges
@@ -47,14 +47,11 @@ from .selection import *
 
 class Nucleic3(ModelBase):
     """A universe the phosphate, sugar, and base of the nucleic acid."""
-    model: str = "NUCLEIC3"
-    describe: str = "Phosohate, sugar, and nucleotide of nucleic acid"
+    model: ClassVar[str] = "NUCLEIC3"
+    describe: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -93,15 +90,12 @@ class Nucleic3(ModelBase):
 
 class Nucleic4(ModelBase):
     """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
-    model: str = "NUCLEIC4"
-    describe: str = ("Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of "
+    model: ClassVar[str] = "NUCLEIC4"
+    describe: ClassVar[str] = ("Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of "
                      "nucleic acid")
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -147,14 +141,11 @@ class Nucleic4(ModelBase):
 
 class Nucleic6(ModelBase):
     """A universe accounting for six sites involved with hydrogen bonding."""
-    model: str = "NUCLEIC6"
-    describe: str = "Phosphate, C2', C4', and 3 sites on the nucleotide"
+    model: ClassVar[str] = "NUCLEIC6"
+    describe: ClassVar[str] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 

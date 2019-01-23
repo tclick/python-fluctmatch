@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,40 +28,33 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
 
-from collections import defaultdict
-from typing import ClassVar, Iterable, List, Mapping, Union
+import MDAnalysis as mda
+import pytest
+from numpy import testing
 
-import numpy as np
-from MDAnalysis.core.groups import Atom, Residue, Segment, ComponentBase
-from MDAnalysis.core.topologyattrs import Atomtypes
+from fluctmatch.models import core, protein
+from ..datafiles import TPR, XTC
 
 
-class XplorTypes(Atomtypes):
-    """String types for atoms used for XPLOR-PSF."""
-    attriname: ClassVar[str] = "xplortypes"
-    singular: ClassVar[str] = "xplortype"
-    target_classes: ClassVar[List[ComponentBase]] = [Atom, Residue, Segment]
-    per_object: ClassVar[str] = "atom"
-    transplants: ClassVar[Mapping[List]] = defaultdict(list)
+class TestModeller:
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(TPR, XTC)
 
-    def __init__(self, values: Union[Iterable, np.ndarray],
-                 guessed: bool=False):
-        super().__init__(values, guessed)
+    @pytest.fixture()
+    def u2(self) -> mda.Universe:
+        return core.modeller(TPR, XTC)
 
+    @pytest.fixture()
+    def system(self) -> protein.Polar:
+        return protein.Polar()
 
-class NumTypes(Atomtypes):
-    """Number types for atoms used for PSF."""
-    attriname: ClassVar[str] = "numtypes"
-    singular: ClassVar[str] = "numtype"
-    target_classes: ClassVar[List[ComponentBase]] = [Atom, Residue, Segment]
-    per_object: ClassVar[str] = "atom"
-    transplants: ClassVar[Mapping[List]] = defaultdict(list)
+    def test_creation(self, u: mda.Universe, u2: mda.Universe,
+                      system: protein.Polar):
+        u3 = system.transform(u)
 
-    def __init__(self, values: Union[Iterable, np.ndarray],
-                 guessed: bool=False):
-        super().__init__(values, guessed)
+        testing.assert_raises(AssertionError, testing.assert_equal,
+                              (u.atoms.n_atoms,), (u2.atoms.n_atoms,))
+        testing.assert_equal(u2.atoms.names, u3.atoms.names,
+                             err_msg="Universes don't match.")

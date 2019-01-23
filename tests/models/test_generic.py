@@ -34,36 +34,49 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Tests for various protein models."""
 
-from collections import defaultdict
-from typing import ClassVar, Iterable, List, Mapping, Union
+import MDAnalysis as mda
+import pytest
+from numpy import testing
 
-import numpy as np
-from MDAnalysis.core.groups import Atom, Residue, Segment, ComponentBase
-from MDAnalysis.core.topologyattrs import Atomtypes
-
-
-class XplorTypes(Atomtypes):
-    """String types for atoms used for XPLOR-PSF."""
-    attriname: ClassVar[str] = "xplortypes"
-    singular: ClassVar[str] = "xplortype"
-    target_classes: ClassVar[List[ComponentBase]] = [Atom, Residue, Segment]
-    per_object: ClassVar[str] = "atom"
-    transplants: ClassVar[Mapping[List]] = defaultdict(list)
-
-    def __init__(self, values: Union[Iterable, np.ndarray],
-                 guessed: bool=False):
-        super().__init__(values, guessed)
+from fluctmatch.models import generic
+from fluctmatch.models.selection import *
+from ..datafiles import DMA
 
 
-class NumTypes(Atomtypes):
-    """Number types for atoms used for PSF."""
-    attriname: ClassVar[str] = "numtypes"
-    singular: ClassVar[str] = "numtype"
-    target_classes: ClassVar[List[ComponentBase]] = [Atom, Residue, Segment]
-    per_object: ClassVar[str] = "atom"
-    transplants: ClassVar[Mapping[List]] = defaultdict(list)
+class TestGeneric:
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(DMA)
 
-    def __init__(self, values: Union[Iterable, np.ndarray],
-                 guessed: bool=False):
-        super().__init__(values, guessed)
+    @pytest.fixture()
+    def system(self) -> generic.Generic:
+        return generic.Generic()
+
+    def test_creation(self, u: mda.Universe, system: generic.Generic):
+        system.create_topology(u)
+
+        n_atoms = u.select_atoms(system._mapping).n_atoms
+        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
+                             err_msg="Number of sites don't match.")
+
+    def test_positions(self, u: mda.Universe, system: generic.Generic):
+        cg_universe: mda.Universe = system.transform(u)
+
+        positions: np.ndarray = u.select_atoms(system._mapping).positions
+
+        testing.assert_allclose(cg_universe.atoms.positions, positions,
+                                err_msg="The coordinates do not match.")
+
+    def test_trajectory(self, u: mda.Universe, system: generic.Generic):
+        cg_universe: mda.Universe = system.transform(u)
+
+        testing.assert_equal(
+            cg_universe.trajectory.n_frames, u.trajectory.n_frames,
+            err_msg="All-atom and coarse-grain trajectories unequal.")
+
+    def test_bonds(self, u: mda.Universe, system: generic.Generic):
+        cg_universe: mda.Universe = system.transform(u)
+
+        assert len(cg_universe.bonds) > 0

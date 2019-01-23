@@ -51,7 +51,6 @@ from MDAnalysis.core.topologyattrs import (
     Atomids, Atomnames, Atomtypes, Charges, Masses, Radii, Resids, Resnames,
     Resnums, Segids, TopologyAttr, Angles, Dihedrals, Impropers)
 from MDAnalysis.core.topologyobjects import TopologyGroup
-from MDAnalysis.coordinates.base import ProtoReader
 from MDAnalysis.coordinates.memory import MemoryReader
 from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
@@ -212,8 +211,7 @@ class ModelBase(abc.ABC):
         self._add_charges(universe)
 
     def generate_bonds(self):
-        """Generate connectivity information for the new system.
-        """
+        """Generate connectivity information for the new system."""
         if not hasattr(self, "universe"):
             raise AttributeError("Topologies need to be created before bonds "
                                  "can be added.")
@@ -238,9 +236,8 @@ class ModelBase(abc.ABC):
         if not hasattr(universe, "trajectory"):
             raise AttributeError("The provided universe does not have "
                                  "coordinates defined.")
-        univ_traj: ProtoReader = universe.trajectory
-        univ_traj.rewind()
-        universe.trajectory.rewind()
+        trajectory = universe.trajectory
+        trajectory.rewind()
 
         selections: Generator = itertools.product(universe.residues,
                                                   self._mapping.values())
@@ -254,50 +251,55 @@ class ModelBase(abc.ABC):
                 bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
             beads.append(bead)
 
-        coordinate_array: List[np.ndarray] = []
+        trajectory2 = self.universe.trajectory
+        trajectory2.ts.has_positions = trajectory.ts.has_positions
+        trajectory2.ts.has_velocities = trajectory.ts.has_velocities
+        trajectory2.ts.has_forces = trajectory.ts.has_forces
+
+        position_array: List[np.ndarray] = []
         velocity_array: List[np.ndarray] = []
         force_array: List[np.ndarray] = []
-        dimensions_array: List[np.ndarray] = []
-        for ts in univ_traj:
-            dimensions_array.append(ts._unitcell)
+        dimension_array: List[np.ndarray] = []
+        for ts in trajectory:
+            dimension_array.append(ts.dimensions)
 
             # Positions
-            if self.universe.trajectory.ts.has_positions and ts.has_positions:
-                coordinates = [
+            try:
+                positions = [
                     bead.center_of_mass()
                     if self._com
                     else bead.center_of_geometry()
                     for bead in beads
                     if bead
                 ]
-                coordinate_array.append(np.asarray(coordinates))
+                position_array.append(np.asarray(positions))
+            except (AttributeError, mda.NoDataError):
+                pass
 
             # Velocities
-            if self.universe.trajectory.ts.has_velocities and ts.has_velocities:
-                try:
-                    velocities = [bead.velocities for bead in beads if bead]
-                    velocity_array.append(np.asarray(velocities))
-                except ValueError:
-                    pass
+            try:
+                velocities = [bead.velocities for bead in beads if bead]
+                velocity_array.append(np.asarray(velocities))
+            except (AttributeError, mda.NoDataError):
+                pass
 
             # Forces
-            if self.universe.trajectory.ts.has_forces and ts.has_forces:
-                try:
-                    forces = [bead.velocities for bead in beads if bead]
-                    force_array.append(np.asarray(forces))
-                except ValueError:
-                    pass
+            try:
+                forces = [bead.velocities for bead in beads if bead]
+                force_array.append(np.asarray(forces))
+            except (AttributeError, mda.NoDataError):
+                pass
 
-        self.universe.trajectory.dimensions_array: np.ndarray = np.asarray(
-            dimensions_array)
-        if self.universe.trajectory.ts.has_positions:
-            coordinate_array: np.ndarray = np.asarray(coordinate_array)
-            self.universe.load_new(coordinate_array, format=MemoryReader)
-        if self.universe.trajectory.ts.has_velocities:
-            self.universe.trajectory.velocity_array: np.ndarray = np.asarray(
+        trajectory2.dimensions_array: np.ndarray = np.asarray(dimension_array)
+        if trajectory2.ts.has_positions:
+            position_array: np.ndarray = np.asarray(position_array)
+            self.universe.load_new(position_array, format=MemoryReader,
+                                   dimensions=dimension_array)
+        if trajectory2.ts.has_velocities:
+            trajectory2.velocity_array: np.ndarray = np.asarray(
                 velocity_array)
-        if self.universe.trajectory.ts.has_forces:
-            self.universe.trajectory.force_array: np.ndarray = np.asarray(
+        if trajectory2.ts.has_forces:
+            trajectory2.force_array: np.ndarray = np.asarray(
                 force_array)
         universe.trajectory.rewind()
 
@@ -331,11 +333,16 @@ class ModelBase(abc.ABC):
         select_residues: Generator = itertools.product(residues,
                                                        self._selection.values())
 
-        masses: np.ndarray = np.fromiter([
-            res.select_atoms(selection).total_mass()
-            for res, selection in select_residues
-            if res.select_atoms(selection)
-        ], dtype=np.float32)
+        try:
+            masses: np.ndarray = np.fromiter([
+                res.select_atoms(selection).total_mass()
+                for res, selection in select_residues
+                if res.select_atoms(selection)
+            ], dtype=np.float32)
+        except (AttributeError, mda.NoDataError):
+            masses: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
+                                          dtype=np.float32)
+
         self.universe.add_TopologyAttr(Masses(masses))
 
     def _add_charges(self, universe: mda.Universe):
@@ -349,7 +356,7 @@ class ModelBase(abc.ABC):
                 for res, selection in select_residues
                 if res.select_atoms(selection)
             ], dtype=np.float32)
-        except AttributeError:
+        except (AttributeError, mda.NoDataError):
             charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
                                            dtype=np.float32)
 
@@ -400,62 +407,64 @@ def Merge(*args: MDUniverse) -> mda.Universe:
 
     # Merge universes
     universe: mda.Universe = mda.Merge(*[u.atoms for u in args])
+    trajectory: mda._READERS[universe.trajectory.format] = universe.trajectory
 
     # Merge coordinates
     for u in args:
         u.trajectory.rewind()
 
     universe1: mda.Universe = args[0]
-    universe.trajectory.ts.has_velocities: bool = (
-        universe1.trajectory.ts.has_velocities
+    trajectory1 = universe1.trajectory
+    trajectory.ts.has_velocities: bool = (
+        trajectory1.ts.has_velocities
     )
-    universe.trajectory.ts.has_forces: bool = universe1.trajectory.ts.has_forces
+    trajectory.ts.has_forces: bool = trajectory1.ts.has_forces
     frames: np.ndarray = np.fromiter(
-        [u.trajectory.n_frames == universe1.trajectory.n_frames for u in args],
+        [u.trajectory.n_frames == trajectory1.n_frames for u in args],
         dtype=bool)
     if not all(frames):
         msg: str = "The trajectories are not the same length."
         logger.error(msg)
         raise ValueError(msg)
 
-    dimensions_array: np.ndarray = (np.mean(
-        universe1.trajectory.dimensions_array, axis=0) if hasattr(
-            universe1.trajectory, "dimensions_array") else np.asarray(
-                [ts.triclinic_dimensions for ts in universe1.trajectory]))
+    dimensions: np.ndarray = (
+        trajectory1.dimensions_array
+        if hasattr(trajectory1, "dimensions_array")
+        else np.asarray([ts.dimensions for ts in trajectory1]))
 
-    universe1.universe.trajectory.rewind()
-    if universe1.universe.trajectory.n_frames > 1:
-        coordinates: List[List[np.ndarray]] = []
+    trajectory1.rewind()
+    if trajectory1.n_frames > 1:
+        positions: List[List[np.ndarray]] = []
         velocities: List[List[np.ndarray]] = []
         forces: List[List[np.ndarray]] = []
 
         # Accumulate coordinates, velocities, and forces.
         for u in args:
-            coordinates.append(
+            positions.append(
                 [ts.positions for ts in u.trajectory if ts.has_positions])
             velocities.append(
                 [ts.velocities for ts in u.trajectory if ts.has_velocities])
             forces.append([ts.forces for ts in u.trajectory if ts.has_forces])
 
-        if universe.trajectory.ts.has_positions:
-            coordinates: np.ndarray = np.concatenate(coordinates, axis=1)
-            if universe.atoms.n_atoms != coordinates.shape[1]:
+        if trajectory.ts.has_positions:
+            positions: np.ndarray = np.concatenate(positions, axis=1)
+            if universe.atoms.n_atoms != positions.shape[1]:
                 msg = ("The number of sites does not match the number of "
                        "coordinates.")
                 logger.error(msg)
                 raise RuntimeError(msg)
-            n_frames, n_beads, _ = coordinates.shape
+            n_frames, n_beads, _ = positions.shape
             logger.info(f"The new universe has {n_beads:d} beads in "
                         f"{n_frames:d} frames.")
+            universe.load_new(positions, format=MemoryReader,
+                              dimensions=dimensions)
 
-            universe.load_new(coordinates, format=MemoryReader)
-            universe.trajectory.dimensions_array = dimensions_array.copy()
-        if universe.trajectory.ts.has_velocities:
+        if trajectory.ts.has_velocities:
             velocities: np.ndarray = np.concatenate(velocities, axis=1)
-            universe.trajectory.velocity_array: np.ndarray = velocities.copy()
-        if universe.trajectory.ts.has_forces:
+            trajectory.velocity_array: np.ndarray = velocities.copy()
+        if trajectory.ts.has_forces:
             forces: np.ndarray = np.concatenate(forces, axis=1)
-            universe.trajectory.force_array: np.ndarray = forces.copy()
+            trajectory.force_array: np.ndarray = forces.copy()
 
     return universe
 

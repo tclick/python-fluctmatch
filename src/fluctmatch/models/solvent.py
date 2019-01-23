@@ -36,7 +36,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Tests for solvent ion model."""
 
-from typing import List, Mapping, Tuple
+from typing import ClassVar, List, Mapping, Tuple
 
 import numpy as np
 from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
@@ -46,14 +46,11 @@ from .base import ModelBase
 
 class Water(ModelBase):
     """Create a universe consisting of the water oxygen."""
-    model: str = "WATER"
-    describe: str = "c.o.m./c.o.g. of whole water molecule"
+    model: ClassVar[str] = "WATER"
+    describe: ClassVar[str] = "c.o.m./c.o.g. of whole water molecule"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -72,14 +69,11 @@ class Water(ModelBase):
 
 class Tip3p(ModelBase):
     """Create a universe containing all three water atoms."""
-    model: str = "TIP3P"
-    describe: str = "All-atom watter"
+    model: ClassVar[str] = "TIP3P"
+    describe: ClassVar[str] = "All-atom watter"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
@@ -124,14 +118,11 @@ class Tip3p(ModelBase):
 
 class Dma(ModelBase):
     """Create a universe for N-dimethylacetamide."""
-    model: str = "DMA"
-    describe: str = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
+    model: ClassVar[str] = "DMA"
+    describe: ClassVar[str] = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = True,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
                  cutoff: float = 10.0):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 

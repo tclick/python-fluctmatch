@@ -36,7 +36,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Class for elastic network model."""
 
-from typing import List, Optional, Tuple
+from typing import ClassVar, List, Optional, Tuple
 
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Atomtypes, Charges, Bonds
@@ -90,16 +90,12 @@ class Enm(ModelBase):
         The transformed universe
 
     """
-    model: str = "ENM"
-    describe: str = "Elastic network model"
+    model: ClassVar[str] = "ENM"
+    describe: ClassVar[str] = "Elastic network model"
 
-    def __init__(self,
-                 xplor: bool = True,
-                 extended: bool = True,
-                 com: bool = True,
-                 guess_angles: bool = False,
-                 cutoff: float = 10.0,
-                 min_cutoff: Optional[float] = None,
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = False,
+                 cutoff: float = 10.0, min_cutoff: Optional[float] = None,
                  charges: bool = False):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
