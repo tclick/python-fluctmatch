@@ -28,36 +28,3 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-from pathlib import Path
-
-import pytest
-import MDAnalysis as mda
-
-import fluctmatch
-from ..datafiles import CGPSF, CGCRD, STR
-
-
-class TestSTRWriter(object):
-    @pytest.fixture()
-    def u(self) -> mda.Universe:
-        return mda.Universe(CGPSF, CGCRD)
-
-    @pytest.fixture()
-    def outfile(self, tmpdir: str) -> Path:
-        return Path(tmpdir) / "out.stream"
-
-    def test_roundtrip(self, u, outfile):
-        # Write out a copy of the Universe, and compare this against the original
-        # This is more rigorous than simply checking the coordinates as it checks
-        # all formatting
-        u.atoms.write(outfile)
-
-        def STR_iter(fn: str):
-            with open(fn) as inf:
-                for line in inf:
-                    if not line.startswith('*'):
-                        yield line
-
-        for ref, other in zip(STR_iter(STR), STR_iter(outfile)):
-            assert ref == other

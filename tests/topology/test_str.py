@@ -30,47 +30,35 @@
 #
 
 from pathlib import Path
-from typing import Dict
+from typing import Union
 
 import pytest
 import MDAnalysis as mda
-from numpy.testing import assert_allclose
 
-from fluctmatch.parameter.PRM import ParamReader
-from ..datafiles import PRM
+import fluctmatch
+from ..datafiles import CGPSF, CGCRD, STR
 
 
-class TestPRMWriter(object):
+class TestSTRWriter(object):
     @pytest.fixture()
-    def u(self) -> Dict:
-        return ParamReader(PRM).read()
+    def u(self) -> mda.Universe:
+        return mda.Universe(CGPSF, CGCRD)
 
     @pytest.fixture()
     def outfile(self, tmpdir: str) -> Path:
-        return Path(tmpdir) / "out.prm"
+        return Path(tmpdir) / "out.stream"
 
-    def test_parameters(self, u, outfile):
-        with mda.Writer(outfile, nonbonded=True) as ofile:
-            ofile.write(u)
+    def test_roundtrip(self, u: mda.Universe, outfile: Path):
+        # Write out a copy of the Universe, and compare this against the
+        # original.  This is more rigorous than simply checking the coordinates
+        # as it checks all formatting
+        u.atoms.write(outfile)
 
-        u2 = ParamReader(outfile).read()
-        assert_allclose(u["ATOMS"]["mass"], u2["ATOMS"]["mass"],
-                        err_msg="The atomic masses don't match.")
-        assert_allclose(u["BONDS"]["Kb"], u2["BONDS"]["Kb"],
-                        err_msg="The force constants don't match.")
-
-    def test_roundtrip(self, u, outfile):
-        # Write out a copy of the internal coordinates, and compare this against
-        # the original. This is more rigorous as it checks all formatting.
-        with mda.Writer(outfile, nonbonded=True) as ofile:
-            ofile.write(u)
-
-        def PRM_iter(fn: str):
+        def STR_iter(fn: Union[str, Path]):
             with open(fn) as inf:
                 for line in inf:
                     if not line.startswith('*'):
                         yield line
 
-        for ref, other in zip(PRM_iter(PRM), PRM_iter(outfile)):
+        for ref, other in zip(STR_iter(STR), STR_iter(outfile)):
             assert ref == other
-

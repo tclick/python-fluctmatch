@@ -30,11 +30,13 @@
 #
 
 from pathlib import Path
+from typing import ClassVar, List
 
 import pytest
 from numpy.testing import assert_equal
 
 import MDAnalysis as mda
+from MDAnalysis.core.topologyobjects import TopologyObject
 
 from ..datafiles import CGPSF, CGCRD
 from MDAnalysisTests.topology.base import ParserBase
@@ -51,7 +53,7 @@ class TestPSFWriter(object):
     def outfile(self, tmpdir: str) -> Path:
         return Path(tmpdir) / "out.xplor.psf"
 
-    def test_roundtrip(self, u, outfile):
+    def test_roundtrip(self, u: mda.Universe, outfile: Path):
         # Write out a copy of the Universe, and compare this against the original
         # This is more rigorous than simply checking the coordinates as it checks
         # all formatting
@@ -66,7 +68,7 @@ class TestPSFWriter(object):
         for ref, other in zip(PSF_iter(CGPSF), PSF_iter(outfile)):
             assert ref == other
 
-    def test_write_atoms(self, u: mda.Universe, outfile: str):
+    def test_write_atoms(self, u: mda.Universe, outfile: Path):
         # Test that written file when read gives same coordinates
         u.atoms.write(outfile)
 
@@ -79,51 +81,50 @@ class TestPSFParser(ParserBase):
     """
     Based on small PDB with AdK (:data:`PDB_small`).
     """
-    parser: PSFParser.PSF36Parser = PSFParser.PSF36Parser
-    ref_filename = CGPSF
-    expected_attrs = ['ids', 'names', 'types', 'masses',
-                      'charges',
-                      'resids', 'resnames',
-                      'segids',
-                      'bonds', 'angles', 'dihedrals', 'impropers']
-    expected_n_atoms = 330
-    expected_n_residues = 115
-    expected_n_segments = 1
+    parser: ClassVar[PSFParser.PSF36Parser] = PSFParser.PSF36Parser
+    ref_filename: ClassVar[str] = CGPSF
+    expected_attrs: ClassVar[List[str]] = ["ids", "names", "types", "masses",
+                                           "charges", "resids", "resnames",
+                                           "segids", "bonds", "angles", 
+                                           "dihedrals", "impropers"]
+    expected_n_atoms: ClassVar[int] = 330
+    expected_n_residues: ClassVar[int] = 115
+    expected_n_segments: ClassVar[int] = 1
 
-    def test_bonds_total_counts(self, top):
+    def test_bonds_total_counts(self, top: TopologyObject):
         assert len(top.bonds.values) == 429
 
-    def test_bonds_atom_counts(self, filename):
+    def test_bonds_atom_counts(self, filename: str):
         u = mda.Universe(filename)
         assert len(u.atoms[[0]].bonds) == 2
         assert len(u.atoms[[42]].bonds) == 2
 
-    def test_bonds_identity(self, top):
+    def test_bonds_identity(self, top: TopologyObject):
         vals = top.bonds.values
         for b in ((0, 1), (0, 2)):
             assert (b in vals) or (b[::-1] in vals)
 
-    def test_angles_total_counts(self, top):
+    def test_angles_total_counts(self, top: TopologyObject):
         assert len(top.angles.values) == 726
 
-    def test_angles_atom_counts(self, filename):
+    def test_angles_atom_counts(self, filename: str):
         u = mda.Universe(filename)
         assert len(u.atoms[[0]].angles), 4
         assert len(u.atoms[[42]].angles), 6
 
-    def test_angles_identity(self, top):
+    def test_angles_identity(self, top: TopologyObject):
         vals = top.angles.values
         for b in ((1, 0, 2), (0, 1, 2), (0, 2, 3)):
             assert (b in vals) or (b[::-1] in vals)
 
-    def test_dihedrals_total_counts(self, top):
+    def test_dihedrals_total_counts(self, top: TopologyObject):
         assert len(top.dihedrals.values) == 907
 
-    def test_dihedrals_atom_counts(self, filename):
+    def test_dihedrals_atom_counts(self, filename: str):
         u = mda.Universe(filename)
         assert len(u.atoms[[0]].dihedrals) == 4
 
-    def test_dihedrals_identity(self, top):
+    def test_dihedrals_identity(self, top: TopologyObject):
         vals = top.dihedrals.values
         for b in ((0, 1, 2, 3), (0, 2, 3, 4), (0, 2, 3, 5), (1, 0, 2, 3)):
             assert (b in vals) or (b[::-1] in vals)
