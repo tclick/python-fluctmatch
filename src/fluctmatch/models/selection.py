@@ -95,8 +95,9 @@ class HBackboneSelection(BackboneSelection):
 
     def apply(self, group: AtomGroup):
         mask: np.ndarray = np.in1d(group.names,
-                       np.concatenate(
-                           [self.bb_atoms, self.oxy_atoms, self.hbb_atoms]))
+                                   np.concatenate([self.bb_atoms,
+                                                   self.oxy_atoms,
+                                                   self.hbb_atoms]))
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
 
@@ -217,9 +218,9 @@ class HBaseSelection(AdditionalNucleicSelection, selection.BaseSelection):
     def __init__(self, parser, tokens):
         super().__init__(parser, tokens)
         self.base_atoms: np.ndarray = np.concatenate(
-            (self.base_atoms,
-             "O8", "H8", "H21", "H22", "H2", "O6", "H6", "H61", "H62",
-             "H41", "H42", "H5", "H51", "H52", "H53", "H3", "H7"]))
+            (self.base_atoms, ["O8", "H8", "H21", "H22", "H2", "O6", "H6",
+                               "H61", "H62", "H41", "H42", "H5", "H51", "H52",
+                               "H53", "H3", "H7"]))
 
     def apply(self, group: AtomGroup):
         mask: np.ndarray = np.in1d(group.names, self.base_atoms)
