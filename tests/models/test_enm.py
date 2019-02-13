@@ -45,11 +45,11 @@ from ..datafiles import CG_PSF, CG_DCD
 
 
 class TestEnm:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(CG_PSF, CG_DCD)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> enm.Enm:
         return enm.Enm()
     

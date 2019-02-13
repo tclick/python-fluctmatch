@@ -38,15 +38,15 @@ from ..datafiles import TPR, XTC
 
 
 class TestModeller:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u2(self) -> mda.Universe:
         return core.modeller(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> protein.Polar:
         return protein.Polar()
 

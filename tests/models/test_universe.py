@@ -18,11 +18,11 @@
 from typing import Tuple
 
 import MDAnalysis as mda
+import numpy as np
 from numpy import testing
 import pytest
 
 from fluctmatch.models.base import ModelBase, Merge, rename_universe
-from fluctmatch.models.selection import *
 from tests.datafiles import TPR, XTC
 
 
@@ -31,7 +31,7 @@ def test_universe():
 
 
 class TestMerge:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 

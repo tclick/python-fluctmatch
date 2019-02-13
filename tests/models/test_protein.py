@@ -39,20 +39,20 @@
 from typing import List
 
 import MDAnalysis as mda
+import numpy as np
 import pytest
 from numpy import testing
 
 from fluctmatch.models import protein
-from fluctmatch.models.selection import *
 from ..datafiles import TPR, XTC
 
 
 class TestCalpha:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> protein.Calpha:
         return protein.Calpha()
 
@@ -85,11 +85,11 @@ class TestCalpha:
 
 
 class TestCaside:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> protein.Caside:
         return protein.Caside()
 
@@ -122,11 +122,11 @@ class TestCaside:
 
 
 class TestNcsc:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> protein.Ncsc:
         return protein.Ncsc()
 
@@ -159,11 +159,11 @@ class TestNcsc:
 
 
 class TestPolar:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> protein.Polar:
         return protein.Polar()
 

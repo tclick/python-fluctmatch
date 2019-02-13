@@ -42,8 +42,7 @@ from MDAnalysis.core import selection, AtomGroup
 
 
 class BioIonSelection(selection.Selection):
-    """Contains atoms commonly found in proteins.
-    """
+    """Contains atoms commonly found in proteins."""
     token: ClassVar[str] = "bioion"
     ion_atoms: np.ndarray = np.array(["MG", "CAL", "MN", "FE", 
                                       "CU", "ZN", "AG"])
@@ -57,8 +56,7 @@ class BioIonSelection(selection.Selection):
 
 
 class WaterSelection(selection.Selection):
-    """Contains atoms commonly found in water.
-    """
+    """Contains atoms commonly found in water."""
     token: ClassVar[str] = "water"
     water_atoms: np.ndarray = np.array(["OW", "HW1", "HW2", "MW"])
 
@@ -74,12 +72,11 @@ class BackboneSelection(selection.BackboneSelection):
     """Contains all heavy atoms within a protein backbone including C-termini.
     """
     token: ClassVar[str] = "backbone"
-    oxy_atoms: np.ndarray = ["OXT", "OT1", "OT2"]
+    oxy_atoms: np.ndarray = np.array(["OXT", "OT1", "OT2"])
+    bb_atoms = np.concatenate([selection.BackboneSelection.bb_atoms, oxy_atoms])
 
     def apply(self, group: AtomGroup):
-        mask: np.ndarray = np.in1d(group.names,
-                                   np.concatenate([self.bb_atoms,
-                                                   self.oxy_atoms]))
+        mask: np.ndarray = np.in1d(group.names, self.bb_atoms)
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
 
@@ -92,19 +89,16 @@ class HBackboneSelection(BackboneSelection):
         "H", "HN", "H1", "H2", "H3", "HT1", "HT2", 
         "HT3", "HA", "HA1", "HA2", "1HA", "2HA"
     ])
+    bb_atoms = np.concatenate([BackboneSelection.bb_atoms, hbb_atoms])
 
     def apply(self, group: AtomGroup):
-        mask: np.ndarray = np.in1d(group.names,
-                                   np.concatenate([self.bb_atoms,
-                                                   self.oxy_atoms,
-                                                   self.hbb_atoms]))
+        mask: np.ndarray = np.in1d(group.names, self.bb_atoms)
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
 
 
 class CalphaSelection(selection.ProteinSelection):
-    """Contains only the alpha-carbon of a protein.
-    """
+    """Contains only the alpha-carbon of a protein."""
     token: ClassVar[str] = "calpha"
     calpha = np.array(["CA"])
 
@@ -115,21 +109,19 @@ class CalphaSelection(selection.ProteinSelection):
 
 
 class HCalphaSelection(CalphaSelection):
-    """Contains the alpha-carbon and alpha-hydrogens of a protein.
-    """
+    """Contains the alpha-carbon and alpha-hydrogens of a protein."""
     token: ClassVar[str] = "hcalpha"
     hcalpha = np.array(["HA", "HA1", "HA2", "1HA", "2HA"])
+    calpha = np.concatenate([CalphaSelection.calpha, hcalpha])
 
     def apply(self, group: AtomGroup):
-        mask: np.ndarray = np.in1d(group.names,
-                                   np.concatenate([self.calpha, self.hcalpha]))
+        mask: np.ndarray = np.in1d(group.names, self.calpha)
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
 
 
 class CbetaSelection(selection.ProteinSelection):
-    """Contains only the beta-carbon of a protein.
-    """
+    """Contains only the beta-carbon of a protein."""
     token: ClassVar[str] = "cbeta"
     cbeta = np.array(["CB"])
 
@@ -140,8 +132,7 @@ class CbetaSelection(selection.ProteinSelection):
 
 
 class AmineSelection(selection.ProteinSelection):
-    """Contains atoms within the amine group of a protein.
-    """
+    """Contains atoms within the amine group of a protein."""
     token: ClassVar[str] = "amine"
     amine = np.array(["N", "HN", "H", "H1", "H2", "H3", "HT1", "HT2", "HT3"])
 
@@ -152,8 +143,7 @@ class AmineSelection(selection.ProteinSelection):
 
 
 class CarboxylSelection(selection.ProteinSelection):
-    """Contains atoms within the carboxyl group of a protein.
-    """
+    """Contains atoms within the carboxyl group of a protein."""
     token: ClassVar[str] = "carboxyl"
     carboxyl = np.array(["C", "O", "OXT", "OT1", "OT2"])
 
@@ -164,15 +154,11 @@ class CarboxylSelection(selection.ProteinSelection):
 
 
 class HSidechainSelection(HBackboneSelection):
-    """Includes hydrogens on the protein sidechain.
-    """
+    """Includes hydrogens on the protein sidechain."""
     token: ClassVar[str] = "hsidechain"
 
     def apply(self, group: AtomGroup):
-        mask: np.ndarray = np.in1d(group.names,
-                                   np.concatenate([self.bb_atoms,
-                                                   self.oxy_atoms,
-                                                   self.hbb_atoms]),
+        mask: np.ndarray = np.in1d(group.names, HBackboneSelection.bb_atoms,
                                    invert=True)
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
@@ -193,8 +179,7 @@ class AdditionalNucleicSelection(selection.NucleicSelection):
 
 class HNucleicSugarSelection(AdditionalNucleicSelection,
                              selection.NucleicSugarSelection):
-    """Contains the additional atoms definitions for the sugar.
-    """
+    """Contains the additional atoms definitions for the sugar."""
     token: ClassVar[str] = "hnucleicsugar"
 
     def __init__(self, parser, tokens):
@@ -211,8 +196,7 @@ class HNucleicSugarSelection(AdditionalNucleicSelection,
 
 
 class HBaseSelection(AdditionalNucleicSelection, selection.BaseSelection):
-    """Contains additional atoms on the base region of the nucleic acids.
-    """
+    """Contains additional atoms on the base region of the nucleic acids."""
     token: ClassVar[str] = "hnucleicbase"
 
     def __init__(self, parser, tokens):
@@ -229,8 +213,7 @@ class HBaseSelection(AdditionalNucleicSelection, selection.BaseSelection):
 
 
 class NucleicPhosphateSelection(AdditionalNucleicSelection):
-    """Contains the nucleic phosphate group including the C5'.
-    """
+    """Contains the nucleic phosphate group including the C5'."""
     token: ClassVar[str] = "nucleicphosphate"
     phos_atoms: np.ndarray = np.array(
         ["P", "O1P", "O2P", "O5'", "C5'", "H5'", "H5''", "O5T", "H5T"])
@@ -242,8 +225,7 @@ class NucleicPhosphateSelection(AdditionalNucleicSelection):
 
 
 class NucleicC2Selection(AdditionalNucleicSelection):
-    """Contains the definition for the C3' region.
-    """
+    """Contains the definition for the C3' region."""
     token: ClassVar[str] = "sugarC2"
     c3_atoms: np.ndarray = np.array(["C1'", "H1'", "C2'", "O2'", "H2'", "H2''"])
 
@@ -254,8 +236,7 @@ class NucleicC2Selection(AdditionalNucleicSelection):
 
 
 class NucleicC4Selection(AdditionalNucleicSelection):
-    """Contains the definition for the C4' region.
-    """
+    """Contains the definition for the C4' region."""
     token: ClassVar[str] = "sugarC4"
     c3_atoms: np.ndarray = np.array(["C3'", "O3'", "H3'", "H3T",
                                      "C4'", "O4'", "H4'"])
@@ -267,8 +248,7 @@ class NucleicC4Selection(AdditionalNucleicSelection):
 
 
 class BaseCenterSelection(AdditionalNucleicSelection):
-    """Contains the central atoms (C4 and C5) on the base of the nuleic acid.
-    """
+    """Contains the central atoms (C4 and C5) on the base of the nuleic acid."""
     token: ClassVar[str] = "nucleiccenter"
     center_atoms: np.ndarray = np.array(["C4", "C5"])
 

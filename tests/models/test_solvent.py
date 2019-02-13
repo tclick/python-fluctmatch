@@ -33,20 +33,20 @@
 """Tests for different solvent models."""
 
 import MDAnalysis as mda
+import numpy as np
 import pytest
 from numpy import testing
 
 from fluctmatch.models import solvent
-from fluctmatch.models.selection import *
 from ..datafiles import TIP3P, TIP4P, DMA
 
 
 class TestWater:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TIP3P)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> solvent.Water:
         return solvent.Water()
 
@@ -136,11 +136,11 @@ class TestWater:
 
 
 class TestTip3p:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TIP3P)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> solvent.Tip3p:
         return solvent.Tip3p()
 
@@ -188,7 +188,7 @@ class TestTip3p:
 
 
 class TestDma:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(DMA)
 

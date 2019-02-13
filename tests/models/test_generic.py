@@ -37,20 +37,20 @@
 """Tests for various protein models."""
 
 import MDAnalysis as mda
+import numpy as np
 import pytest
 from numpy import testing
 
 from fluctmatch.models import generic
-from fluctmatch.models.selection import *
 from ..datafiles import DMA
 
 
 class TestGeneric:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(DMA)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> generic.Generic:
         return generic.Generic()
 

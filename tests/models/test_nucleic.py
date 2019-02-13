@@ -37,16 +37,16 @@
 """Tests for the different nucleic acid models."""
 
 import MDAnalysis as mda
+import numpy as np
 import pytest
 from numpy import testing
 
 from fluctmatch.models import nucleic
-from fluctmatch.models.selection import *
 from ..datafiles import TPR, XTC
 
 
 class TestNucleic3:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
@@ -85,11 +85,11 @@ class TestNucleic3:
 
 
 class TestNucleic4:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> nucleic.Nucleic4:
         return nucleic.Nucleic4()
 
@@ -124,11 +124,11 @@ class TestNucleic4:
 
 
 class TestNucleic6:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(TPR, XTC)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> nucleic.Nucleic6:
         return nucleic.Nucleic6()
 

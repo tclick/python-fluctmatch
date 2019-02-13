@@ -41,19 +41,19 @@
 from typing import List
 
 import MDAnalysis as mda
+import numpy as np
 import pytest
 from numpy import testing
 from fluctmatch.models import ions
-from fluctmatch.models.selection import *
 from ..datafiles import IONS
 
 
 class TestIons:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(IONS)
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def system(self) -> ions.SolventIons:
         return ions.SolventIons()
 

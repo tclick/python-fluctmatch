@@ -40,7 +40,7 @@ from pathlib import Path
 
 __all__ = [
     "PDB",  # PDB
-    "PDB_prot",
+    "GRO",
     "PDB_dna",
     "TIP3P",
     "TIP4P",
@@ -55,8 +55,8 @@ __all__ = [
 
 PDB = resource_filename(__name__,
                         Path().joinpath("data", "trex1.pdb").as_posix())
-PDB_prot = resource_filename(__name__,
-                             Path().joinpath("data", "protein.pdb").as_posix())
+GRO = resource_filename(__name__,
+                        Path().joinpath("data", "trex2.gro").as_posix())
 PDB_dna = resource_filename(__name__,
                             Path().joinpath("data", "dna.pdb").as_posix())
 TPR = resource_filename(__name__,
