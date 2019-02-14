@@ -41,13 +41,13 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import enm
-from ..datafiles import CG_PSF, CG_DCD
+from ..datafiles import PSF, DCD
 
 
 class TestEnm:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(CG_PSF, CG_DCD)
+        return mda.Universe(PSF, DCD)
 
     @pytest.fixture(scope="class")
     def system(self) -> enm.Enm:

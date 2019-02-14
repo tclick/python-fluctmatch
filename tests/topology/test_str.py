@@ -36,13 +36,13 @@ import pytest
 import MDAnalysis as mda
 
 import fluctmatch
-from ..datafiles import CGPSF, CGCRD, STR
+from ..datafiles import PSF, COR, STR
 
 
 class TestSTRWriter(object):
     @pytest.fixture()
     def u(self) -> mda.Universe:
-        return mda.Universe(CGPSF, CGCRD)
+        return mda.Universe(PSF, COR)
 
     @pytest.fixture()
     def outfile(self, tmpdir: str) -> Path:

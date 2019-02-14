@@ -33,25 +33,26 @@ from pathlib import Path
 from typing import Union
 
 import pytest
+from numpy import testing
 import MDAnalysis as mda
 
 import fluctmatch
-from ..datafiles import CGPSF, CGCRD, RTF
+from ..datafiles import PSF, COR, RTF
 
 
 class TestRTFWriter(object):
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(CGPSF, CGCRD)
+        return mda.Universe(PSF, COR)
 
     @pytest.fixture()
     def outfile(self, tmpdir: str) -> Path:
         return Path(tmpdir) / "out.rtf"
 
     def test_roundtrip(self, u: mda.Universe, outfile: Path):
-        # Write out a copy of the Universe, and compare this against the original
-        # This is more rigorous than simply checking the coordinates as it checks
-        # all formatting
+        # Write out a copy of the Universe, and compare this against the
+        # original. This is more rigorous than simply checking the coordinates
+        # as it checks all formatting.
         u.atoms.write(outfile)
 
         def RTF_iter(fn: Union[str, Path]):
@@ -61,4 +62,4 @@ class TestRTFWriter(object):
                         yield line
 
         for ref, other in zip(RTF_iter(RTF), RTF_iter(outfile)):
-            assert ref == other
+            testing.assert_string_equal(other, ref)

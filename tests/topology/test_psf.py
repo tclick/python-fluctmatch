@@ -38,16 +38,16 @@ from numpy.testing import assert_equal
 import MDAnalysis as mda
 from MDAnalysis.core.topologyobjects import TopologyObject
 
-from ..datafiles import CGPSF, CGCRD
+from ..datafiles import PSF, COR
 from MDAnalysisTests.topology.base import ParserBase
 
 from fluctmatch.topology import PSFParser
 
 
 class TestPSFWriter(object):
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(CGPSF, CGCRD)
+        return mda.Universe(PSF, COR)
 
     @pytest.fixture()
     def outfile(self, tmpdir: str) -> Path:
@@ -65,14 +65,14 @@ class TestPSFWriter(object):
                     if not line.startswith('*'):
                         yield line
 
-        for ref, other in zip(PSF_iter(CGPSF), PSF_iter(outfile)):
+        for ref, other in zip(PSF_iter(PSF), PSF_iter(outfile)):
             assert ref == other
 
     def test_write_atoms(self, u: mda.Universe, outfile: Path):
         # Test that written file when read gives same coordinates
         u.atoms.write(outfile)
 
-        u2: mda.Universe = mda.Universe(outfile, CGCRD)
+        u2: mda.Universe = mda.Universe(outfile, COR)
 
         assert_equal(u.atoms.charges, u2.atoms.charges)
 
@@ -82,7 +82,7 @@ class TestPSFParser(ParserBase):
     Based on small PDB with AdK (:data:`PDB_small`).
     """
     parser: ClassVar[PSFParser.PSF36Parser] = PSFParser.PSF36Parser
-    ref_filename: ClassVar[str] = CGPSF
+    ref_filename: ClassVar[str] = PSF
     expected_attrs: ClassVar[List[str]] = ["ids", "names", "types", "masses",
                                            "charges", "resids", "resnames",
                                            "segids", "bonds", "angles", 

@@ -36,13 +36,13 @@ import MDAnalysis as mda
 from numpy.testing import assert_allclose
 
 from fluctmatch.intcor.utils import create_empty_table
-from tests.datafiles import CGPSF, CGCRD
+from tests.datafiles import PSF, COR
 
 
 class TestICUtils:
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(CGPSF, CGCRD)
+        return mda.Universe(PSF, COR)
 
     def test_test_empty_intcor(self, u: mda.Universe):
         empty: np.ndarray = np.zeros(len(u.dihedrals))

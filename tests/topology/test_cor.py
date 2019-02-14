@@ -48,12 +48,12 @@ from MDAnalysisTests.topology.base import ParserBase
 from numpy.testing import assert_equal
 
 from fluctmatch.topology.CORParser import CORParser
-from ..datafiles import CGCRD
+from ..datafiles import COR
 
 
 class TestCORParser(ParserBase):
     parser: CORParser = CORParser
-    ref_filename: str = CGCRD
+    ref_filename: str = COR
     expected_attrs: List[str] = ['ids', 'names', 'tempfactors', 'resids',
                                  'resnames', 'resnums', 'segids']
     guessed_attrs: List[str] = ['masses', 'types']
