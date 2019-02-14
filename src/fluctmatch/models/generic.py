@@ -32,13 +32,13 @@
 
 from typing import ClassVar, List, Tuple
 
+import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
 from MDAnalysis.topology import guessers
 from MDAnalysis.coordinates.memory import MemoryReader
 
 from . import base
-from .selection import *
 
 
 class Generic(base.ModelBase):

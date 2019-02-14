@@ -38,11 +38,11 @@
 
 from typing import ClassVar, List, Tuple, Mapping
 
+import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds, Charges
 
 from .base import ModelBase
-from .selection import *
 
 
 class Nucleic3(ModelBase):

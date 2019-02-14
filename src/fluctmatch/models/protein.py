@@ -41,7 +41,6 @@ from typing import ClassVar, List, Tuple, Mapping
 from MDAnalysis.core.topologyattrs import Bonds
 
 from .base import ModelBase
-from .selection import *
 
 
 class Calpha(ModelBase):

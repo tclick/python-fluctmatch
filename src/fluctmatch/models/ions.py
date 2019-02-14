@@ -38,10 +38,10 @@
 
 from typing import ClassVar, List, MutableMapping
 
+import numpy as np
 from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
 from .base import ModelBase
-from .selection import *
 
 
 class SolventIons(ModelBase):
