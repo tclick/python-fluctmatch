@@ -1,248 +1,227 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    super,
-    zip,
-)
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
+"""Classes for various nucleic acid models."""
 
-from collections import OrderedDict
+from typing import ClassVar, List, Tuple, Mapping
 
-from MDAnalysis.core import topologyattrs
-from fluctmatch.models.base import ModelBase
-from fluctmatch.models.selection import *
+import numpy as np
+import MDAnalysis as mda
+from MDAnalysis.core.topologyattrs import Bonds, Charges
+
+from .base import ModelBase
 
 
 class Nucleic3(ModelBase):
-    """A universe consisting of the phosphate, sugar, and base of the nucleic acid.
-    """
-    model = "NUCLEIC3"
-    describe = "Phosohate, sugar, and nucleotide of nucleic acid"
-    _mapping = OrderedDict()
+    """A universe the phosphate, sugar, and base of the nucleic acid."""
+    model: ClassVar[str] = "NUCLEIC3"
+    describe: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._mapping["P"] = "nucleicphosphate and not name H*"
-        self._mapping["C4'"] = "hnucleicsugar and not name H*"
-        self._mapping["C5"] = "hnucleicbase and not name H*"
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        kwargs["mapping"] = self._mapping
-        self._initialize(*args, **kwargs)
-        self._set_masses()
-        self._set_charges()
+        self._mapping["P"]: str = "nucleicphosphate and not name H*"
+        self._mapping["C4'"]: str = "hnucleicsugar and not name H*"
+        self._mapping["C5"]: str = "hnucleicbase and not name H*"
+        self._selection: Mapping[str, str] = {
+            "P": "nucleicphosphate",
+            "C4'": "hnucleicsugar",
+            "C5": "hnucleicbase"
+        }
 
     def _add_bonds(self):
-        bonds = []
+        bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name P").ix,
-                s.atoms.select_atoms("name C4'").ix)
+            idx 
+            for segment in self.universe.segments 
+            for idx in zip(segment.atoms.select_atoms("name P").ix,
+                           segment.atoms.select_atoms("name C4'").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix,
-                s.atoms.select_atoms("name C5").ix)
+            idx 
+            for segment in self.universe.segments 
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
+                           segment.atoms.select_atoms("name C5").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix[:-1],
-                s.atoms.select_atoms("name P").ix[1:])
-            if s.residues.n_residues > 1
+            idx 
+            for segment in self.universe.segments 
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
+                           segment.atoms.select_atoms("name P").ix[1:])
+            if segment.residues.n_residues > 1
         ])
-        self._topology.add_TopologyAttr(topologyattrs.Bonds(bonds))
-        self._generate_from_topology()
-
-    def _set_masses(self):
-        p_atu = self.atu.select_atoms("nucleicphosphate").split("residue")
-        sugar_atu = self.atu.select_atoms("hnucleicsugar").split("residue")
-        nucl_atu = self.atu.select_atoms("hnucleicbase").split("residue")
-
-        self.atoms.select_atoms("name P").masses = np.array(
-            [_.total_mass() for _ in p_atu])
-        self.atoms.select_atoms("name C4'").masses = np.array(
-            [_.total_mass() for _ in sugar_atu])
-        self.atoms.select_atoms("name C5").masses = np.array(
-            [_.total_mass() for _ in nucl_atu])
-
-    def _set_charges(self):
-        p_atu = self.atu.select_atoms("nucleicphosphate").split("residue")
-        sugar_atu = self.atu.select_atoms("hnucleicsugar").split("residue")
-        nucl_atu = self.atu.select_atoms("hnucleicbase").split("residue")
-
-        try:
-            self.atoms.select_atoms("name P").charges = np.array(
-                [_.total_charge() for _ in p_atu])
-            self.atoms.select_atoms("name C4'").charges = np.array(
-                [_.total_charge() for _ in sugar_atu])
-            self.atoms.select_atoms("name C5").charges = np.array(
-                [_.total_charge() for _ in nucl_atu])
-        except AttributeError:
-            pass
+        self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Nucleic4(ModelBase):
-    """A universe consisting of the phosphate, C4', C3', and base of the nucleic acid.
-    """
-    model = "NUCLEIC4"
-    describe = "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of nucleic acid"
-    _mapping = OrderedDict()
+    """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
+    model: ClassVar[str] = "NUCLEIC4"
+    describe: ClassVar[str] = ("Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of "
+                     "nucleic acid")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._mapping["P"] = "nucleicphosphate and not name H*"
-        self._mapping["C4'"] = "name C4'"
-        self._mapping["C2'"] = "name C2'"
-        self._mapping["C5"] = "nucleiccenter and not name H*"
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        kwargs["mapping"] = self._mapping
-        self._initialize(*args, **kwargs)
-        self._set_masses()
-        self._set_charges()
+        self._mapping["P"]: str = "nucleicphosphate and not name H*"
+        self._mapping["C4'"]: str = "name C4'"
+        self._mapping["C2'"]: str = "name C2'"
+        self._mapping["C5"]: str = "nucleiccenter and not name H*"
+        self._selection: Mapping[str, str] = {
+            "P": "nucleicphosphate",
+            "C4'": "sugarC4",
+            "C2'": "sugarC2",
+            "C5": "hnucleicbase"
+        }
 
     def _add_bonds(self):
-        bonds = []
+        bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name P").ix,
-                s.atoms.select_atoms("name C4'").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name P").ix,
+                           segment.atoms.select_atoms("name C4'").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix,
-                s.atoms.select_atoms("name C2'").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
+                           segment.atoms.select_atoms("name C2'").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix,
-                s.atoms.select_atoms("name C5").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
+                           segment.atoms.select_atoms("name C5").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix[:-1],
-                s.atoms.select_atoms("name P").ix[1:])
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
+                           segment.atoms.select_atoms("name P").ix[1:])
         ])
-        self._topology.add_TopologyAttr(topologyattrs.Bonds(bonds))
-        self._generate_from_topology()
-
-    def _set_masses(self):
-        p_atu = self.atu.select_atoms("nucleicphosphate").split("residue")
-        sugar_atu = self.atu.select_atoms("sugarC4").split("residue")
-        sugar2_atu = self.atu.select_atoms("sugarC2").split("residue")
-        nucl_atu = self.atu.select_atoms("hnucleicbase").split("residue")
-
-        self.atoms.select_atoms("name P").masses = np.array(
-            [_.total_mass() for _ in p_atu])
-        self.atoms.select_atoms("name C4'").masses = np.array(
-            [_.total_mass() for _ in sugar_atu])
-        self.atoms.select_atoms("name C2'").masses = np.array(
-            [_.total_mass() for _ in sugar2_atu])
-        self.atoms.select_atoms("name C5").masses = np.array(
-            [_.total_mass() for _ in nucl_atu])
-
-    def _set_charges(self):
-        p_atu = self.atu.select_atoms("nucleicphosphate").split("residue")
-        sugar_atu = self.atu.select_atoms("sugarC4").split("residue")
-        sugar2_atu = self.atu.select_atoms("sugarC2").split("residue")
-        nucl_atu = self.atu.select_atoms("hnucleicbase").split("residue")
-
-        try:
-            self.atoms.select_atoms("name P").charges = np.array(
-                [_.total_charge() for _ in p_atu])
-            self.atoms.select_atoms("name C4'").charges = np.array(
-                [_.total_charge() for _ in sugar_atu])
-            self.atoms.select_atoms("name C2'").charges = np.array(
-                [_.total_charge() for _ in sugar2_atu])
-            self.atoms.select_atoms("name C5").charges = np.array(
-                [_.total_charge() for _ in nucl_atu])
-        except AttributeError:
-            pass
+        self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Nucleic6(ModelBase):
-    """A universe accounting for six sites involved with hydrogen bonding.
-    """
-    model = "NUCLEIC6"
-    describe = "Phosphate, C2', C4', and 3 sites on the nucleotide"
-    _mapping = OrderedDict()
+    """A universe accounting for six sites involved with hydrogen bonding."""
+    model: ClassVar[str] = "NUCLEIC6"
+    describe: ClassVar[str] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._mapping["P"] = "name P H5T"
-        self._mapping["C4'"] = "name C4'"
-        self._mapping["C2'"] = "name C2'"
-        self._mapping["H1"] = ("(resname ADE DA* RA* and name N6) or "
-                               "(resname OXG GUA DG* RG* and name O6) or "
-                               "(resname CYT DC* RC* and name N4) or "
-                               "(resname THY URA DT* RU* and name O4)")
-        self._mapping["H2"] = (
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
+
+        self._mapping["P"]: str = "name P H5T"
+        self._mapping["C4'"]: str = "name C4'"
+        self._mapping["C2'"]: str = "name C2'"
+        self._mapping["H1"]: str = ("(resname ADE DA* RA* and name N6) or "
+                                    "(resname OXG GUA DG* RG* and name O6) or "
+                                    "(resname CYT DC* RC* and name N4) or "
+                                    "(resname THY URA DT* RU* and name O4)")
+        self._mapping["H2"]: str = (
             "(resname ADE DA* RA* OXG GUA DG* RG* and name N1) or "
             "(resname CYT DC* RC* THY URA DT* RU* and name N3)")
-        self._mapping["H3"] = (
+        self._mapping["H3"]: str = (
             "(resname ADE DA* RA* and name H2) or "
             "(resname OXG GUA DG* RG* and name N2) or "
             "(resname CYT DC* RC* THY URA DT* RU* and name O2)")
+        self._selection: Mapping[str, str] = {
+            "P": "nucleicphosphate",
+            "C4'": "sugarC4",
+            "C2'": "sugarC2",
+            "H1": "nucleic and name C2'",
+            "H2": "nucleic and name C2'",
+            "H3": "nucleic and name C2'"
+        }
 
-        kwargs["mapping"] = self._mapping
-        self._initialize(*args, **kwargs)
-        self._set_charges()
-        self._set_masses()
+    def create_topology(self, universe: mda.Universe):
+        """Deteremine the topology attributes and initialize the universe.
+
+        Parameters
+        ----------
+        universe : :class:`~MDAnalysis.Universe`
+            An all-atom universe
+        """
+        super().create_topology(universe)
+
+        charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
+                                       dtype=np.float32)
+        self.universe.add_TopologyAttr(Charges(charges))
 
     def _add_bonds(self):
-        bonds = []
+        bonds: List[Tuple[int, int]] = []
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name P").ix,
-                s.atoms.select_atoms("name C4'").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name P").ix,
+                           segment.atoms.select_atoms("name C4'").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix,
-                s.atoms.select_atoms("name C2'").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
+                           segment.atoms.select_atoms("name C2'").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C2'").ix,
-                s.atoms.select_atoms("name H1").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C2'").ix,
+                           segment.atoms.select_atoms("name H1").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name H1").ix,
-                s.atoms.select_atoms("name H2").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name H1").ix,
+                           segment.atoms.select_atoms("name H2").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name H2").ix,
-                s.atoms.select_atoms("name H3").ix)
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name H2").ix,
+                           segment.atoms.select_atoms("name H3").ix)
         ])
         bonds.extend([
-            _ for s in self.segments for _ in zip(
-                s.atoms.select_atoms("name C4'").ix[:-1],
-                s.atoms.select_atoms("name P").ix[1:])
+            idx
+            for segment in self.universe.segments
+            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
+                           segment.atoms.select_atoms("name P").ix[1:])
         ])
-        self._topology.add_TopologyAttr(topologyattrs.Bonds(bonds))
-        self._generate_from_topology()
-
-    def _set_charges(self):
-        self.atoms.charges = 0.
-
-    def _set_masses(self):
-        self.atoms.masses = self.atu.select_atoms("name C4'")[0].mass
+        self.universe.add_TopologyAttr(Bonds(bonds))
