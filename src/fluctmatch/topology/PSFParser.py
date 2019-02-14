@@ -255,6 +255,7 @@ class PSF36Parser(PSFParser.PSFParser):
         atomids: Atomids = Atomids(atomids - 1)
         atomnames: Atomnames = Atomnames(atomnames)
         atomtypes: Atomtypes = Atomtypes(atomtypes)
+        charges[charges == -0.] = 0.
         charges: Charges = Charges(charges)
         masses: Masses = Masses(masses)
 

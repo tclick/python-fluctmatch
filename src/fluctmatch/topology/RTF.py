@@ -121,7 +121,6 @@ class RTFWriter(topbase.TopologyWriterBase):
 
     def _write_residues(self, residue: mda.core.groups.Residue):
         atoms: mda.AtomGroup = residue.atoms
-        atoms.charges[atoms.charges == -0.] = 0.
 
         print(self.fmt["RES"].format(residue.resname, residue.charge),
               file=self.rtffile)
@@ -200,7 +199,7 @@ class RTFWriter(topbase.TopologyWriterBase):
             Include the declaration (DECL) statements
         """
         self._atoms: mda.AtomGroup = universe.atoms
-        with open(self.filename, "w") as self.rtffile:
+        with self.filename.open(mode="w") as self.rtffile:
             # Write the title and header information.
             for _ in self._title:
                 print(_, file=self.rtffile)
