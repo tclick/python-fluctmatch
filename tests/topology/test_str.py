@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,22 +28,37 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
 
-import logging
+from pathlib import Path
+from typing import Union
 
-__version__: str = "3.4.1"
+import pytest
+import MDAnalysis as mda
 
-_MODELS: dict = {}
-_DESCRIBE: dict = {}
+import fluctmatch
+from ..datafiles import PSF, COR, STR
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
-from .coordinates import COR
-from .intcor import IC
-from .parameter import PRM
-from .topology import CORParser, PSFParser, RTF, STR
+class TestSTRWriter(object):
+    @pytest.fixture()
+    def u(self) -> mda.Universe:
+        return mda.Universe(PSF, COR)
+
+    @pytest.fixture()
+    def outfile(self, tmpdir: str) -> Path:
+        return Path(tmpdir) / "out.stream"
+
+    def test_roundtrip(self, u: mda.Universe, outfile: Path):
+        # Write out a copy of the Universe, and compare this against the
+        # original.  This is more rigorous than simply checking the coordinates
+        # as it checks all formatting
+        u.atoms.write(outfile)
+
+        def STR_iter(fn: Union[str, Path]):
+            with open(fn) as inf:
+                for line in inf:
+                    if not line.startswith('*'):
+                        yield line
+
+        for ref, other in zip(STR_iter(STR), STR_iter(outfile)):
+            assert ref == other

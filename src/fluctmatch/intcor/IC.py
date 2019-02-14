@@ -1,48 +1,69 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
+
 import logging
-import pathlib
 import textwrap
+from pathlib import Path
+from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
 from MDAnalysis.lib.util import FORTRANReader
 
-from ..libs.typing import FileName
 from ..topology.base import (TopologyReaderBase, TopologyWriterBase)
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class IntcorReader(TopologyReaderBase):
     """
     Parameters
     ----------
-    filename : str or :class:`~pathlib.Path`
+    filename : str or :class:`~Path`
          name of the output file or a stream
     """
-    format: str = "IC"
-    units: dict = dict(time=None, length="Angstrom")
+    format: ClassVar[str] = "IC"
+    units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
-    fmt: dict = dict(
+    fmt: Dict[str, str] = dict(
         # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
-        STANDARD=("I5,1X,I3,1X,A4,I3,1X,A4,I3,1X,A4,I3,1X,A4,F9.4,3F8.2,F9.4"),
+        STANDARD="I5,1X,I3,1X,A4,I3,1X,A4,I3,1X,A4,I3,1X,A4,F9.4,3F8.2,F9.4",
         # fortran_format = "(I9,1X,4(I5,1X,A8),F9.4,3F8.2,F9.4)"
-        EXTENDED=("I9,1X,I5,1X,A8,I5,1X,A8,I5,1X,A8,I5,1X,A8,F9.4,3F8.2,F9.4"),
+        EXTENDED="I9,1X,I5,1X,A8,I5,1X,A8,I5,1X,A8,I5,1X,A8,F9.4,3F8.2,F9.4",
         # fortran_format = "(I5,4(1X,A4,1X,A4,1X,A4,"":""),F12.6,3F12.4,F12.6)"
         STANDARD_RESID=(
             "I5,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,"
@@ -59,8 +80,8 @@ class IntcorReader(TopologyReaderBase):
         "segidL", "resL", "L", "r_IJ", "T_IJK", "P_IJKL", "T_JKL", "r_KL"
     ])
 
-    def __init__(self, filename: FileName):
-        self.filename: pathlib.Path = pathlib.Path(filename).with_suffix(".ic")
+    def __init__(self, filename: Union[str, Path]):
+        self.filename: Path = Path(filename).with_suffix(".ic")
 
     def read(self) -> pd.DataFrame:
         """Read the internal coordinates file.
@@ -71,7 +92,7 @@ class IntcorReader(TopologyReaderBase):
             An internal coordinates table.
         """
         table: pd.DataFrame = pd.DataFrame()
-        with open(self.filename, "r") as infile:
+        with open(self.filename) as infile:
             logger.info(f"Reading {self.filename}")
 
             # Read title and header lines
@@ -124,7 +145,7 @@ class IntcorWriter(TopologyWriterBase):
 
     Parameters
     ----------
-    filename : str or :class:`pathlib.Path`
+    filename : str or :class:`Path`
         Filename for output.
     n_atoms : int, optional
         The number of atoms in the output trajectory.
@@ -136,10 +157,11 @@ class IntcorWriter(TopologyWriterBase):
         A header section written at the beginning of the stream file.
         If no title is given, a default title will be written.
     """
-    format: str = "IC"
-    units: dict = dict(time="picosecond", length="Angstrom")
+    format: ClassVar[str] = "IC"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(time="picosecond",
+                                                     length="Angstrom")
 
-    fmt: dict = dict(
+    fmt: ClassVar[Dict[str, str]] = dict(
         # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
         STANDARD=(
             "%5d %3s %-4s%3s %-4%3s %-4%3s %-4%9.4f%8.2f%8.2f%8.2f%9.4f"
@@ -160,9 +182,10 @@ class IntcorWriter(TopologyWriterBase):
         ),
     )
 
-    def __init__(self, filename: FileName, **kwargs):
+    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
         super().__init__()
-        self.filename: pathlib.Path = pathlib.Path(filename).with_suffix(".ic")
+
+        self.filename: Path = Path(filename).with_suffix(".ic")
         self._intcor: pd.DataFrame = None
         self._extended: bool = kwargs.get("extended", True)
         self._resid: bool = kwargs.get("resid", True)
@@ -177,7 +200,7 @@ class IntcorWriter(TopologyWriterBase):
         table : :class:`~pandas.DataFrame`
             A CHARMM-compliant internal coordinate table.
         """
-        ictable: pd.DataFrame = table.copy(deep=True)
+        ictable: pd.DataFrame = table.copy()
 
         # Increment index.
         if ictable.index[0] == 0:
@@ -192,27 +215,14 @@ class IntcorWriter(TopologyWriterBase):
             line: np.ndarray = np.zeros((1, 20), dtype=np.int)
             line[0, 0]: int = 30 if self._extended else 20
             line[0, 1]: int = 2 if self._resid else 1
-            np.savetxt(
-                outfile,
-                line,
-                fmt="%4d",
-                delimiter=""
-            )
+            np.savetxt(outfile, line, fmt="%4d", delimiter="")
 
             # Save the internal coordinates
             line: np.ndarray = np.zeros((1, 2), dtype=np.int)
             n_rows, _ = ictable.shape
             line[0, 0] += n_rows
             line[0, 1] += 2 if self._resid else 1
-            np.savetxt(
-                outfile,
-                line,
-                fmt="%5d",
-                delimiter=""
-            )
-            np.savetxt(
-                outfile,
-                ictable.reset_index().values,
-                fmt=self.fmt[self.key]
-            )
+            np.savetxt(outfile, line, fmt="%5d", delimiter="")
+            np.savetxt(outfile, ictable.reset_index().values,
+                       fmt=self.fmt[self.key])
             logger.info("Table successfully written.")

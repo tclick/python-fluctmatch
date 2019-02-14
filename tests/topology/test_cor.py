@@ -34,18 +34,29 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+#
+#  Borrowed the test code from MDAnalysisTests.
 
-import logging
+from collections import OrderedDict
+from pathlib import Path
+from typing import List
 
-__version__: str = "3.4.1"
+import MDAnalysis as mda
+import pytest
+from MDAnalysisTests import make_Universe
+from MDAnalysisTests.topology.base import ParserBase
+from numpy.testing import assert_equal
 
-_MODELS: dict = {}
-_DESCRIBE: dict = {}
+from fluctmatch.topology.CORParser import CORParser
+from ..datafiles import COR
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
-from .coordinates import COR
-from .intcor import IC
-from .parameter import PRM
-from .topology import CORParser, PSFParser, RTF, STR
+class TestCORParser(ParserBase):
+    parser: CORParser = CORParser
+    ref_filename: str = COR
+    expected_attrs: List[str] = ['ids', 'names', 'tempfactors', 'resids',
+                                 'resnames', 'resnums', 'segids']
+    guessed_attrs: List[str] = ['masses', 'types']
+    expected_n_atoms: int = 330
+    expected_n_residues: int = 115
+    expected_n_segments: int = 1

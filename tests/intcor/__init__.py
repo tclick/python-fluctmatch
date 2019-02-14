@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,22 +28,3 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
-
-import logging
-
-__version__: str = "3.4.1"
-
-_MODELS: dict = {}
-_DESCRIBE: dict = {}
-
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-from .coordinates import COR
-from .intcor import IC
-from .parameter import PRM
-from .topology import CORParser, PSFParser, RTF, STR
