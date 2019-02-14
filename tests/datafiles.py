@@ -1,62 +1,79 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
 #
-# Please cite your use of fluctmatch in published work:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-# Simulation. Meth Enzymology. 578 (2016), 327-342,
-# doi:10.1016/bs.mie.2016.05.024.
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
 
-from os import path
+from pkg_resources import resource_filename
+from pathlib import Path
 
 __all__ = [
     "PDB",  # PDB
-    "PDB_prot",
+    "GRO",
     "PDB_dna",
     "TIP3P",
     "TIP4P",
     "IONS",
     "DMA",
-    "CGCRD",
-    "CGPSF",
     "TPR",
     "XTC",  # Gromacs
     "NCSC",
-    "RTF",
-    "STR",
-    "IC",
-    "PRM"
+    "CG_PSF",
+    "CG_DCD"
 ]
 
-from pkg_resources import resource_filename
-
-PDB = resource_filename(__name__, path.join("data", "trex1.pdb"))
-PDB_prot = resource_filename(__name__, path.join("data", "protein.pdb"))
-PDB_dna = resource_filename(__name__, path.join("data", "dna.pdb"))
-TPR = resource_filename(__name__, path.join("data", "trex1.tpr"))
-XTC = resource_filename(__name__, path.join("data", "trex1.xtc"))
-TIP3P = resource_filename(__name__, path.join("data", "spc216.gro"))
-TIP4P = resource_filename(__name__, path.join("data", "tip4p.gro"))
-IONS = resource_filename(__name__, path.join("data", "ions.pdb"))
-DMA = resource_filename(__name__, path.join("data", "dma.gro"))
-NCSC = resource_filename(__name__, path.join("data", "ncsc.pdb"))
-CGCRD = resource_filename(__name__, path.join("data", "cg.cor"))
-CGPSF = resource_filename(__name__, path.join("data", "cg.xplor.psf"))
-RTF = resource_filename(__name__, path.join("data", "cg.rtf"))
-STR = resource_filename(__name__, path.join("data", "cg.stream"))
-IC = resource_filename(__name__, path.join("data", "fluct.ic"))
-PRM = resource_filename(__name__, path.join("data", "fluctmatch.prm"))
+PDB = resource_filename(__name__,
+                        Path().joinpath("data", "trex1.pdb").as_posix())
+GRO = resource_filename(__name__,
+                        Path().joinpath("data", "trex2.gro").as_posix())
+PDB_dna = resource_filename(__name__,
+                            Path().joinpath("data", "dna.pdb").as_posix())
+TPR = resource_filename(__name__,
+                        Path().joinpath("data", "trex1.tpr").as_posix())
+XTC = resource_filename(__name__,
+                        Path().joinpath("data", "trex1.xtc").as_posix())
+TIP3P = resource_filename(__name__,
+                          Path().joinpath("data", "spc216.gro").as_posix())
+TIP4P = resource_filename(__name__,
+                          Path().joinpath("data", "tip4p.gro").as_posix())
+IONS = resource_filename(__name__,
+                         Path().joinpath("data", "ions.pdb").as_posix())
+DMA = resource_filename(__name__,
+                        Path().joinpath("data", "dma.gro").as_posix())
+NCSC = resource_filename(__name__,
+                         Path().joinpath("data", "ncsc.pdb").as_posix())
+CG_PSF = resource_filename(__name__,
+                           Path().joinpath("data", "cg.xplor.psf").as_posix())
+CG_DCD = resource_filename(__name__,
+                           Path().joinpath("data", "cg.dcd").as_posix())
