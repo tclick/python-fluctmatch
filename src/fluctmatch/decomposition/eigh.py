@@ -16,12 +16,10 @@
 #
 
 import numpy as np
-from scipy.sparse import issparse, linalg
-
+from scipy.sparse import linalg
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_random_state
 from sklearn.utils import check_array
-from sklearn.utils.extmath import randomized_svd, svd_flip
+
 
 class Eigh(BaseEstimator, TransformerMixin):
     """Hermitian eigenvalue decomposition.
@@ -54,7 +52,7 @@ class Eigh(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from fluctmatch.decomposition.svd import SVD
+    >>> from fluctmatch.decomposition.eigh import Eigh
     >>> X = np.arange(4, dtype=np.float).reshape((2,2))
     >>> eigh = Eigh()
     >>> eigh.fit(X)
@@ -117,8 +115,7 @@ class Eigh(BaseEstimator, TransformerMixin):
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
-        X: np.ndarray = check_array(X, dtype=[np.float64, np.float32],
-                                    ensure_2d=True, copy=self.copy)
+        X: np.ndarray = check_array(X, dtype=[np.float64, np.float32], copy=self.copy, accept_sparse=True)
         L, V = linalg.eigsh(X, k=X.shape[0])
         idx: np.ndarray = np.argsort(L)[::-1]
         self.eigenvalues_: np.ndarray = L[idx].copy()
