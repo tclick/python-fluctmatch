@@ -89,12 +89,6 @@ class SVD(_BasePCA):
     """
     def __init__(self, copy: bool=True):
         self.copy: bool = copy
-        self.components_: np.ndarray = None
-        self.singular_values_: np.ndarray = None
-        self.explained_variance_: np.ndarray = None
-        self.explained_variance_ratio_: np.ndarray = None
-        self.n_features_: int = None
-        self.n_samples_: int = None
 
     def get_covariance(self) -> np.ndarray:
         """Compute data covariance with the generative model.
