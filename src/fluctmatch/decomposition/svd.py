@@ -21,7 +21,7 @@ import numpy as np
 from scipy import linalg
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition.base import _BasePCA
-from sklearn.utils import check_array
+from sklearn.utils import check_array, safe_sqr
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.extmath import fast_logdet, svd_flip
 
@@ -135,7 +135,7 @@ class SVD(_BasePCA):
         U, Vt = svd_flip(U, Vt)
 
         # Get variance explained by singular values
-        explained_variance_: np.ndarray = (S ** 2) / (n_samples - 1)
+        explained_variance_: np.ndarray = safe_sqr(S) / (n_samples - 1)
         total_var: float = explained_variance_.sum()
         explained_variance_ratio_: np.ndarray = explained_variance_ / total_var
         singular_values_: np.ndarray = S.copy()  # Store the singular values.

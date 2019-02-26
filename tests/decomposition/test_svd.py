@@ -31,10 +31,10 @@
 #  These tests were taken from the scikit-learn tests for PCA.
 
 import numpy as np
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_greater
-from numpy.testing import assert_no_warnings
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn import datasets
 from fluctmatch.decomposition.svd import SVD 
