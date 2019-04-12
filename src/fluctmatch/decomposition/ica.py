@@ -1,11 +1,39 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# -*- coding: utf-8 -*-
 #
-# fluctmatch --- https://github.com/tclick/python-fluctmatch
-# Copyright (c) 2015-2017 The fluctmatch Development Team and contributors
-# (see the file AUTHORS for the full list of names)
+#  python-fluctmatch -
+#  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
-# Released under the New BSD license.
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
+#
+#  Redistributions in binary form must reproduce the above copyright notice,
+#  this list of conditions and the following disclaimer in the documentation
+#  and/or other materials provided with the distribution.
+#
+#  Neither the name of the author nor the names of its contributors may be used
+#  to endorse or promote products derived from this software without specific
+#  prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  doi:10.1016/bs.mie.2016.05.024.
 #
 # Please cite your use of fluctmatch in published work:
 #
@@ -20,14 +48,14 @@
 # C. Brodbeck, R. Goj, M. Jas, T. Brooks, L. Parkkonen, M. Hämäläinen,
 # MEG and EEG data analysis with MNE-Python, Frontiers in Neuroscience,
 # Volume 7, 2013, ISSN 1662-453X,
+
 import logging
 from copy import deepcopy
 
 import numpy as np
 from scipy import linalg
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.decomposition import PCA, FastICA
-from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import FastICA
 from sklearn.utils.validation import (
     as_float_array, check_array, check_is_fitted, check_random_state, FLOAT_DTYPES
 )
@@ -403,26 +431,16 @@ class ICA(BaseEstimator, TransformerMixin):
     """Signal decomposition using Independent Component Analysis (ICA).
 
     This object can be used to estimate ICA components and then remove some
-    from Raw or Epochs for data exploration or artifact correction.
+    data exploration or artifact correction.
 
     Caveat! If supplying a noise covariance, keep track of the projections
-    available in the cov or in the raw object. For example, if you are
-    interested in EOG or ECG artifacts, EOG and ECG projections should be
-    temporally removed before fitting ICA, for example::
-
-        >> projs, raw.info['projs'] = raw.info['projs'], []
-        >> ica.fit(raw)
-        >> raw.info['projs'] = projs
+    available in the cov or in the raw object.
 
     .. note:: Methods currently implemented are FastICA (default), Infomax,
-              Extended Infomax. Infomax can be quite sensitive to
-              differences in floating point arithmetic. Extended Infomax seems
-              to be more stable in this respect enhancing reproducibility and
-              stability of results.
-
-    .. warning:: ICA is sensitive to low-frequency drifts and therefore
-                 requires the data to be high-pass filtered prior to fitting.
-                 Typically, a cutoff frequency of 1 Hz is recommended.
+              Extended Infomax. Infomax can be quite sensitive to differences in
+              floating point arithmetic. Extended Infomax seems to be more
+              stable in this respect enhancing reproducibility and stability of
+              results.
 
     Parameters
     ----------

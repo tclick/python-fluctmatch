@@ -88,7 +88,6 @@ setup(
     ],
     install_requires=[
         "click",
-        "future",
         "MDAnalysis",
         "MDAnalysisTests",
         "numpy",

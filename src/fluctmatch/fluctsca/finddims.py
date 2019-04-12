@@ -17,9 +17,10 @@
 import numpy as np
 from numpy.random import RandomState
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import scale, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
+from sklearn.utils.validation import (check_array, FLOAT_DTYPES,
+                                      check_random_state, check_is_fitted)
 
 from ..decomposition.svd import SVD
 
@@ -30,48 +31,47 @@ class FindDims(BaseEstimator, TransformerMixin):
     """
     def __init__(self, whiten: bool=True, max_iter: int=100,
                  stddev: int=2, random_state: RandomState=None,
-                 tol: float=0.99, algorithm="auto"):
+                 tol: float=0.99):
         self.whiten: bool=whiten
         self.max_iter: int= max_iter
         self.stddev: int= stddev
         self.random_state: RandomState= random_state
         self.tol: float= tol
-        self.algorithm: str= algorithm
 
     def fit(self, X: np.ndarray) -> "FindDims":
         X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+        random_state = check_random_state(self.random_state)
+        Xt = X.T
         n_samples, n_features = X.shape
 
         scaler: StandardScaler = StandardScaler()
-        svd: SVD = SVD(random_state=self.random_state,
-                       iterated_power=self.max_iter,
-                       algorithm=self.algorithm)
+        svd: SVD = SVD()
         pipeline: Pipeline = (
             make_pipeline(scaler, svd)
             if self.whiten
             else make_pipeline(svd)
         )
 
-        scaler.fit(X)
-        self.mean_: np.ndarray = np.tile(scaler.mean_[None, :], (n_samples, 1))
-        self.std_: np.ndarray = np.tile(scaler.var_[None, :], (n_samples, 1))
+        scaler.fit(Xt)
+        self.mean_: np.ndarray = np.tile(scaler.mean_[None, :], (n_features, 1)).T
+        self.std_: np.ndarray = np.tile(scaler.var_[None, :], (n_features, 1)).T
         self.positive_: bool = np.all(X >= 0.)
 
-        self.random_: np.ndarray = np.empty((self.max_iter, n_features),
+        self.random_: np.ndarray = np.empty((self.max_iter, np.min(X.shape)),
                                             dtype=X.dtype)
         for _ in range(self.max_iter):
-            Y: np.ndarray = np.random.normal(self.mean_, self.std_)
+            Y: np.ndarray = random_state.normal(self.mean_, self.std_)
             if self.positive_:
                 Y[Y < 0.] = 0.
             pipeline.fit(Y)
-            self.random_[_, :] = svd.explained_variance_.copy()
+            self.random_[_, :] = svd.singular_values_.copy()
         return self
 
     def transform(self, X: np.ndarray) -> int:
+        check_is_fitted(self, ["random_"])
+
         scaler: StandardScaler = StandardScaler()
-        svd: SVD = SVD(random_state=self.random_state,
-                       iterated_power=self.max_iter,
-                       algorithm=self.algorithm)
+        svd: SVD = SVD()
         pipeline: Pipeline = (
             make_pipeline(scaler, svd)
             if self.whiten
@@ -79,16 +79,14 @@ class FindDims(BaseEstimator, TransformerMixin):
         )
         pipeline.fit(X)
 
-        self.eigenvector_: np.ndarray = svd.explained_variance_.copy()
         if self.whiten:
-            eigenvector_: np.ndarray = svd.explained_variance_
+            self.eigenvector_ = eigenvector_ = svd.singular_values_
             mean: np.ndarray = self.random_.mean(axis=1)[1]
             std: np.ndarray = self.random_.std(axis=1)[1]
             value: float = mean + ((self.stddev + 1) * std)
             n_components: int = eigenvector_[eigenvector_ > value].size
         else:
-            explained_ratio: np.ndarray = svd.explained_variance_ratio_.cumsum()
+            self.eigenvector_ = explained_ratio = svd.explained_variance_ratio_.cumsum()
             n_components: int = explained_ratio[explained_ratio <= self.tol].size
 
-        self.n_components: int = n_components
         return n_components
