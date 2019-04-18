@@ -143,43 +143,87 @@ class SVD(_BasePCA):
         return linalg.inv(self.get_covariance())
 
     def fit(self, X: np.ndarray, y=None) -> "SVD":
-        self._fit(X)
+        """Fit LSI model on training data X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data.
+
+        y : Ignored
+
+        Returns
+        -------
+        self : object
+            Returns the transformer object.
+        """
+        self.fit_transform(X)
         return self
 
-    def _fit(self, X: np.ndarray):
+    def fit_transform(self, X: np.ndarray, y=None) -> np.ndarray:
+        """Fit LSI model to X and perform SVD on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data.
+
+        y : Ignored
+
+        Returns
+        -------
+        X_new : array, shape (n_samples, n_features)
+            Reduced version of X. This will always be a dense array.
+        """
         X: np.ndarray = check_array(X, dtype=[np.float64, np.float32],  copy=self.copy)
         n_samples, n_features = X.shape
 
-        U, S, Vt = linalg.svd(X, full_matrices=False)
-        U, Vt = svd_flip(U, Vt)
+        U, Sigma, VT = linalg.svd(X, full_matrices=False)
+        U, VT = svd_flip(U, VT)
 
-        # Get variance explained by singular values
-        explained_variance_: np.ndarray = safe_sqr(S) / (n_samples - 1)
-        total_var: float = explained_variance_.sum()
-        explained_variance_ratio_: np.ndarray = explained_variance_ / total_var
-        singular_values_: np.ndarray = S.copy()  # Store the singular values.
+        self.components_ = VT
 
-        self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_: np.ndarray = Vt
-        self.singular_values_: np.ndarray = singular_values_
-        self.explained_variance_: np.ndarray = explained_variance_
-        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_
+        # Calculate explained variance & explained variance ratio
+        X_transformed = U * Sigma
+        self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
+        full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ratio_ = exp_var / full_var
+        self.singular_values_ = Sigma  # Store the singular values.
 
-        return U, S, Vt
+        return X_transformed
 
     def transform(self, X: np.ndarray) -> np.ndarray:
+        """Perform SVD on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            New data.
+
+        Returns
+        -------
+        X_new : array, shape (n_samples, n_features)
+            Reduced version of X. This will always be a dense array.
+        """
         check_is_fitted(self, ['singular_values_', 'components_'],
                         all_or_any=all)
-        U: np.ndarray = X.dot(self.components_.T) / self.singular_values_
-        return U
-
-    def fit_transform(self, X: np.ndarray, y=None) -> np.ndarray:
-        U, _, _ = self._fit(X)
-        return U
+        X: np.ndarray = check_array(X, dtype=[np.float64, np.float32],  copy=self.copy)
+        return np.dot(X, self.components_.T)
 
     def inverse_transform(self, X: np.ndarray) -> np.ndarray:
-        check_is_fitted(self, ['singular_values_', 'components_'],
-                        all_or_any=all)
-        X_transformed: np.ndarray = self.singular_values_ * self.components_.T
-        X_transformed: np.ndarray = X.dot(X_transformed.T)
-        return X_transformed
+        """Transform X back to its original space.
+
+        Returns an array X_original whose transform would be X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_components)
+            New data.
+
+        Returns
+        -------
+        X_original : array, shape (n_samples, n_features)
+            Note that this is always a dense array.
+        """
+        X: np.ndarray = check_array(X)
+        return np.dot(X, self.components_)
