@@ -181,6 +181,7 @@ class SVD(_BasePCA):
         U, Sigma, VT = linalg.svd(X, full_matrices=False)
         U, VT = svd_flip(U, VT)
 
+        self.n_components = Sigma.size
         self.components_ = VT
 
         # Calculate explained variance & explained variance ratio
