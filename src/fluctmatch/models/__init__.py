@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -34,6 +33,10 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Definitions of coarse-grain models.
+
+Imports all models to the top level.
+"""
 
 import logging
 
@@ -43,12 +46,6 @@ from .ions import BioIons, NobleAtoms, SolventIons
 from .nucleic import Nucleic3, Nucleic4, Nucleic6
 from .protein import Calpha, Caside, Ncsc, Polar
 from .solvent import Dma, Tip3p, Water
-
-__all__ = [
-    "Calpha", "Caside", "Ncsc", "Polar", "Enm", "Generic", "Nucleic3",
-    "Nucleic4", "Nucleic6", "Water", "Tip3p", "Dma", "SolventIons",
-    "BioIons", "NobleAtoms",
-]
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
