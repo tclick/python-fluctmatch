@@ -38,7 +38,7 @@
 import logging
 
 from .enm import Enm
-from .generic import Generic
+from .generic import Generic, UnitedAtom
 from .ions import BioIons, NobleAtoms, SolventIons
 from .nucleic import Nucleic3, Nucleic4, Nucleic6
 from .protein import Calpha, Caside, Ncsc, Polar
@@ -47,7 +47,7 @@ from .solvent import Dma, Tip3p, Water
 __all__ = [
     "Calpha", "Caside", "Ncsc", "Polar", "Enm", "Generic", "Nucleic3",
     "Nucleic4", "Nucleic6", "Water", "Tip3p", "Dma", "SolventIons",
-    "BioIons", "NobleAtoms",
+    "BioIons", "NobleAtoms", "UnitedAtom"
 ]
 
 logger: logging.Logger = logging.getLogger(__name__)

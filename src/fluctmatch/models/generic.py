@@ -139,3 +139,24 @@ class Generic(base.ModelBase):
         except AttributeError:
             pass
 
+class UnitedAtom(Generic):
+    """Universe consisting of all heavy atoms in proteins and nucleic acids."""
+    model: ClassVar[str] = "UNITED"
+    describe: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"
+
+    def __init__(self, xplor: bool = True, extended: bool = True,
+                 com: bool = True, guess_angles: bool = True,
+                 cutoff: float = 10.0):
+        super().__init__(xplor, extended, com, guess_angles, cutoff)
+
+    def create_topology(self, universe: mda.Universe):
+        """Deteremine the topology attributes and initialize the universe.
+
+        Parameters
+        ----------
+        universe : :class:`~MDAnalysis.Universe`
+            An all-atom universe
+        """
+        self._mapping = "(protein or nucleic or bioion) and not hydrogen"
+        ag: mda.AtomGroup = universe.select_atoms(self._mapping)
+        self.universe: mda.Universe = mda.Merge(ag)
