@@ -47,12 +47,18 @@ from .base import ModelBase
 
 class Nucleic3(ModelBase):
     """A universe the phosphate, sugar, and base of the nucleic acid."""
+
     model: ClassVar[str] = "NUCLEIC3"
     describe: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["P"]: str = "nucleicphosphate and not name H*"
@@ -61,42 +67,61 @@ class Nucleic3(ModelBase):
         self._selection: Mapping[str, str] = {
             "P": "nucleicphosphate",
             "C4'": "hnucleicsugar",
-            "C5": "hnucleicbase"
+            "C5": "hnucleicbase",
         }
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx 
-            for segment in self.universe.segments 
-            for idx in zip(segment.atoms.select_atoms("name P").ix,
-                           segment.atoms.select_atoms("name C4'").ix)
-        ])
-        bonds.extend([
-            idx 
-            for segment in self.universe.segments 
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
-                           segment.atoms.select_atoms("name C5").ix)
-        ])
-        bonds.extend([
-            idx 
-            for segment in self.universe.segments 
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
-                           segment.atoms.select_atoms("name P").ix[1:])
-            if segment.residues.n_residues > 1
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name P").ix,
+                    segment.atoms.select_atoms("name C4'").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix,
+                    segment.atoms.select_atoms("name C5").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix[:-1],
+                    segment.atoms.select_atoms("name P").ix[1:],
+                )
+                if segment.residues.n_residues > 1
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Nucleic4(ModelBase):
     """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
-    model: ClassVar[str] = "NUCLEIC4"
-    describe: ClassVar[str] = ("Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of "
-                     "nucleic acid")
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    model: ClassVar[str] = "NUCLEIC4"
+    describe: ClassVar[str] = (
+        "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of " "nucleic acid"
+    )
+
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["P"]: str = "nucleicphosphate and not name H*"
@@ -107,69 +132,95 @@ class Nucleic4(ModelBase):
             "P": "nucleicphosphate",
             "C4'": "sugarC4",
             "C2'": "sugarC2",
-            "C5": "hnucleicbase"
+            "C5": "hnucleicbase",
         }
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name P").ix,
-                           segment.atoms.select_atoms("name C4'").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
-                           segment.atoms.select_atoms("name C2'").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
-                           segment.atoms.select_atoms("name C5").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
-                           segment.atoms.select_atoms("name P").ix[1:])
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name P").ix,
+                    segment.atoms.select_atoms("name C4'").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix,
+                    segment.atoms.select_atoms("name C2'").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix,
+                    segment.atoms.select_atoms("name C5").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix[:-1],
+                    segment.atoms.select_atoms("name P").ix[1:],
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Nucleic6(ModelBase):
     """A universe accounting for six sites involved with hydrogen bonding."""
+
     model: ClassVar[str] = "NUCLEIC6"
     describe: ClassVar[str] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["P"]: str = "name P H5T"
         self._mapping["C4'"]: str = "name C4'"
         self._mapping["C2'"]: str = "name C2'"
-        self._mapping["H1"]: str = ("(resname ADE DA* RA* and name N6) or "
-                                    "(resname OXG GUA DG* RG* and name O6) or "
-                                    "(resname CYT DC* RC* and name N4) or "
-                                    "(resname THY URA DT* RU* and name O4)")
+        self._mapping["H1"]: str = (
+            "(resname ADE DA* RA* and name N6) or "
+            "(resname OXG GUA DG* RG* and name O6) or "
+            "(resname CYT DC* RC* and name N4) or "
+            "(resname THY URA DT* RU* and name O4)"
+        )
         self._mapping["H2"]: str = (
             "(resname ADE DA* RA* OXG GUA DG* RG* and name N1) or "
-            "(resname CYT DC* RC* THY URA DT* RU* and name N3)")
+            "(resname CYT DC* RC* THY URA DT* RU* and name N3)"
+        )
         self._mapping["H3"]: str = (
             "(resname ADE DA* RA* and name H2) or "
             "(resname OXG GUA DG* RG* and name N2) or "
-            "(resname CYT DC* RC* THY URA DT* RU* and name O2)")
+            "(resname CYT DC* RC* THY URA DT* RU* and name O2)"
+        )
         self._selection: Mapping[str, str] = {
             "P": "nucleicphosphate",
             "C4'": "sugarC4",
             "C2'": "sugarC2",
             "H1": "nucleic and name C2'",
             "H2": "nucleic and name C2'",
-            "H3": "nucleic and name C2'"
+            "H3": "nucleic and name C2'",
         }
 
     def create_topology(self, universe: mda.Universe):
@@ -182,46 +233,69 @@ class Nucleic6(ModelBase):
         """
         super().create_topology(universe)
 
-        charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
-                                       dtype=np.float32)
+        charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
         self.universe.add_TopologyAttr(Charges(charges))
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name P").ix,
-                           segment.atoms.select_atoms("name C4'").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix,
-                           segment.atoms.select_atoms("name C2'").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C2'").ix,
-                           segment.atoms.select_atoms("name H1").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name H1").ix,
-                           segment.atoms.select_atoms("name H2").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name H2").ix,
-                           segment.atoms.select_atoms("name H3").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C4'").ix[:-1],
-                           segment.atoms.select_atoms("name P").ix[1:])
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name P").ix,
+                    segment.atoms.select_atoms("name C4'").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix,
+                    segment.atoms.select_atoms("name C2'").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C2'").ix,
+                    segment.atoms.select_atoms("name H1").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name H1").ix,
+                    segment.atoms.select_atoms("name H2").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name H2").ix,
+                    segment.atoms.select_atoms("name H3").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C4'").ix[:-1],
+                    segment.atoms.select_atoms("name P").ix[1:],
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))

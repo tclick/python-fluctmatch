@@ -46,12 +46,18 @@ from .base import ModelBase
 
 class SolventIons(ModelBase):
     """Select ions within the solvent."""
+
     model: ClassVar[str] = "SOLVENTIONS"
     describe: ClassVar[str] = "Common ions within solvent (Li K Na F Cl Br I)"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._guess: bool = False
@@ -61,8 +67,7 @@ class SolventIons(ModelBase):
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
         restypes: MutableMapping[str, int] = {
-            k: v
-            for k, v in zip(resnames, np.arange(resnames.size) + 10)
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 10)
         }
 
         atomtypes: List[int] = [
@@ -76,12 +81,18 @@ class SolventIons(ModelBase):
 
 class BioIons(ModelBase):
     """Select ions normally found within biological systems."""
+
     model: ClassVar[str] = "BIOIONS"
     describe: ClassVar[str] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._guess: bool = False
@@ -91,13 +102,10 @@ class BioIons(ModelBase):
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
         restypes: MutableMapping[str, int] = {
-            k: v
-            for k, v in zip(resnames, np.arange(resnames.size) + 20)
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 20)
         }
 
-        atomtypes: List[int] = [
-            restypes[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
@@ -106,12 +114,18 @@ class BioIons(ModelBase):
 
 class NobleAtoms(ModelBase):
     """Select atoms column VIII of the periodic table."""
+
     model: ClassVar[str] = "NOBLE"
     describe: ClassVar[str] = "Noble gases (He Ne Kr Xe)"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._guess: bool = False
@@ -121,13 +135,10 @@ class NobleAtoms(ModelBase):
     def _add_atomtypes(self):
         resnames: np.ndarray = np.unique(self.universe.residues.resnames)
         restypes: MutableMapping[str, int] = {
-            k: v
-            for k, v in zip(resnames, np.arange(resnames.size) + 40)
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 40)
         }
 
-        atomtypes: List[int] = [
-            restypes[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):

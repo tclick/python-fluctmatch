@@ -43,13 +43,20 @@ from . import base
 
 class Generic(base.ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
-    model: ClassVar[str] = "GENERIC"
-    describe: ClassVar[str] = ("all heavy atoms excluding proteins "
-                               "and nucleic acids")
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    model: ClassVar[str] = "GENERIC"
+    describe: ClassVar[str] = (
+        "all heavy atoms excluding proteins " "and nucleic acids"
+    )
+
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
     def create_topology(self, universe: mda.Universe):
@@ -73,12 +80,14 @@ class Generic(base.ModelBase):
             An all-atom universe
         """
         if not hasattr(self, "universe"):
-            raise AttributeError("Topologies need to be created before bonds "
-                                 "can be added.")
+            raise AttributeError(
+                "Topologies need to be created before bonds " "can be added."
+            )
 
         if not hasattr(universe, "trajectory"):
-            raise AttributeError("The provided universe does not have "
-                                 "coordinates defined.")
+            raise AttributeError(
+                "The provided universe does not have " "coordinates defined."
+            )
 
         ag: mda.AtomGroup = universe.select_atoms(self._mapping)
         trajectory = universe.trajectory
@@ -118,14 +127,13 @@ class Generic(base.ModelBase):
         trajectory2.dimensions_array: np.ndarray = np.asarray(dimension_array)
         if trajectory2.ts.has_positions:
             position_array: np.ndarray = np.asarray(position_array)
-            self.universe.load_new(position_array, format=MemoryReader,
-                                   dimensions=dimension_array)
+            self.universe.load_new(
+                position_array, format=MemoryReader, dimensions=dimension_array
+            )
         if trajectory2.ts.has_velocities:
-            trajectory2.velocity_array: np.ndarray = np.asarray(
-                velocity_array)
+            trajectory2.velocity_array: np.ndarray = np.asarray(velocity_array)
         if trajectory2.ts.has_forces:
-            trajectory2.force_array: np.ndarray = np.asarray(
-                force_array)
+            trajectory2.force_array: np.ndarray = np.asarray(force_array)
         universe.trajectory.rewind()
 
     def _add_bonds(self):
@@ -133,20 +141,26 @@ class Generic(base.ModelBase):
             atoms: mda.AtomGroup = self.universe.atoms
             positions: np.ndarray = self.universe.atoms.positions
 
-            bonds: Tuple[Tuple[int, int]] = guessers.guess_bonds(atoms,
-                                                                 positions)
+            bonds: Tuple[Tuple[int, int]] = guessers.guess_bonds(atoms, positions)
             self.universe.add_TopologyAttr(Bonds(bonds))
         except AttributeError:
             pass
 
+
 class UnitedAtom(Generic):
     """Universe consisting of all heavy atoms in proteins and nucleic acids."""
+
     model: ClassVar[str] = "UNITED"
     describe: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
     def create_topology(self, universe: mda.Universe):

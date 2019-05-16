@@ -46,12 +46,18 @@ from .base import ModelBase
 
 class Water(ModelBase):
     """Create a universe consisting of the water oxygen."""
+
     model: ClassVar[str] = "WATER"
     describe: ClassVar[str] = "c.o.m./c.o.g. of whole water molecule"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._guess: bool = False
@@ -69,12 +75,18 @@ class Water(ModelBase):
 
 class Tip3p(ModelBase):
     """Create a universe containing all three water atoms."""
+
     model: ClassVar[str] = "TIP3P"
     describe: ClassVar[str] = "All-atom watter"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["OW"]: str = "name OW MW"
@@ -83,47 +95,62 @@ class Tip3p(ModelBase):
         self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
             key: value + 1
-            for key, value in zip(self._mapping.keys(),
-                                  range(len(self._mapping)))
+            for key, value in zip(self._mapping.keys(), range(len(self._mapping)))
         }
 
     def _add_atomtypes(self):
-        atomtypes: List[int] = [
-            self._types[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name OW").ix,
-                         s.atoms.select_atoms("name HW1").ix)
-        ])
-        bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name OW").ix,
-                         s.atoms.select_atoms("name HW2").ix)
-        ])
-        bonds.extend([
-            _
-            for s in self.universe.segments
-            for _ in zip(s.atoms.select_atoms("name HW1").ix,
-                         s.atoms.select_atoms("name HW2").ix)
-        ])
+        bonds.extend(
+            [
+                _
+                for s in self.universe.segments
+                for _ in zip(
+                    s.atoms.select_atoms("name OW").ix,
+                    s.atoms.select_atoms("name HW1").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                _
+                for s in self.universe.segments
+                for _ in zip(
+                    s.atoms.select_atoms("name OW").ix,
+                    s.atoms.select_atoms("name HW2").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                _
+                for s in self.universe.segments
+                for _ in zip(
+                    s.atoms.select_atoms("name HW1").ix,
+                    s.atoms.select_atoms("name HW2").ix,
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Dma(ModelBase):
     """Create a universe for N-dimethylacetamide."""
+
     model: ClassVar[str] = "DMA"
     describe: ClassVar[str] = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["C1"]: str = "resname DMA and name C1 H1*"
@@ -133,34 +160,43 @@ class Dma(ModelBase):
         self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
             key: value + 4
-            for key, value in zip(self._mapping.keys(),
-                                  range(len(self._mapping)))
+            for key, value in zip(self._mapping.keys(), range(len(self._mapping)))
         }
 
     def _add_atomtypes(self):
-        atomtypes: List[int] = [
-            self._types[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C1").ix,
-                           segment.atoms.select_atoms("name N").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C2").ix,
-                           segment.atoms.select_atoms("name N").ix)
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name C3").ix,
-                           segment.atoms.select_atoms("name N").ix)
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C1").ix,
+                    segment.atoms.select_atoms("name N").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C2").ix,
+                    segment.atoms.select_atoms("name N").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name C3").ix,
+                    segment.atoms.select_atoms("name N").ix,
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))

@@ -90,13 +90,20 @@ class Enm(ModelBase):
         The transformed universe
 
     """
+
     model: ClassVar[str] = "ENM"
     describe: ClassVar[str] = "Elastic network model"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = False,
-                 cutoff: float = 10.0, min_cutoff: Optional[float] = None,
-                 charges: bool = False):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        cutoff: float = 10.0,
+        min_cutoff: Optional[float] = None,
+        charges: bool = False,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._min_cutoff: Optional[float] = min_cutoff
@@ -113,8 +120,9 @@ class Enm(ModelBase):
         try:
             self.universe = universe.copy()
         except TypeError:
-            self.universe = mda.Universe(universe.filename,
-                                         universe.trajectory.filename)
+            self.universe = mda.Universe(
+                universe.filename, universe.trajectory.filename
+            )
 
         rename_universe(self.universe)
 
@@ -135,11 +143,9 @@ class Enm(ModelBase):
         self.universe.trajectory.rewind()
         positions /= self.universe.trajectory.n_frames
 
-        pairs, _ = distances.self_capped_distance(positions, self._cutoff,
-                                                  min_cutoff=self._min_cutoff)
-        pairs: List[Tuple[int, int]] = [
-            tuple(_)
-            for _ in np.unique(pairs, axis=0)
-        ]
+        pairs, _ = distances.self_capped_distance(
+            positions, self._cutoff, min_cutoff=self._min_cutoff
+        )
+        pairs: List[Tuple[int, int]] = [tuple(_) for _ in np.unique(pairs, axis=0)]
         bonds: Bonds = Bonds(pairs)
         self.universe.add_TopologyAttr(bonds)

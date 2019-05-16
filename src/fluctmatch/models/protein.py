@@ -45,12 +45,18 @@ from .base import ModelBase
 
 class Calpha(ModelBase):
     """Universe defined by the protein C-alpha."""
+
     model: ClassVar[str] = "CALPHA"
     describe: ClassVar[str] = "C-alpha of a protein"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["CA"]: str = "calpha"
@@ -59,105 +65,150 @@ class Calpha(ModelBase):
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments for idx in zip(
-                segment.atoms.select_atoms("calpha").ix,
-                segment.atoms.select_atoms("calpha").ix[1:])
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("calpha").ix,
+                    segment.atoms.select_atoms("calpha").ix[1:],
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Caside(ModelBase):
     """Universe consisting of the C-alpha and sidechains of a protein."""
+
     model: ClassVar[str] = "CASIDE"
     describe: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["CA"]: str = "calpha"
         self._mapping["CB"]: str = "hsidechain and not name H*"
         self._mapping["ions"]: str = "bioion"
-        self._selection: Mapping[str, str] = dict(CA="hbackbone",
-                                                  CB="hsidechain",
-                                                  ions="bioion")
+        self._selection: Mapping[str, str] = dict(
+            CA="hbackbone", CB="hsidechain", ions="bioion"
+        )
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("calpha").ix,
-                           segment.atoms.select_atoms("calpha").ix[1:])
-        ])
-        bonds.extend([(
-            residue.atoms.select_atoms("calpha").ix[0],
-            residue.atoms.select_atoms("cbeta").ix[0])
-            for residue in self.universe.select_atoms("protein").residues
-            if residue.resname != "GLY"
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("calpha").ix,
+                    segment.atoms.select_atoms("calpha").ix[1:],
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                (
+                    residue.atoms.select_atoms("calpha").ix[0],
+                    residue.atoms.select_atoms("cbeta").ix[0],
+                )
+                for residue in self.universe.select_atoms("protein").residues
+                if residue.resname != "GLY"
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Ncsc(ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
+
     model: ClassVar[str] = "NCSC"
     describe: ClassVar[str] = "c.o.m./c.o.g. of N, O, and sidechain of protein"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["N"]: str = "protein and name N"
         self._mapping["CB"]: str = "hsidechain and not name H*"
         self._mapping["O"]: str = "protein and name O OT1 OT2 OXT"
         self._mapping["ions"]: str = "bioion"
-        self._selection: Mapping[str, str] = dict(N="amine",
-                                                  CB="hsidechain",
-                                                  O="carboxyl",
-                                                  ions="bioion")
+        self._selection: Mapping[str, str] = dict(
+            N="amine", CB="hsidechain", O="carboxyl", ions="bioion"
+        )
 
     def _add_bonds(self):
         bonds: List[Tuple[int, int]] = []
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name N").ix,
-                           segment.atoms.select_atoms("name O").ix)
-        ])
-        bonds.extend([(
-            residue.atoms.select_atoms("name N").ix[0],
-            residue.atoms.select_atoms("cbeta").ix[0])
-            for residue in self.universe.select_atoms("protein").residues
-            if residue.resname != "GLY"
-        ])
-        bonds.extend([(
-            residue.atoms.select_atoms("cbeta").ix[0],
-            residue.atoms.select_atoms("name O").ix[0])
-            for residue in self.universe.select_atoms("protein").residues
-            if residue.resname != "GLY"
-        ])
-        bonds.extend([
-            idx
-            for segment in self.universe.segments
-            for idx in zip(segment.atoms.select_atoms("name O").ix,
-                           segment.atoms.select_atoms("name N").ix[1:])
-        ])
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name N").ix,
+                    segment.atoms.select_atoms("name O").ix,
+                )
+            ]
+        )
+        bonds.extend(
+            [
+                (
+                    residue.atoms.select_atoms("name N").ix[0],
+                    residue.atoms.select_atoms("cbeta").ix[0],
+                )
+                for residue in self.universe.select_atoms("protein").residues
+                if residue.resname != "GLY"
+            ]
+        )
+        bonds.extend(
+            [
+                (
+                    residue.atoms.select_atoms("cbeta").ix[0],
+                    residue.atoms.select_atoms("name O").ix[0],
+                )
+                for residue in self.universe.select_atoms("protein").residues
+                if residue.resname != "GLY"
+            ]
+        )
+        bonds.extend(
+            [
+                idx
+                for segment in self.universe.segments
+                for idx in zip(
+                    segment.atoms.select_atoms("name O").ix,
+                    segment.atoms.select_atoms("name N").ix[1:],
+                )
+            ]
+        )
         self.universe.add_TopologyAttr(Bonds(bonds))
 
 
 class Polar(Ncsc):
     """Universe consisting of the amine, carboxyl, and polar regions."""
+
     model: ClassVar[str] = "POLAR"
     describe: ClassVar[str] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
 
-    def __init__(self, xplor: bool = True, extended: bool = True,
-                 com: bool = True, guess_angles: bool = True,
-                 cutoff: float = 10.0):
+    def __init__(
+        self,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = True,
+        cutoff: float = 10.0,
+    ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
         self._mapping["CB"]: Mapping[str, str] = dict(
