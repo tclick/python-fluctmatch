@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -38,11 +37,21 @@
 import logging
 
 from .enm import Enm
-from .generic import Generic, UnitedAtom
-from .ions import BioIons, NobleAtoms, SolventIons
-from .nucleic import Nucleic3, Nucleic4, Nucleic6
-from .protein import Calpha, Caside, Ncsc, Polar
-from .solvent import Dma, Tip3p, Water
+from .generic import Generic
+from .generic import UnitedAtom
+from .ions import BioIons
+from .ions import NobleAtoms
+from .ions import SolventIons
+from .nucleic import Nucleic3
+from .nucleic import Nucleic4
+from .nucleic import Nucleic6
+from .protein import Calpha
+from .protein import Caside
+from .protein import Ncsc
+from .protein import Polar
+from .solvent import Dma
+from .solvent import Tip3p
+from .solvent import Water
 
 __all__ = [
     "Calpha",

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -67,6 +66,7 @@ class RTFWriter(topbase.TopologyWriterBase):
     charmm_version
         Version of CHARMM for formatting (default: 41)
     """
+
     format: ClassVar[str] = "RTF"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length=None)
     fmt: ClassVar[Dict[str, str]] = dict(
@@ -92,10 +92,12 @@ class RTFWriter(topbase.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: str = kwargs.get(
-            "title", (
+            "title",
+            (
                 "* Created by fluctmatch on {date}".format(date=date),
                 "* User: {user}".format(user=user),
-            ))
+            ),
+        )
         if not iterable(self._title):
             self._title: str = asiterable(self._title)
 
@@ -105,9 +107,13 @@ class RTFWriter(topbase.TopologyWriterBase):
             atomtypes: np.ndarray = self._atoms[idx].types.astype(np.int)
         except ValueError:
             atomtypes: np.ndarray = np.arange(idx.size, dtype=np.int) + 1
-        columns: np.ndarray = np.hstack((atomtypes[:, np.newaxis],
-                                         self._atoms.names[idx, np.newaxis],
-                                         self._atoms.masses[idx, np.newaxis]))
+        columns: np.ndarray = np.hstack(
+            (
+                atomtypes[:, np.newaxis],
+                self._atoms.names[idx, np.newaxis],
+                self._atoms.masses[idx, np.newaxis],
+            )
+        )
 
         if self._version >= 39:
             columns[:, 0] = -1
@@ -122,17 +128,26 @@ class RTFWriter(topbase.TopologyWriterBase):
     def _write_residues(self, residue: mda.core.groups.Residue):
         atoms: mda.AtomGroup = residue.atoms
 
-        print(self.fmt["RES"].format(residue.resname, residue.charge),
-              file=self.rtffile)
+        print(
+            self.fmt["RES"].format(residue.resname, residue.charge),
+            file=self.rtffile
+        )
 
         # Write the atom lines with site name, type, and charge.
         key: str = "ATOM"
         lines: np.ndarray = np.hstack(
-            (atoms.names[:, np.newaxis], atoms.types[:, np.newaxis],
-             atoms.charges[:, np.newaxis])
-            if not np.issubdtype(atoms.types.dtype, np.signedinteger)
-            else (atoms.names[:, np.newaxis], atoms.names[:, np.newaxis],
-                  atoms.charges[:, np.newaxis]))
+            (
+                atoms.names[:, np.newaxis],
+                atoms.types[:, np.newaxis],
+                atoms.charges[:, np.newaxis],
+            )
+            if np.issubdtype(atoms.types.dtype, np.number)
+            else (
+                atoms.names[:, np.newaxis],
+                atoms.names[:, np.newaxis],
+                atoms.charges[:, np.newaxis],
+            )
+        )
         np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
 
         # Write the bond, angle, dihedral, and improper dihedral lines.
@@ -147,19 +162,23 @@ class RTFWriter(topbase.TopologyWriterBase):
                 # Create list of atom names and include "+" for atoms not
                 # within the residue.
                 names: np.ndarray = np.vstack(
-                    [_.atoms.names[np.newaxis, :] for _ in bonds])
+                    [_.atoms.names[np.newaxis, :] for _ in bonds]
+                )
 
                 idx: List[np.ndarray] = [
-                    np.isin(_.atoms, atoms, invert=True)
-                    for _ in bonds]
+                    np.isin(_.atoms, atoms, invert=True) for _ in bonds
+                ]
                 idx: np.ndarray = np.any(idx, axis=1)
 
                 pos_names: np.ndarray = np.where(
-                    np.isin(bonds[idx], atoms, invert=True), "+", "")
+                    np.isin(bonds[idx], atoms, invert=True), "+", ""
+                )
                 if pos_names.size == 0:
-                    logger.warning("Please check that all bond definitions are "
-                                   "valid. You may have some missing or broken "
-                                   "bonds.")
+                    logger.warning(
+                        "Please check that all bond definitions are "
+                        "valid. You may have some missing or broken "
+                        "bonds."
+                    )
                 else:
                     names[idx]: str = pos_names + names[idx]
                 names: np.ndarray = names.astype(str)
@@ -168,7 +187,8 @@ class RTFWriter(topbase.TopologyWriterBase):
                 # Code courtesy of Daniel F on
                 # https://stackoverflow.com/questions/45005477/eliminating-redundant-numpy-rows/45006131?noredirect=1#comment76988894_45006131
                 dtype: np.dtype = np.dtype(
-                    (np.void, names.dtype.itemsize * names.shape[1]))
+                    (np.void, names.dtype.itemsize * names.shape[1])
+                )
                 b: np.ndarray = np.ascontiguousarray(np.sort(names)).view(dtype)
                 _, idx = np.unique(b, return_index=True)
                 names: np.ndarray = names[idx]
@@ -180,10 +200,11 @@ class RTFWriter(topbase.TopologyWriterBase):
                     n_extra: int = n_values - (n_rows % n_values)
                     extras: np.ndarray = np.full((n_extra, n_cols), "")
                     names: np.ndarray = np.concatenate((names, extras))
-                names: np.ndarray = names.reshape((names.shape[0] // n_values,
-                                                   n_perline))
+                names: np.ndarray = names.reshape(
+                    (names.shape[0] // n_values, n_perline)
+                )
                 np.savetxt(self.rtffile, names, fmt=fmt)
-            except (AttributeError, ):
+            except (AttributeError,):
                 continue
         print(file=self.rtffile)
 
@@ -215,8 +236,7 @@ class RTFWriter(topbase.TopologyWriterBase):
             print("AUTOGENERATE ANGLES DIHEDRAL\n", file=self.rtffile)
 
             # Write out the residue information
-            _, idx = np.unique(
-                self._atoms.residues.resnames, return_index=True)
+            _, idx = np.unique(self._atoms.residues.resnames, return_index=True)
             for residue in self._atoms.residues[idx]:
                 self._write_residues(residue)
             print("END", file=self.rtffile)

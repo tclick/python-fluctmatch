@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -30,22 +29,15 @@ Why does this file exist, and why not put this in __main__?
 
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import os
 import sys
 from os import path
+from pathlib import Path
 
 import click
 
 CONTEXT_SETTINGS = dict(
-    auto_envvar_prefix='COMPLEX',
-    help_option_names=['-h', '--help'],
+    auto_envvar_prefix="COMPLEX", help_option_names=["-h", "--help"]
 )
 
 
@@ -54,7 +46,7 @@ class Context(object):
 
     def __init__(self):
         self.verbose = False
-        self.home = os.getcwd()
+        self.home = Path.home()
 
     def log(self, msg, *args):
         """Logs a message to stderr."""
@@ -69,7 +61,7 @@ class Context(object):
 
 
 pass_context = click.make_pass_decorator(Context, ensure=True)
-cmd_folder = path.abspath(path.join(path.dirname(__file__), 'commands'))
+cmd_folder = path.abspath(path.join(path.dirname(__file__), "commands"))
 
 
 class ComplexCLI(click.MultiCommand):
@@ -90,7 +82,7 @@ class ComplexCLI(click.MultiCommand):
         """
         rv = []
         for filename in os.listdir(cmd_folder):
-            if (filename.endswith(".py") and filename.startswith("cmd_")):
+            if filename.endswith(".py") and filename.startswith("cmd_"):
                 rv.append(filename[4:-3])
         rv.sort()
         return rv

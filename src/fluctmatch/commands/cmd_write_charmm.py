@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -15,9 +14,7 @@
 # doi:10.1016/bs.mie.2016.05.024.
 #
 from __future__ import (
-    absolute_import,
-    division,
-    print_function,
+    absolute_import, division, print_function,
     unicode_literals,
 )
 
@@ -94,10 +91,8 @@ from fluctmatch.fluctmatch import utils as fmutils
     help="Include nonbonded section in CHARMM parameter file",
 )
 @click.option(
-    "--no-cmap",
-    "cmap",
-    is_flag=True,
-    help="Include CMAP section in CHARMM PSF file",
+    "--no-cmap", "cmap", is_flag=True,
+    help="Include CMAP section in CHARMM PSF file"
 )
 @click.option(
     "--no-cheq",
@@ -105,65 +100,53 @@ from fluctmatch.fluctmatch import utils as fmutils
     is_flag=True,
     help="Include charge equilibrium section in CHARMM PSF file",
 )
-@click.option(
-    "--write",
-    "write_traj",
-    is_flag=True,
-    help="Convert the trajectory file",
-)
-@click.option(
-    "-l",
-    "--list",
-    "model_list",
-    is_flag=True,
-    help="List available models with their descriptions")
+@click.option("--write", "write_traj", is_flag=True,
+              help="Convert the trajectory file")
 def cli(
-        topology,
-        trajectory,
-        logfile,
-        outdir,
-        prefix,
-        charmm_version,
-        extended,
-        cmap,
-        cheq,
-        nonbonded,
-        write_traj,
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    prefix,
+    charmm_version,
+    extended,
+    cmap,
+    cheq,
+    nonbonded,
+    write_traj,
 ):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     kwargs = dict(

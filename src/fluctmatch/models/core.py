@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -41,8 +40,9 @@ from typing import List
 
 import MDAnalysis as mda
 
+from .base import Merge
+from .base import ModelBase
 from .. import _MODELS
-from .base import Merge, ModelBase
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -52,8 +52,12 @@ def modeller(*args, **kwargs) -> mda.Universe:
 
     Parameters
     ----------
-    args
-    kwargs
+    topology : str
+        A topology file containing atomic information about a system.
+    trajectory : str
+        A trajectory file with coordinates of atoms
+    model : list[str], optional
+        Name(s) of coarse-grain models
 
     Returns
     -------
@@ -66,7 +70,8 @@ def modeller(*args, **kwargs) -> mda.Universe:
             model: ModelBase = _MODELS["ENM"]()
             return model.transform(mda.Universe(*args, **kwargs))
     except Exception as exc:
-        logger.exception("An error occurred while trying to create " "the universe.")
+        logger.exception(
+            "An error occurred while trying to create the universe.")
         raise RuntimeError from exc
 
     try:
@@ -75,7 +80,7 @@ def modeller(*args, **kwargs) -> mda.Universe:
         ]
     except KeyError:
         tb: List[str] = traceback.format_exc()
-        msg = f"One of the models is not implemented. " f"Please try {_MODELS.keys()}"
+        msg = f"One of the models is not implemented. Please try {_MODELS.keys()}"
         logger.exception(msg)
         raise KeyError(msg).with_traceback(tb)
     else:

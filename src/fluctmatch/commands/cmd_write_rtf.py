@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # pysca --- https://github.com/tclick/python-pysca
@@ -14,27 +13,17 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
-from future.utils import (native_str)
-
 import logging
 import logging.config
 import os
 from os import path
 
-import click
 import MDAnalysis as mda
-from fluctmatch.topology import RTF
+import click
 
 
-@click.command(
-    "write_rtf", short_help="Create an RTF file from a structure file.")
+@click.command("write_rtf",
+               short_help="Create an RTF file from a structure file.")
 @click.option(
     "-s",
     "topology",
@@ -78,53 +67,41 @@ from fluctmatch.topology import RTF
     help="Include declaration section in CHARMM topology file",
 )
 @click.option(
-    "--uniform",
-    "mass",
-    is_flag=True,
-    help="Set uniform mass of beads to 1.0",
+    "--uniform", "mass", is_flag=True, help="Set uniform mass of beads to 1.0"
 )
-def cli(
-        topology,
-        trajectory,
-        logfile,
-        outfile,
-        decl,
-        mass,
-):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+def cli(topology, trajectory, logfile, outfile, decl, mass):
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     kwargs = dict()
@@ -134,6 +111,6 @@ def cli(
         logger.info("Setting all bead masses to 1.0.")
         universe.atoms.mass = 1.0
 
-    with mda.Writer(native_str(outfile), **kwargs) as rtf:
+    with mda.Writer(outfile, **kwargs) as rtf:
         logger.info("Writing {}...".format(outfile))
         rtf.write(universe, decl=not decl)

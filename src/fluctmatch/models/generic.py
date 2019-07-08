@@ -171,6 +171,9 @@ class UnitedAtom(Generic):
         universe : :class:`~MDAnalysis.Universe`
             An all-atom universe
         """
-        self._mapping = "(protein or nucleic or bioion) and not hydrogen"
+        self._mapping = "(protein or nucleic or bioion) and not name H*"
         ag: mda.AtomGroup = universe.select_atoms(self._mapping)
         self.universe: mda.Universe = mda.Merge(ag)
+
+    def _add_bonds(self):
+        pass

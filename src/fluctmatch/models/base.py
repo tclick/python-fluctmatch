@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -43,32 +42,35 @@ import itertools
 import logging
 import string
 from collections import OrderedDict
-from typing import Generator, Iterable, List, MutableMapping, TypeVar
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import MutableMapping
+from typing import TypeVar
 
-import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import (
-    Atomids,
-    Atomnames,
-    Atomtypes,
-    Charges,
-    Masses,
-    Radii,
-    Resids,
-    Resnames,
-    Resnums,
-    Segids,
-    TopologyAttr,
-    Angles,
-    Dihedrals,
-    Impropers,
-)
-from MDAnalysis.core.topologyobjects import TopologyGroup
+import numpy as np
 from MDAnalysis.coordinates.memory import MemoryReader
+from MDAnalysis.core.topologyattrs import Angles
+from MDAnalysis.core.topologyattrs import Atomids
+from MDAnalysis.core.topologyattrs import Atomnames
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Charges
+from MDAnalysis.core.topologyattrs import Dihedrals
+from MDAnalysis.core.topologyattrs import Impropers
+from MDAnalysis.core.topologyattrs import Masses
+from MDAnalysis.core.topologyattrs import Radii
+from MDAnalysis.core.topologyattrs import Resids
+from MDAnalysis.core.topologyattrs import Resnames
+from MDAnalysis.core.topologyattrs import Resnums
+from MDAnalysis.core.topologyattrs import Segids
+from MDAnalysis.core.topologyattrs import TopologyAttr
+from MDAnalysis.core.topologyobjects import TopologyGroup
 from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
 
-from .. import _MODELS, _DESCRIBE
+from .. import _DESCRIBE
+from .. import _MODELS
 from ..libs.typing import StrMapping
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -165,7 +167,7 @@ class ModelBase(abc.ABC):
         # Allocate arrays
         beads: List[mda.AtomGroup] = []
         atomnames: List[str] = []
-        selections: Generator = itertools.product(
+        selections: Iterator = itertools.product(
             universe.residues, self._mapping.items()
         )
 
@@ -267,7 +269,7 @@ class ModelBase(abc.ABC):
         trajectory = universe.trajectory
         trajectory.rewind()
 
-        selections: Generator = itertools.product(
+        selections: Iterator = itertools.product(
             universe.residues, self._mapping.values()
         )
         beads: List[mda.AtomGroup] = []
@@ -357,7 +359,7 @@ class ModelBase(abc.ABC):
 
     def _add_masses(self, universe: mda.Universe):
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
-        select_residues: Generator = itertools.product(
+        select_residues: Iterator = itertools.product(
             residues, self._selection.values()
         )
 
@@ -377,7 +379,7 @@ class ModelBase(abc.ABC):
 
     def _add_charges(self, universe: mda.Universe):
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
-        select_residues: Generator = itertools.product(
+        select_residues: Iterator = itertools.product(
             residues, self._selection.values()
         )
 

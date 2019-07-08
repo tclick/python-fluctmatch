@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -14,13 +13,6 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 import logging.config
 import os
@@ -38,11 +30,7 @@ from fluctmatch.analysis import thermodynamics
     metavar="FILE",
     default="fluctmatch.xplor.psf",
     show_default=True,
-    type=click.Path(
-        exists=False,
-        file_okay=True,
-        resolve_path=False,
-    ),
+    type=click.Path(exists=False, file_okay=True, resolve_path=False),
     help="Topology file (e.g., tpr gro g96 pdb brk ent psf)",
 )
 @click.option(
@@ -51,11 +39,7 @@ from fluctmatch.analysis import thermodynamics
     metavar="FILE",
     default="cg.dcd",
     show_default=True,
-    type=click.Path(
-        exists=False,
-        file_okay=True,
-        resolve_path=False,
-    ),
+    type=click.Path(exists=False, file_okay=True, resolve_path=False),
     help="Trajectory file (e.g. xtc trr dcd)",
 )
 @click.option(
@@ -115,42 +99,48 @@ from fluctmatch.analysis import thermodynamics
     type=click.IntRange(27, None, clamp=True),
     help="CHARMM version",
 )
-def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
-        charmm_version):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+def cli(
+    datadir,
+    logfile,
+    outdir,
+    topology,
+    trajectory,
+    nma_exec,
+    temperature,
+    charmm_version,
+):
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     # Attempt to create the necessary subdirectory
@@ -160,8 +150,8 @@ def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
         pass
 
     logger.info("Calculating thermodynamic properties.")
-    logger.warning("Depending upon the size of the system, this may take a "
-                   "while.")
+    logger.warning(
+        "Depending upon the size of the system, this may take a " "while.")
     thermodynamics.create_thermo_tables(
         datadir,
         outdir,
@@ -169,4 +159,5 @@ def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
         trajectory=trajectory,
         temperature=temperature,
         nma_exec=nma_exec,
-        charmm_version=charmm_version)
+        charmm_version=charmm_version,
+    )

@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -14,27 +13,19 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.utils import (viewkeys, iteritems)
-
 import logging
 import logging.config
 import os
 from os import path
 
 import click
-from fluctmatch import (_DESCRIBE, _MODELS)
+from fluctmatch import _DESCRIBE, _MODELS
 from fluctmatch.models.core import modeller
 from fluctmatch.fluctmatch.utils import write_charmm_files
 
 
-@click.command(
-    "convert", short_help="Convert from all-atom to coarse-grain model.")
+@click.command("convert",
+               short_help="Convert from all-atom to coarse-grain model.")
 @click.option(
     "-s",
     "topology",
@@ -100,7 +91,7 @@ from fluctmatch.fluctmatch.utils import write_charmm_files
     "-m",
     "--model",
     metavar="MODEL",
-    type=click.Choice(viewkeys(_MODELS)),
+    type=click.Choice(_MODELS.keys()),
     multiple=True,
     help="Model(s) to convert to",
 )
@@ -140,10 +131,8 @@ from fluctmatch.fluctmatch.utils import write_charmm_files
     help="Include segment IDs in internal coordinate files",
 )
 @click.option(
-    "--no-cmap",
-    "cmap",
-    is_flag=True,
-    help="Include CMAP section in CHARMM PSF file",
+    "--no-cmap", "cmap", is_flag=True,
+    help="Include CMAP section in CHARMM PSF file"
 )
 @click.option(
     "--no-cheq",
@@ -152,80 +141,72 @@ from fluctmatch.fluctmatch.utils import write_charmm_files
     help="Include charge equilibrium section in CHARMM PSF file",
 )
 @click.option(
-    "--uniform",
-    "mass",
-    is_flag=True,
-    help="Set uniform mass of beads to 1.0",
+    "--uniform", "mass", is_flag=True, help="Set uniform mass of beads to 1.0"
 )
-@click.option(
-    "--write",
-    "write_traj",
-    is_flag=True,
-    help="Convert the trajectory file",
-)
+@click.option("--write", "write_traj", is_flag=True,
+              help="Convert the trajectory file")
 @click.option(
     "--list",
     "model_list",
     is_flag=True,
-    help="List available models with their descriptions")
+    help="List available models with their descriptions",
+)
 def cli(
-        topology,
-        trajectory,
-        logfile,
-        outdir,
-        prefix,
-        rmin,
-        rmax,
-        model,
-        charmm_version,
-        com,
-        extended,
-        resid,
-        cmap,
-        cheq,
-        nonbonded,
-        mass,
-        write_traj,
-        model_list,
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    prefix,
+    rmin,
+    rmax,
+    model,
+    charmm_version,
+    com,
+    extended,
+    resid,
+    cmap,
+    cheq,
+    nonbonded,
+    mass,
+    write_traj,
+    model_list,
 ):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     if model_list:
-        for k, v in iteritems(_DESCRIBE):
+        for k, v in _DESCRIBE.items():
             print("{:20}{}".format(k, v))
         return
 
@@ -245,7 +226,8 @@ def cli(
             cheq=not cheq,
             nonbonded=not nonbonded,
             write_traj=write_traj,
-        ))
+        )
+    )
     if mass:
         logger.info("Setting all bead masses to 1.0.")
         universe.atoms.mass = 1.0

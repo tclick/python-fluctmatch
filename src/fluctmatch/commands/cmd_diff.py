@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -14,16 +13,8 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import open
-from future.utils import native_str
-
 import logging
+import logging.config
 import os
 from os import path
 
@@ -47,11 +38,7 @@ from fluctmatch.analysis import paramtable
     metavar="OUTDIR",
     default=os.getcwd(),
     show_default=True,
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        resolve_path=True,
-    ),
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
 )
 @click.option(
@@ -61,60 +48,47 @@ from fluctmatch.analysis import paramtable
     default=3,
     show_default=True,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of residues to exclude in I,I+r")
-@click.argument(
-    "table1",
-    metavar="TABLE1",
-    type=click.Path(
-        exists=True,
-        file_okay=True,
-        resolve_path=True,
-    ),
+    help="Number of residues to exclude in I,I+r",
 )
 @click.argument(
-    "table2",
-    metavar="TABLE2",
-    type=click.Path(
-        exists=True,
-        file_okay=True,
-        resolve_path=True,
-    ),
+    "table1", metavar="TABLE1", type=click.Path(exists=True, resolve_path=True)
+)
+@click.argument(
+    "table2", metavar="TABLE2", type=click.Path(exists=True, resolve_path=True)
 )
 def cli(logfile, outdir, ressep, table1, table2):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     logger.info("Loading {}".format(table1))
@@ -128,20 +102,16 @@ def cli(logfile, outdir, ressep, table1, table2):
     logger.info("{} loaded".format(table2))
 
     d_table = table_1 - table_2
-    d_perres = table_1.per_residue.subtract(
-        table_2.per_residue, fill_value=0.0)
-    d_interactions = table_1.interactions.subtract(
-        table_2.interactions, fill_value=0.0)
+    d_perres = table_1.per_residue.subtract(table_2.per_residue, fill_value=0.0)
+    d_interactions = table_1.interactions.subtract(table_2.interactions,
+                                                   fill_value=0.0)
 
     filename = path.join(outdir, "dcoupling.txt")
     with open(filename, mode="wb") as output:
         logger.info("Writing table differences to {}".format(filename))
         d_table = d_table.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_table.encode())
         logger.info("Table written successfully.")
@@ -150,11 +120,8 @@ def cli(logfile, outdir, ressep, table1, table2):
     with open(filename, mode="wb") as output:
         logger.info("Writing per residue differences to {}".format(filename))
         d_perres = d_perres.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_perres.encode())
         logger.info("Table written successfully.")
@@ -164,11 +131,8 @@ def cli(logfile, outdir, ressep, table1, table2):
         logger.info(
             "Writing residue-residue differences to {}".format(filename))
         d_interactions = d_interactions.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_interactions.encode())
         logger.info("Table written successfully.")

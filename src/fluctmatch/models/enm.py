@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -36,13 +35,21 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Class for elastic network model."""
 
-from typing import ClassVar, List, Optional, Tuple
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Atomtypes, Charges, Bonds
+from MDAnalysis.core.topologyattrs import Angles
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Charges
+from MDAnalysis.core.topologyattrs import Dihedrals
+from MDAnalysis.core.topologyattrs import Impropers
 from MDAnalysis.lib import distances
 
-from .base import ModelBase, rename_universe
+from .base import ModelBase
+from .base import rename_universe
 from .selection import *
 
 
@@ -125,13 +132,14 @@ class Enm(ModelBase):
             )
 
         rename_universe(self.universe)
+        n_atoms = self.universe.atoms.n_atoms
 
         if not self._charges:
-            charges = np.zeros(self.universe.atoms.n_atoms)
+            charges = np.zeros(n_atoms)
             self.universe.add_TopologyAttr(Charges(charges))
 
-        atomtypes: np.ndarray = np.arange(self.universe.atoms.n_atoms) + 1
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
+        atomtypes: np.ndarray = np.arange(n_atoms, dtype=int) + 1
+        self.universe.add_TopologyAttr(Atomtypes(self.universe.atoms.names))
 
     def add_trajectory(self, universe: mda.Universe):
         pass
@@ -149,3 +157,7 @@ class Enm(ModelBase):
         pairs: List[Tuple[int, int]] = [tuple(_) for _ in np.unique(pairs, axis=0)]
         bonds: Bonds = Bonds(pairs)
         self.universe.add_TopologyAttr(bonds)
+        if not self._guess:
+            self.universe.add_TopologyAttr(Angles([]))
+            self.universe.add_TopologyAttr(Dihedrals([]))
+            self.universe.add_TopologyAttr(Impropers([]))

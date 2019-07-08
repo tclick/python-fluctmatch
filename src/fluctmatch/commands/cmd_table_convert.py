@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # pysca --- https://github.com/tclick/python-pysca
@@ -14,14 +13,6 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (dict, open, zip)
-
 import logging
 import logging.config
 import os
@@ -34,7 +25,8 @@ import MDAnalysis as mda
 
 @click.command(
     "table_convert",
-    short_help="Transform an ENM IC table name to corresponding atoms.")
+    short_help="Transform an ENM IC table name to corresponding atoms."
+)
 @click.option(
     "-l",
     "--logfile",
@@ -91,40 +83,38 @@ import MDAnalysis as mda
 )
 def cli(logfile, top1, top2, coord, table, outfile):
     # Setup logger
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": path.join(os.getcwd(), logfile),
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": path.join(os.getcwd(), logfile),
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     cg = mda.Universe(top1, coord)
@@ -132,16 +122,13 @@ def cli(logfile, top1, top2, coord, table, outfile):
     convert = dict(zip(fluctmatch.atoms.names, cg.atoms.names))
     resnames = pd.DataFrame.from_records(
         zip(cg.residues.segids, cg.residues.resnums, cg.residues.resnames),
-        columns=["segid", "res", "resn"]
+        columns=["segid", "res", "resn"],
     ).set_index(["segid", "res"])
 
     with open(table, "rb") as tbl:
         logger.info("Loading {}.".format(table))
         constants = pd.read_csv(
-            tbl,
-            header=0,
-            skipinitialspace=True,
-            delim_whitespace=True,
+            tbl, header=0, skipinitialspace=True, delim_whitespace=True
         )
         logger.info("Table loaded successfully.")
 
@@ -166,10 +153,7 @@ def cli(logfile, top1, top2, coord, table, outfile):
     with open(outfile, "wb") as output:
         logger.info("Writing updated table to {}.".format(outfile))
         constants = constants.to_csv(
-            header=True,
-            index=True,
-            sep=" ",
-            float_format="%.4f",
+            header=True, index=True, sep=" ", float_format="%.4f"
         )
         output.write(constants.encode())
         logger.info("Table written successfully.")

@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -14,13 +13,6 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 import logging.config
 import os
@@ -102,7 +94,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "--tol",
     metavar="TOL",
     type=click.FLOAT,
-    default=1.e-4,
+    default=1.0e-4,
     show_default=True,
     help="Tolerance level between simulations",
 )
@@ -143,61 +135,55 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     default=True,
     help="Include segment IDs in internal coordinate files",
 )
-@click.option(
-    "--restart",
-    is_flag=True,
-    help="Restart simulation",
-)
+@click.option("--restart", is_flag=True, help="Restart simulation")
 def cli(
-        topology,
-        trajectory,
-        logfile,
-        outdir,
-        nma_exec,
-        temperature,
-        n_cycles,
-        tol,
-        prefix,
-        charmm_version,
-        extended,
-        resid,
-        nonbonded,
-        restart,
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    nma_exec,
+    temperature,
+    n_cycles,
+    tol,
+    prefix,
+    charmm_version,
+    extended,
+    resid,
+    nonbonded,
+    restart,
 ):
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     kwargs = dict(

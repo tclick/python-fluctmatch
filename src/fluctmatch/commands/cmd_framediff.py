@@ -1,4 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
@@ -14,15 +13,6 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import open
-from future.utils import native_str
-
 import logging
 import logging.config
 import os
@@ -33,8 +23,8 @@ from fluctmatch.analysis import paramtable
 
 
 @click.command(
-    "framediff",
-    short_help="Calculate differences between consecutive frames.")
+    "framediff", short_help="Calculate differences between consecutive frames."
+)
 @click.option(
     "-l",
     "--logfile",
@@ -50,11 +40,7 @@ from fluctmatch.analysis import paramtable
     metavar="OUTDIR",
     default=os.getcwd(),
     show_default=True,
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        resolve_path=True,
-    ),
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
 )
 @click.option(
@@ -64,52 +50,47 @@ from fluctmatch.analysis import paramtable
     default=3,
     show_default=True,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of residues to exclude in I,I+r")
+    help="Number of residues to exclude in I,I+r",
+)
 @click.argument(
     "table",
     metavar="TABLE",
-    type=click.Path(
-        exists=True,
-        file_okay=True,
-        resolve_path=True,
-    ),
+    type=click.Path(exists=True, file_okay=True, resolve_path=True),
 )
 def cli(logfile, outdir, ressep, table):
     # Setup logger
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger = logging.getLogger(__name__)
 
     logger.info("Reading {}".format(table))
@@ -125,11 +106,8 @@ def cli(logfile, outdir, ressep, table):
     with open(filename, mode="wb") as output:
         logger.info("Writing frame differences to {}".format(filename))
         d_table = d_table.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_table.encode())
         logger.info("Table written successfully.")
@@ -139,11 +117,8 @@ def cli(logfile, outdir, ressep, table):
         logger.info(
             "Writing per residue frame differences to {}".format(filename))
         d_perres = d_perres.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_perres.encode())
         logger.info("Table written successfully.")
@@ -153,11 +128,8 @@ def cli(logfile, outdir, ressep, table):
         logger.info(
             "Writing residue-residue frame differences to {}".format(filename))
         d_interactions = d_interactions.to_csv(
-            header=True,
-            index=True,
-            sep=native_str(" "),
-            float_format=native_str("%.4f"),
-            encoding="utf-8",
+            header=True, index=True, sep=" ", float_format="%.4f",
+            encoding="utf-8"
         )
         output.write(d_interactions.encode())
         logger.info("Table written successfully.")

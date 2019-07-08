@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -194,7 +193,8 @@ class AdditionalNucleicSelection(selection.NucleicSelection):
 
     def __init__(self, parser, tokens):
         super().__init__(parser, tokens)
-        self.nucl_res = np.concatenate((self.nucl_res, ["OXG", "HPX", "DC35"]))
+        self.nucl_res = np.concatenate(
+            (self.nucl_res, ["OXG", "ABNP", "HPX", "DC35"]))
 
     def apply(self, group: AtomGroup):
         mask: np.ndarray = np.in1d(group.resnames, self.nucl_res)

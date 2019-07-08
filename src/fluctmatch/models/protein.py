@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -36,7 +35,10 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes for various protein models."""
 
-from typing import ClassVar, List, Tuple, Mapping
+from typing import ClassVar
+from typing import List
+from typing import Mapping
+from typing import Tuple
 
 from MDAnalysis.core.topologyattrs import Bonds
 
@@ -59,8 +61,7 @@ class Calpha(ModelBase):
     ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["CA"]: str = "calpha"
-        self._mapping["ions"]: str = "bioion"
+        self._mapping: Mapping[str, str] = dict(CA="calpha", ions="bioion")
         self._selection: Mapping[str, str] = dict(CA="protein", ions="bioion")
 
     def _add_bonds(self):
@@ -94,9 +95,9 @@ class Caside(ModelBase):
     ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["CA"]: str = "calpha"
-        self._mapping["CB"]: str = "hsidechain and not name H*"
-        self._mapping["ions"]: str = "bioion"
+        self._mapping: Mapping[str, str] = dict(
+            CA="calpha", CB="hsidechain and not name H*", ions="bioion"
+        )
         self._selection: Mapping[str, str] = dict(
             CA="hbackbone", CB="hsidechain", ions="bioion"
         )
@@ -142,10 +143,12 @@ class Ncsc(ModelBase):
     ):
         super().__init__(xplor, extended, com, guess_angles, cutoff)
 
-        self._mapping["N"]: str = "protein and name N"
-        self._mapping["CB"]: str = "hsidechain and not name H*"
-        self._mapping["O"]: str = "protein and name O OT1 OT2 OXT"
-        self._mapping["ions"]: str = "bioion"
+        self._mapping: Mapping[str, str] = dict(
+            N="protein and name N",
+            CB="hsidechain and not name H*",
+            O="protein and name O OT1 OT2 OXT",
+            ions="bioion",
+        )
         self._selection: Mapping[str, str] = dict(
             N="amine", CB="hsidechain", O="carboxyl", ions="bioion"
         )
