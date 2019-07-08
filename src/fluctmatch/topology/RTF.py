@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import MDAnalysis as mda
 from MDAnalysis.core.topologyobjects import TopologyObject
 from MDAnalysis.lib.util import iterable, asiterable
@@ -94,8 +95,8 @@ class RTFWriter(topbase.TopologyWriterBase):
         self._title: str = kwargs.get(
             "title",
             (
-                "* Created by fluctmatch on {date}".format(date=date),
-                "* User: {user}".format(user=user),
+                f"* Created by fluctmatch on {date}",
+                f"* User: {user}",
             ),
         )
         if not iterable(self._title):
@@ -134,20 +135,12 @@ class RTFWriter(topbase.TopologyWriterBase):
         )
 
         # Write the atom lines with site name, type, and charge.
-        key: str = "ATOM"
-        lines: np.ndarray = np.hstack(
-            (
-                atoms.names[:, np.newaxis],
-                atoms.types[:, np.newaxis],
-                atoms.charges[:, np.newaxis],
-            )
-            if np.issubdtype(atoms.types.dtype, np.number)
-            else (
-                atoms.names[:, np.newaxis],
-                atoms.names[:, np.newaxis],
-                atoms.charges[:, np.newaxis],
-            )
-        )
+        key = "ATOM"
+        atoms = residue.atoms
+        lines = ((atoms.names, atoms.types, atoms.charges)
+                 if np.issubdtype(atoms.types.dtype, np.signedinteger) else
+                 (atoms.names, atoms.names, atoms.charges))
+        lines = pd.concat([pd.Series(_) for _ in lines], axis=1)
         np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
 
         # Write the bond, angle, dihedral, and improper dihedral lines.

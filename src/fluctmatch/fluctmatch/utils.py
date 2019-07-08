@@ -200,10 +200,14 @@ def write_charmm_files(
 
     # Write required CHARMM input files.
     with ExitStack() as stack:
-        rtf = mda.Writer(filenames["topology_file"].as_posix(), **kwargs)
-        stream = mda.Writer(filenames["stream_file"].as_posix(), **kwargs)
-        psf = mda.Writer(filenames["psf_file"].as_posix(), **kwargs)
-        xplor = mda.Writer(filenames["xplor_psf_file"].as_posix(), **kwargs)
+        rtf = stack.enter_context(
+            mda.Writer(filenames["topology_file"].as_posix(), **kwargs))
+        stream = stack.enter_context(
+            mda.Writer(filenames["stream_file"].as_posix(), **kwargs))
+        psf = stack.enter_context(
+            mda.Writer(filenames["psf_file"].as_posix(), **kwargs))
+        xplor = stack.enter_context(
+            mda.Writer(filenames["xplor_psf_file"].as_posix(), **kwargs))
 
         logger.info(f"Writing {rtf.filename}...")
         rtf.write(universe)
@@ -225,22 +229,26 @@ def write_charmm_files(
     if write_traj:
         universe.trajectory.rewind()
         with ExitStack() as stack:
-            trj = stack.enter_context(
-                mda.Writer(
-                    filenames["traj_file"].as_posix(),
-                    universe.atoms.n_atoms,
-                    istart=universe.trajectory.time,
-                    remarks="Written by fluctmatch.",
-                )
-            )
+            trj = stack.enter_context(mda.Writer(
+                filenames["traj_file"],
+                universe.atoms.n_atoms,
+                istart=universe.trajectory.time,
+                remarks="Written by fluctmatch."))
             bar = stack.enter_context(click.progressbar(universe.trajectory))
-            logger.info(f"Writing the trajectory {trj.filename}...")
-            logger.warning(
-                "This may take a while depending upon the size and "
-                "length of the trajectory."
-            )
+            logger.info("Writing the trajectory {}...".format(
+                filenames["traj_file"]))
+            logger.warning("This may take a while depending upon the size and "
+                           "length of the trajectory.")
             for ts in bar:
                 trj.write(ts)
+
+    # Write an XPLOR version of the PSF
+    atomtypes = topologyattrs.Atomtypes(universe.atoms.names)
+    universe._topology.add_TopologyAttr(topologyattr=atomtypes)
+    universe._generate_from_topology()
+    with mda.Writer(filenames["xplor_psf_file"], **kwargs) as psf:
+        logger.info("Writing {}...".format(filenames["xplor_psf_file"]))
+        psf.write(universe)
 
     # Calculate the average coordinates from the trajectory.
     logger.info("Determining the average structure of the trajectory. ")
@@ -348,19 +356,18 @@ def split_gmx(info, data_dir=Path.cwd() / "data", **kwargs):
         ]
     fd, fpath = tempfile.mkstemp(text=True)
     fpath = Path(fpath)
-    with open(fpath, mode="w") as temp:
-        with ExitStack() as stack:
-            temp = open(fpath, mode="w+")
-            log = open(logfile, mode="w")
-            logger.info(
-                f"Writing trajectory to {outfile} and "
-                f"writing Gromacs output to {logfile}"
-            )
-            print(kwargs.get("system", 0), file=temp)
-            temp.seek(0)
-            subprocess.check_call(
-                command, stdin=temp, stdout=log, stderr=subprocess.STDOUT
-            )
+    with ExitStack() as stack:
+        temp = stack.enter_context(open(fpath, mode="w+"))
+        log = stack.enter_context(open(logfile, mode="w"))
+        logger.info(
+            f"Writing trajectory to {outfile} and "
+            f"writing Gromacs output to {logfile}"
+        )
+        print(kwargs.get("system", 0), file=temp)
+        temp.seek(0)
+        subprocess.check_call(
+            command, stdin=temp, stdout=log, stderr=subprocess.STDOUT
+        )
     fpath.unlink()
 
 
