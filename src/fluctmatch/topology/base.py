@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -37,12 +35,16 @@
 
 import os
 import time
-from typing import Mapping, Union
+from typing import Mapping
+from typing import Union
 
 import MDAnalysis as mda
-from MDAnalysis.coordinates.base import _Readermeta, _Writermeta, IOBase
+from MDAnalysis.coordinates.base import IOBase
+from MDAnalysis.coordinates.base import _Readermeta
+from MDAnalysis.coordinates.base import _Writermeta
 
-from ..libs.register import register_reader, register_writer
+from ..libs.register import register_reader
+from ..libs.register import register_writer
 
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
@@ -61,12 +63,10 @@ class TopologyWriterBase(IOBase, metaclass=_Writermeta):
         register_writer(cls)
 
     def __init__(self):
-        self.title: str = (
-            f"""
+        self.title: str = f"""
             * Created by fluctmatch on {time.asctime(time.localtime())}
             * User: {os.environ["USER"]}
-            """
-        )
+            """.strip("\n")
 
     def write(self, selection: Union[mda.Universe, mda.AtomGroup]):
         """Write selection at current trajectory frame to file.

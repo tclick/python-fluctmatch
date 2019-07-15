@@ -36,16 +36,23 @@
 """Write CHARMM residue topology file (RTF)."""
 
 import logging
+import textwrap
 import time
 from os import environ
 from pathlib import Path
-from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import TextIO
+from typing import Tuple
+from typing import Union
 
+import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-import MDAnalysis as mda
 from MDAnalysis.core.topologyobjects import TopologyObject
-from MDAnalysis.lib.util import iterable, asiterable
 
 from . import base as topbase
 
@@ -93,14 +100,11 @@ class RTFWriter(topbase.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: str = kwargs.get(
-            "title",
-            (
-                f"* Created by fluctmatch on {date}",
-                f"* User: {user}",
-            ),
+            "title", f"""
+            * Created by fluctmatch on {date},
+            * User: {user}""",
         )
-        if not iterable(self._title):
-            self._title: str = asiterable(self._title)
+        self._title = textwrap.dedent(self._title.strip("\n"))
 
     def _write_mass(self):
         _, idx = np.unique(self._atoms.names, return_index=True)

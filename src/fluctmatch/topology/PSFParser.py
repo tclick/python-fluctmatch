@@ -36,36 +36,39 @@
 """CHARMM PSF reader (for CHARMM36 style) and writer."""
 
 import logging
+import textwrap
 import time
 from os import environ
 from pathlib import Path
-from typing import (
-    Callable, ClassVar, List, Mapping, Optional, TextIO, Tuple,
-    Union,
-)
+from typing import Callable
+from typing import ClassVar
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import TextIO
+from typing import Tuple
+from typing import Union
 
+import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-import MDAnalysis as mda
-from MDAnalysis.lib.util import FORTRANReader, iterable, asiterable
+from MDAnalysis.core.topology import Topology
+from MDAnalysis.core.topologyattrs import Angles
+from MDAnalysis.core.topologyattrs import Atomids
+from MDAnalysis.core.topologyattrs import Atomnames
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Charges
+from MDAnalysis.core.topologyattrs import Dihedrals
+from MDAnalysis.core.topologyattrs import Impropers
+from MDAnalysis.core.topologyattrs import Masses
+from MDAnalysis.core.topologyattrs import Resids
+from MDAnalysis.core.topologyattrs import Resnames
+from MDAnalysis.core.topologyattrs import Resnums
+from MDAnalysis.core.topologyattrs import Segids
+from MDAnalysis.lib.util import FORTRANReader
 from MDAnalysis.topology import PSFParser
 from MDAnalysis.topology.base import change_squash
-from MDAnalysis.core.topologyattrs import (
-    Atomids,
-    Atomnames,
-    Atomtypes,
-    Masses,
-    Charges,
-    Resids,
-    Resnums,
-    Resnames,
-    Segids,
-    Bonds,
-    Angles,
-    Dihedrals,
-    Impropers,
-)
-from MDAnalysis.core.topology import Topology
 
 from . import base
 
@@ -379,15 +382,18 @@ class PSFWriter(base.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: str = kwargs.get(
-            "title", (f"* Created by fluctmatch on {date}", f"* User: {user}")
+            "title", f"""
+            * Created by fluctmatch on {date}
+            * User: {user}"""
         )
-        if not iterable(self._title):
-            self._title = asiterable(self._title)
+        self._title = textwrap.dedent(self._title.strip("\n"))
 
         self.col_width: int = 10 if self._extended else 8
         self.sect_hdr: str = "{:>10d} !{}" if self._extended else "{:>8d} !{}"
         self.sect_hdr2: str = (
-            "{:>10d}{:>10d} !{}" if self._extended else "{:>8d}{:>8d} !{}"
+            "{:>10d}{:>10d} !{}"
+            if self._extended
+            else "{:>8d}{:>8d} !{}"
         )
         self.sections: Tuple[Tuple[str, str, int], ...] = (
             ("bonds", "NBOND: bonds", 8),
@@ -431,7 +437,7 @@ class PSFWriter(base.TopologyWriterBase):
             if self._version < 36:
                 self._fmtkey += "_C35"
 
-        with open(self.filename, "w") as psffile:
+        with open(self.filename, mode="w") as psffile:
             print(header, file=psffile)
             print(file=psffile)
             n_title: int = len(self._title)
@@ -526,8 +532,7 @@ class PSFWriter(base.TopologyWriterBase):
         values: np.ndarray = values.reshape(
             (values.shape[0] // n_values, n_perline))
         print(self.sect_hdr.format(n_rows, header), file=psffile)
-        np.savetxt(psffile, values, fmt="%{:d}s".format(self.col_width),
-                   delimiter="")
+        np.savetxt(psffile, values, fmt=f"%{self.col_width:d}s", delimiter="")
         print(file=psffile)
 
     def _write_other(self, psffile: TextIO):
@@ -544,16 +549,14 @@ class PSFWriter(base.TopologyWriterBase):
         nnb: np.ndarray = nnb.reshape((nnb.size // n_cols, n_cols))
 
         print(self.sect_hdr.format(0, "NNB\n"), file=psffile)
-        np.savetxt(psffile, nnb, fmt="%{:d}s".format(self.col_width),
-                   delimiter="")
+        np.savetxt(psffile, nnb, fmt=f"%{self.col_width:d}s", delimiter="")
         print(file=psffile)
 
         # NGRP NST2
         print(self.sect_hdr2.format(1, 0, "NGRP NST2"), file=psffile)
         line: np.ndarray = np.zeros(3, dtype=np.int)
         line = line.reshape((1, line.size))
-        np.savetxt(psffile, line, fmt="%{:d}d".format(self.col_width),
-                   delimiter="")
+        np.savetxt(psffile, line, fmt=f"%{self.col_width:d}d", delimiter="")
         print(file=psffile)
 
         # MOLNT
@@ -565,8 +568,7 @@ class PSFWriter(base.TopologyWriterBase):
                 )
             line: np.ndarray = line.reshape((line.size // n_cols, n_cols))
             print(self.sect_hdr.format(1, "MOLNT"), file=psffile)
-            np.savetxt(psffile, line, fmt="%{:d}s".format(self.col_width),
-                       delimiter="")
+            np.savetxt(psffile, line, fmt=f"%{self.col_width:d}s", delimiter="")
             print(file=psffile)
         else:
             print(self.sect_hdr.format(0, "MOLNT"), file=psffile)

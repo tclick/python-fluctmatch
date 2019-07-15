@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -36,16 +34,20 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Write CHARMM stream file."""
 
+import os
 import textwrap
 import time
-from os import environ
 from pathlib import Path
-from typing import ClassVar, Dict, Mapping, Optional, Tuple, Union
+from typing import ClassVar
+from typing import Dict
+from typing import Mapping
+from typing import Optional
+from typing import Union
 
+import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-import MDAnalysis as mda
-from MDAnalysis.lib.util import iterable, asiterable 
+
 from . import base as topbase
 
 
@@ -86,14 +88,13 @@ class STRWriter(topbase.TopologyWriterBase):
                 """
 
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user: str = environ["USER"]
+        user: str = os.environ["USER"]
         self._title: str = kwargs.get(
-            "title", (
-                f"* Created by fluctmatch on {date}",
-                f"* User: {user}",
-            ))
-        if not iterable(self._title):
-            self._title: str = asiterable(self._title)
+            "title", f"""
+            * Created by fluctmatch on {date}"
+            * User: {user}""")
+        self._title = [_ for _ in filter(lambda x: x, self._title.split("\n"))]
+        self._title = "\n".join(self._title)
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.
@@ -107,19 +108,19 @@ class STRWriter(topbase.TopologyWriterBase):
         # Create the table
         data: Union[pd.DataFrame, np.ndarray]
         try:
-            dist: np.ndarray = np.zeros_like(universe.atoms.bonds.bonds(), 
-                                             dtype=np.float)
+            dist: np.ndarray = np.zeros_like(universe.atoms.bonds.bonds(),
+                                             dtype=float)
             if self._version >= 36:
                 a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: np.ndarray = np.hstack((
+                data: pd.DataFrame = pd.concat((
                     a1.segids[:, np.newaxis], a1.resids[:, np.newaxis],
                     a1.names[:, np.newaxis], a2.segids[:, np.newaxis],
                     a2.resids[:, np.newaxis], a2.names[:, np.newaxis],
-                    dist[:, np.newaxis]))
-                data: pd.DataFrame = pd.DataFrame(data)
+                    dist[:, np.newaxis]), axis="columns")
             else:
-                data: np.ndarray = pd.DataFrame(universe._topology.bonds.values)
-                data: np.ndarray = pd.concat((data, dist[:, np.newaxis]))
+                data: pd.DataFrame = pd.DataFrame(
+                    universe._topology.bonds.values)
+                data: pd.DataFrame = pd.concat((data, dist), axis="columns")
         except AttributeError:
             AttributeError("No bonds were found.")
 
@@ -127,5 +128,6 @@ class STRWriter(topbase.TopologyWriterBase):
         with open(self.filename, "w") as stream_file:
             for title in self._title:
                 print(title, file=stream_file)
-            np.savetxt(stream_file, data, fmt=textwrap.dedent(self.fmt[1:]))
+            np.savetxt(stream_file, data,
+                       fmt=textwrap.dedent(self.fmt.strip("\n")))
             print("RETURN", file=stream_file)
