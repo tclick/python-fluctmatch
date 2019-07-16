@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -38,13 +36,18 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import ClassVar, Dict, Mapping, Optional, Union
+from typing import ClassVar
+from typing import Dict
+from typing import Mapping
+from typing import Optional
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from MDAnalysis.lib.util import FORTRANReader
 
-from ..topology.base import (TopologyReaderBase, TopologyWriterBase)
+from ..topology.base import TopologyReaderBase
+from ..topology.base import TopologyWriterBase
 
 logger: logging.Logger = logging.getLogger(__name__)
 

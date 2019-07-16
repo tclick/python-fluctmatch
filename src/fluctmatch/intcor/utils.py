@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -37,10 +35,11 @@
 
 import logging
 import traceback
-from typing import List, Union
+from typing import List
+from typing import Union
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
 import pandas as pd
 from MDAnalysis.core.topologyobjects import TopologyGroup
 
@@ -91,12 +90,16 @@ def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
             else:
                 n_bonds: int = len(bonds)
                 atom1, atom2 = bonds.atom1, bonds.atom2
-                zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_bonds, 5), dtype=np.float))
+                zeros: pd.DataFrame = pd.DataFrame(
+                    np.zeros((n_bonds, 5), dtype=np.float))
                 cols: pd.DataFrame = pd.DataFrame([
                     atom1.segids, atom1.resnums, atom1.names, atom2.segids,
-                    atom2.resnums, atom2.names, ["??",] * n_bonds,
-                    ["??",] * n_bonds, ["??",] * n_bonds, ["??",] * n_bonds,
-                    ["??",] * n_bonds, ["??",] * n_bonds
+                    atom2.resnums, atom2.names, ["??", ] * n_bonds,
+                                                ["??", ] * n_bonds,
+                                                ["??", ] * n_bonds,
+                                                ["??", ] * n_bonds,
+                                                ["??", ] * n_bonds,
+                                                ["??", ] * n_bonds
                 ]).T
                 table: pd.DataFrame = pd.concat([table, cols, zeros], axis=1)
         else:
@@ -107,14 +110,14 @@ def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
             cols: pd.DataFrame = pd.DataFrame([
                 atom1.segids, atom1.resnums, atom1.names, atom2.segids,
                 atom2.resnums, atom2.names, atom3.segids, atom3.resnums,
-                atom3.names, ["??",] * n_angles, ["??",] * n_angles,
-                ["??",] * n_angles
+                atom3.names, ["??", ] * n_angles, ["??", ] * n_angles,
+                             ["??", ] * n_angles
             ]).T
             table: pd.DataFrame = pd.concat([table, cols, zeros], axis=1)
     else:
         n_dihedrals: int = len(dihedrals)
         atom1, atom2, atom3, atom4 = (
-            dihedrals.atom1, dihedrals.atom2,dihedrals.atom3, dihedrals.atom4
+            dihedrals.atom1, dihedrals.atom2, dihedrals.atom3, dihedrals.atom4
         )
         zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_dihedrals, 5),
                                                     dtype=np.float))
