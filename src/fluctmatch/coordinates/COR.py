@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -40,10 +38,17 @@ import itertools
 import logging
 import warnings
 from pathlib import Path
-from typing import ClassVar, Dict, Mapping, Optional, Any, List, Generator, Union
+from typing import Any
+from typing import ClassVar
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import Union
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
 from MDAnalysis.coordinates import CRD
 from MDAnalysis.exceptions import NoDataError
 
@@ -59,10 +64,10 @@ class CORReader(CRD.CRDReader):
     """
     format: ClassVar[str] = "COR"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None,
-                                                        length="Angstrom")
+                                                     length="Angstrom")
 
-    def __init__(self, filename: Union[str, Path], convert_units: bool=None,
-                 n_atoms: int=None, **kwargs: Mapping):
+    def __init__(self, filename: Union[str, Path], convert_units: bool = None,
+                 n_atoms: int = None, **kwargs: Mapping):
         super().__init__(filename, convert_units, n_atoms, **kwargs)
 
     @staticmethod
@@ -98,7 +103,9 @@ class CORWriter(CRD.CRDWriter):
        Frames now 0-based instead of 1-based
     """
     format: ClassVar[str] = "COR"
-    units: ClassVar[Dict[str, Optional[str]]] = {"time": None, "length": "Angstrom"}
+    units: ClassVar[Dict[str, Optional[str]]] = {
+        "time": None, "length": "Angstrom"
+    }
 
     fmt: Dict[str, str] = dict(
         # crdtype = "extended"
@@ -129,7 +136,7 @@ class CORWriter(CRD.CRDWriter):
         self.crd: Optional[str] = None
 
     def write(self, selection: Union[mda.Universe, mda.AtomGroup],
-              frame: Optional[int]=None):
+              frame: Optional[int] = None):
         """Write selection at current trajectory frame to file.
 
         write(selection,frame=FRAME)
@@ -163,9 +170,9 @@ class CORWriter(CRD.CRDWriter):
         missing_topology: List[Any] = []
         for attr, default in (
             ("resnames", itertools.cycle(("UNK",))),
-                # Resids *must* be an array because we index it later
+            # Resids *must* be an array because we index it later
             ("resids", np.ones(n_atoms, dtype=np.int)),
-            ("names", itertools.cycle(("X", ))),
+            ("names", itertools.cycle(("X",))),
             ("tempfactors", itertools.cycle((0.0,))),
         ):
             try:
@@ -181,7 +188,7 @@ class CORWriter(CRD.CRDWriter):
             try:
                 attrs["chainIDs"]: np.ndarray = atoms.chainIDs
             except (NoDataError, AttributeError):
-                attrs["chainIDs"]: Generator = itertools.cycle(("", ))
+                attrs["chainIDs"]: Generator = itertools.cycle(("",))
                 missing_topology.append(attr)
         if missing_topology:
             miss: str = ", ".join(missing_topology)
@@ -207,8 +214,8 @@ class CORWriter(CRD.CRDWriter):
             current_resid: int = 1
             resids: List[int] = attrs["resids"]
             for i, pos, resname, name, chainID, resid, tempfactor in zip(
-                    range(n_atoms), coor, attrs["resnames"], attrs["names"],
-                    attrs["chainIDs"], attrs["resids"], attrs["tempfactors"]):
+                range(n_atoms), coor, attrs["resnames"], attrs["names"],
+                attrs["chainIDs"], attrs["resids"], attrs["tempfactors"]):
                 if not i == 0 and resids[i] != resids[i - 1]:
                     current_resid += 1
 
