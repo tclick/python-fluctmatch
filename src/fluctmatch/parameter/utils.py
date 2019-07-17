@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -36,7 +34,10 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Utilities for parameter creation."""
 
-from typing import Dict, List, Mapping, Union
+from typing import Dict
+from typing import List
+from typing import Mapping
+from typing import Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -123,7 +124,8 @@ def create_empty_parameters(universe: Union[mda.Universe, mda.AtomGroup],
             np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.float),
         ))
         parameters["DIHEDRALS"] = pd.DataFrame(dihedrals,
-                                               columns=param_columns["DIHEDRALS"])
+                                               columns=param_columns[
+                                                   "DIHEDRALS"])
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 
@@ -139,7 +141,8 @@ def create_empty_parameters(universe: Union[mda.Universe, mda.AtomGroup],
             np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.float),
         ))
         parameters["IMPROPER"] = pd.DataFrame(impropers,
-                                              columns=param_columns["DIHEDRALS"])
+                                              columns=param_columns[
+                                                  "DIHEDRALS"])
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 

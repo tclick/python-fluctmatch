@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -42,14 +40,24 @@ import time
 from io import StringIO
 from os import environ
 from pathlib import Path
-from typing import (ClassVar, Dict, List, Mapping, MutableMapping, Optional,
-                    Tuple, Union, TextIO)
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Mapping
+from typing import MutableMapping
+from typing import Optional
+from typing import TextIO
+from typing import Tuple
+from typing import Union
 
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-from MDAnalysis.lib.util import asiterable, iterable
-from ..topology.base import TopologyReaderBase, TopologyWriterBase
+from MDAnalysis.lib.util import asiterable
+from MDAnalysis.lib.util import iterable
+
+from ..topology.base import TopologyReaderBase
+from ..topology.base import TopologyWriterBase
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -79,13 +87,13 @@ class ParamReader(TopologyReaderBase):
         DIHEDRALS=["I", "J", "K", "L", "Kchi", "n", "delta"],
         IMPROPER=["I", "J", "K", "L", "Kchi", "n", "delta"])
     _dtypes: Dict[str, Dict] = dict(
-        ATOMS=dict(hdr=np.str, type=np.int, atom=np.str, mass=np.float,),
+        ATOMS=dict(hdr=np.str, type=np.int, atom=np.str, mass=np.float, ),
         BONDS=dict(I=np.str, J=np.str, Kb=np.float, b0=np.float),
-        ANGLES=dict(I=np.str, J=np.str, K=np.str, Ktheta=np.float, 
+        ANGLES=dict(I=np.str, J=np.str, K=np.str, Ktheta=np.float,
                     theta0=np.float, Kub=np.object, S0=np.object),
-        DIHEDRALS=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float, 
+        DIHEDRALS=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float,
                        n=np.int, delta=np.float),
-        IMPROPER=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float, 
+        IMPROPER=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float,
                       n=np.int, delta=np.float),
     )
     _na_values: ClassVar[Dict[str, Dict]] = dict(
@@ -113,11 +121,12 @@ class ParamReader(TopologyReaderBase):
         -------
         Dictionary with CHARMM parameters per key.
         """
-        parameters: Dict[str, pd.DataFrame] = dict.fromkeys(self._prmbuffers.keys())
-        headers: Tuple[str, ...] = ("ATOMS", "BONDS", "ANGLES", "DIHEDRALS", 
+        parameters: Dict[str, pd.DataFrame] = dict.fromkeys(
+            self._prmbuffers.keys())
+        headers: Tuple[str, ...] = ("ATOMS", "BONDS", "ANGLES", "DIHEDRALS",
                                     "IMPROPER")
         section: str
-        
+
         with open(self.filename) as prmfile:
             for line in prmfile:
                 line: str = line.strip()
@@ -154,7 +163,7 @@ class PARReader(ParamReader):
 
     def __init__(self, filename: Union[str, Path]):
         super().__init__(filename)
-        
+
         self.filename: Path = Path(filename).with_suffix(".par")
 
 
@@ -175,7 +184,7 @@ class ParamWriter(TopologyWriterBase):
     format: ClassVar[str] = "PRM"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
-    _headers: Tuple[str, ...] = ("ATOMS", "BONDS", "ANGLES", "DIHEDRALS", 
+    _headers: Tuple[str, ...] = ("ATOMS", "BONDS", "ANGLES", "DIHEDRALS",
                                  "IMPROPER")
     _fmt: Dict[str, str] = dict(
         ATOMS="MASS %5d %-6s %9.5f",
@@ -188,7 +197,7 @@ class ParamWriter(TopologyWriterBase):
 
     def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
         super().__init__()
-        
+
         self.filename: Path = Path(filename).with_suffix(".prm")
         self._version: int = kwargs.get("charmm_version", 41)
         self._nonbonded: bool = kwargs.get("nonbonded", False)
@@ -202,7 +211,7 @@ class ParamWriter(TopologyWriterBase):
             self._title = asiterable(self._title)
 
     def write(self, parameters: MutableMapping[str, pd.DataFrame],
-              atomgroup: Optional[mda.AtomGroup]=None):
+              atomgroup: Optional[mda.AtomGroup] = None):
         """Write a CHARMM-formatted parameter file.
 
         Parameters
@@ -227,12 +236,12 @@ class ParamWriter(TopologyWriterBase):
                         if np.issubdtype(atomgroup.types.dtype, np.int)
                         else np.arange(atomgroup.n_atoms) + 1
                     )
-                    atoms: np.rec.recarray = np.hstack(
-                        (atom_types[:, np.newaxis],
-                         atomgroup.types[:, np.newaxis],
-                         atomgroup.masses[:, np.newaxis]))
+                    atoms: np.ndarray = np.vstack(
+                        (atom_types,
+                         atomgroup.types,
+                         atomgroup.masses))
                     parameters["ATOMS"]: pd.DataFrame = pd.DataFrame(
-                        atoms, columns=parameters["ATOMS"].columns)
+                        atoms.T, columns=parameters["ATOMS"].columns)
                 else:
                     raise RuntimeError("Either define ATOMS parameter or "
                                        "provide a MDAnalsys.AtomGroup")
