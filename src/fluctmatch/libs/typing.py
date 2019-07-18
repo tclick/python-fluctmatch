@@ -1,5 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -39,7 +37,8 @@
 
 import logging
 from pathlib import Path
-from typing import Mapping, TypeVar
+from typing import Mapping
+from typing import TypeVar
 
 import MDAnalysis as mda
 import numpy as np

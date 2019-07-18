@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2015-2017 The pySCA Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -16,9 +13,12 @@
 #
 import logging
 
-from MDAnalysis import _MULTIFRAME_WRITERS, _READERS, _SINGLEFRAME_WRITERS
+from MDAnalysis import _MULTIFRAME_WRITERS
+from MDAnalysis import _READERS
+from MDAnalysis import _SINGLEFRAME_WRITERS
 
-from .. import _DESCRIBE, _MODELS
+from .. import _DESCRIBE
+from .. import _MODELS
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ def register_description(target_class: object):
 
 def register_reader(target_class: object):
     _READERS[target_class.format.upper()]: object = target_class
+
 
 def register_writer(target_class: object):
     fmt: str = target_class.format.upper()

@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2015-2017 The pySCA Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -17,7 +14,8 @@
 import io
 import logging
 import typing
-from collections.abc import Container, Iterable
+from collections.abc import Container
+from collections.abc import Iterable
 
 import numpy as np
 from sklearn.preprocessing import scale
@@ -59,7 +57,7 @@ def asiterable(obj: typing.Any) -> typing.Tuple:
     -------
     Eiter the object, if already an iterable collection or a tuple of the object
     """
-    return obj if iterable(obj) else (obj, )
+    return obj if iterable(obj) else (obj,)
 
 
 def center2D(X: np.ndarray) -> np.ndarray:

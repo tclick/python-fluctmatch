@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-pysca
 # Copyright (c) 2015-2017 The pySCA Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,9 +12,11 @@
 # doi:10.1016/bs.mie.2016.05.024.
 #
 import numpy as np
-
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
+from sklearn.utils.validation import FLOAT_DTYPES
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
 
 
 class Center2D(BaseEstimator, TransformerMixin):
@@ -38,7 +37,8 @@ class Center2D(BaseEstimator, TransformerMixin):
         matrix which in common use cases is likely to be too large to fit in
         memory.
     """
-    def __init__(self, copy: bool=True, with_mean: bool=True):
+
+    def __init__(self, copy: bool = True, with_mean: bool = True):
         self.with_mean: bool = with_mean
         self.copy: bool = copy
 
@@ -55,7 +55,7 @@ class Center2D(BaseEstimator, TransformerMixin):
             del self.samples_mean_
             del self.grand_mean_
 
-    def fit(self, X: np.ndarray, y: np.ndarray=None):
+    def fit(self, X: np.ndarray, y: np.ndarray = None):
         """Compute the mean to be used for later scaling.
 
         Parameters
@@ -120,7 +120,7 @@ class Center2D(BaseEstimator, TransformerMixin):
                         force_all_finite='allow-nan')
         return X - self.features_mean_ - self.samples_mean_ + self.grand_mean_
 
-    def inverse_transform(self, X: np.ndarray, copy: bool=None):
+    def inverse_transform(self, X: np.ndarray, copy: bool = None):
         """Scale back the data to the original representation
 
         Parameters
