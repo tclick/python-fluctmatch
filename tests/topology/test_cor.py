@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -37,15 +35,9 @@
 #
 #  Borrowed the test code from MDAnalysisTests.
 
-from collections import OrderedDict
-from pathlib import Path
 from typing import List
 
-import MDAnalysis as mda
-import pytest
-from MDAnalysisTests import make_Universe
 from MDAnalysisTests.topology.base import ParserBase
-from numpy.testing import assert_equal
 
 from fluctmatch.topology.CORParser import CORParser
 from ..datafiles import COR

@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2015-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -17,7 +14,6 @@
 
 import numpy as np
 from numpy import testing
-from sklearn.utils.extmath import svd_flip
 
 from fluctmatch.decomposition.eigh import Eigh
 
@@ -33,6 +29,7 @@ V: np.ndarray = np.array([
     [np.sqrt(0.8), 0, -np.sqrt(0.2)],
     [0, 1, 0]
 ])
+
 
 def test_eigh():
     eigh = Eigh()

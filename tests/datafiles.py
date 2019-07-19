@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -35,8 +33,9 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
 
-from pkg_resources import resource_filename
 from pathlib import Path
+
+from pkg_resources import resource_filename
 
 __all__ = [
     "PDB",  # PDB
@@ -79,16 +78,16 @@ DMA = resource_filename(__name__,
 NCSC = resource_filename(__name__,
                          Path().joinpath("data", "ncsc.pdb").as_posix())
 PSF = resource_filename(__name__,
-                           Path().joinpath("data", "cg.xplor.psf").as_posix())
+                        Path().joinpath("data", "cg.xplor.psf").as_posix())
 DCD = resource_filename(__name__,
-                           Path().joinpath("data", "cg.dcd").as_posix())
+                        Path().joinpath("data", "cg.dcd").as_posix())
 IC = resource_filename(__name__,
-                           Path().joinpath("data", "fluct.ic").as_posix())
+                       Path().joinpath("data", "fluct.ic").as_posix())
 PRM = resource_filename(__name__,
-                           Path().joinpath("data", "fluctmatch.prm").as_posix())
+                        Path().joinpath("data", "fluctmatch.prm").as_posix())
 COR = resource_filename(__name__,
-                           Path().joinpath("data", "cg.cor").as_posix())
+                        Path().joinpath("data", "cg.cor").as_posix())
 RTF = resource_filename(__name__,
-                           Path().joinpath("data", "cg.rtf").as_posix())
+                        Path().joinpath("data", "cg.rtf").as_posix())
 STR = resource_filename(__name__,
-                           Path().joinpath("data", "cg.stream").as_posix())
+                        Path().joinpath("data", "cg.stream").as_posix())

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -42,7 +40,8 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import nucleic
-from ..datafiles import TPR, XTC
+from ..datafiles import TPR
+from ..datafiles import XTC
 
 
 class TestNucleic3:
@@ -56,29 +55,29 @@ class TestNucleic3:
 
     def test_creation(self, u: mda.Universe, system: nucleic.Nucleic3):
         system.create_topology(u)
-    
+
         n_atoms = sum(u.select_atoms(select).residues.n_residues
                       for select in system._mapping.values())
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_positions(self, u: mda.Universe, system: nucleic.Nucleic3):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: np.ndarray = np.asarray([
             residue.atoms.select_atoms(select).center_of_mass()
             for residue in u.select_atoms("nucleic or bioion").residues
             for select in system._mapping.values()
             if residue.atoms.select_atoms(select)
         ])
-    
+
         testing.assert_allclose(
             cg_universe.atoms.positions, positions,
             err_msg="The coordinates do not match.")
-    
+
     def test_trajectory(self, u: mda.Universe, system: nucleic.Nucleic3):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
@@ -95,29 +94,29 @@ class TestNucleic4:
 
     def test_creation(self, u: mda.Universe, system: nucleic.Nucleic4):
         system.create_topology(u)
-    
+
         n_atoms = sum(u.select_atoms(sel).residues.n_residues
                       for sel in system._mapping.values())
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_positions(self, u: mda.Universe, system: nucleic.Nucleic4):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: np.ndarray = np.asarray([
             residue.atoms.select_atoms(select).center_of_mass()
             for residue in u.select_atoms("nucleic or bioion").residues
             for select in system._mapping.values()
             if residue.atoms.select_atoms(select)
         ])
-    
+
         testing.assert_allclose(
             cg_universe.atoms.positions, positions,
             err_msg="The coordinates do not match.")
-    
+
     def test_trajectory(self, u: mda.Universe, system: nucleic.Nucleic4):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
@@ -134,45 +133,45 @@ class TestNucleic6:
 
     def test_creation(self, u: mda.Universe, system: nucleic.Nucleic6):
         system.create_topology(u)
-    
+
         n_atoms = sum(u.select_atoms(select).residues.n_residues
                       for select in system._mapping.values())
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_positions(self, u: mda.Universe, system: nucleic.Nucleic6):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: np.ndarray = np.asarray([
             residue.atoms.select_atoms(select).center_of_mass()
             for residue in u.select_atoms("nucleic or bioion").residues
             for select in system._mapping.values()
             if residue.atoms.select_atoms(select)
         ])
-    
+
         testing.assert_allclose(
             cg_universe.atoms.positions, positions,
             err_msg="The coordinates do not match.")
-    
+
     def test_trajectory(self, u: mda.Universe, system: nucleic.Nucleic6):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
-    
+
     def test_charges(self, u: mda.Universe, system: nucleic.Nucleic6):
         system.create_topology(u)
-    
+
         charges: np.ndarray = np.zeros(system.universe.atoms.n_atoms,
                                        dtype=np.float32)
         testing.assert_allclose(system.universe.atoms.charges, charges,
                                 err_msg="Charges should be 0.")
-    
+
     def test_masses(self, u: mda.Universe, system: nucleic.Nucleic6):
         system.create_topology(u)
         sel = system.universe.select_atoms("nucleic and name H1 H2 H3")
-    
+
         c_mass: float = u.select_atoms("nucleic and name C4'").masses[0]
         masses: np.ndarray = np.repeat(c_mass, sel.n_atoms)
         testing.assert_allclose(sel.masses, masses,

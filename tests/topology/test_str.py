@@ -32,11 +32,12 @@
 from pathlib import Path
 from typing import Union
 
-import pytest
 import MDAnalysis as mda
+import pytest
 
-import fluctmatch
-from ..datafiles import PSF, COR, STR
+from ..datafiles import COR
+from ..datafiles import PSF
+from ..datafiles import STR
 
 
 class TestSTRWriter(object):

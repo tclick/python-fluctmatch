@@ -1,5 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -38,7 +36,8 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import solvent
-from ..datafiles import TIP3P, TIP4P, DMA
+from ..datafiles import DMA
+from ..datafiles import TIP3P
 
 
 class TestWater:
@@ -146,32 +145,32 @@ class TestTip3p:
 
     def test_creation(self, u: mda.Universe, system: solvent.Tip3p):
         system.create_topology(u)
-    
+
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
                            for select in system._mapping.values())
-    
+
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_tip3p_positions(self, u: mda.Universe, system: solvent.Tip3p):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: np.ndarray = np.asarray([
             _.atoms.select_atoms(select).center_of_mass()
             for _ in u.select_atoms("water").residues
             for select in system._mapping.values()
             if _.atoms.select_atoms(select)
         ])
-    
+
         testing.assert_allclose(
             np.asarray(positions),
             cg_universe.atoms.positions,
             err_msg="The coordinates do not match.",
         )
-    
+
     def test_tip3p_bonds(self, u: mda.Universe, system: solvent.Tip3p):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(len(cg_universe.bonds),
                              system.universe.residues.n_residues * 3,
                              err_msg=("Expected and actual number of bonds "
@@ -198,31 +197,31 @@ class TestDma:
 
     def test_creation(self, u: mda.Universe, system: solvent.Dma):
         system.create_topology(u)
-    
+
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
                            for select in system._mapping.values())
-    
+
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_positions(self, u: mda.Universe, system: solvent.Dma):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: np.ndarray = np.asarray([
             _.atoms.select_atoms(select).center_of_mass()
             for _ in u.select_atoms("resname DMA").residues
             for select in system._mapping.values()
             if _.atoms.select_atoms(select)
         ])
-    
+
         testing.assert_allclose(
             positions, cg_universe.atoms.positions,
             err_msg="The coordinates do not match.",
         )
-    
+
     def test_bonds(self, u: mda.Universe, system: solvent.Dma):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(len(cg_universe.bonds),
                              system.universe.residues.n_residues * 3,
                              err_msg=("Expected and actual number of bonds "

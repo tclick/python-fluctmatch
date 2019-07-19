@@ -1,5 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-#
 #  python-fluctmatch - Fluctuation matching library for Python
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -44,6 +42,7 @@ import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
+
 from fluctmatch.models import ions
 from ..datafiles import IONS
 
@@ -59,30 +58,30 @@ class TestIons:
 
     def test_creation(self, u: mda.Universe, system: ions.SolventIons):
         system.create_topology(u)
-    
+
         n_atoms: int = sum(u.select_atoms(sel).residues.n_residues
                            for sel in system._mapping.values())
-    
+
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
-    
+
     def test_positions(self, u: mda.Universe, system: ions.SolventIons):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         positions: List[np.ndarray] = [
             _.atoms.select_atoms(select).center_of_mass()
             for _ in u.select_atoms("name LI LIT K NA F CL BR I").residues
             for select in system._mapping.values()
             if _.atoms.select_atoms(select)
         ]
-    
+
         testing.assert_allclose(
             np.asarray(positions), cg_universe.atoms.positions,
             err_msg="The coordinates do not match.",
         )
-    
+
     def test_bonds(self, u: mda.Universe, system: ions.SolventIons):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(len(cg_universe.bonds), 0,
                              err_msg="No bonds should exist.")

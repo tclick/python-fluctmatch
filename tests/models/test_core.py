@@ -33,8 +33,10 @@ import MDAnalysis as mda
 import pytest
 from numpy import testing
 
-from fluctmatch.models import core, protein
-from ..datafiles import TPR, XTC
+from fluctmatch.models import core
+from fluctmatch.models import protein
+from ..datafiles import TPR
+from ..datafiles import XTC
 
 
 class TestModeller:

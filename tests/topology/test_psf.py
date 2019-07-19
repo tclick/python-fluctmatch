@@ -30,18 +30,18 @@
 #
 
 from pathlib import Path
-from typing import ClassVar, List
-
-import pytest
-from numpy.testing import assert_equal
+from typing import ClassVar
+from typing import List
 
 import MDAnalysis as mda
+import pytest
 from MDAnalysis.core.topologyobjects import TopologyObject
-
-from ..datafiles import PSF, COR
 from MDAnalysisTests.topology.base import ParserBase
+from numpy.testing import assert_equal
 
 from fluctmatch.topology import PSFParser
+from ..datafiles import COR
+from ..datafiles import PSF
 
 
 class TestPSFWriter(object):
@@ -85,7 +85,7 @@ class TestPSFParser(ParserBase):
     ref_filename: ClassVar[str] = PSF
     expected_attrs: ClassVar[List[str]] = ["ids", "names", "types", "masses",
                                            "charges", "resids", "resnames",
-                                           "segids", "bonds", "angles", 
+                                           "segids", "bonds", "angles",
                                            "dihedrals", "impropers"]
     expected_n_atoms: ClassVar[int] = 330
     expected_n_residues: ClassVar[int] = 115
@@ -128,4 +128,3 @@ class TestPSFParser(ParserBase):
         vals = top.dihedrals.values
         for b in ((0, 1, 2, 3), (0, 2, 3, 4), (0, 2, 3, 5), (1, 0, 2, 3)):
             assert (b in vals) or (b[::-1] in vals)
-

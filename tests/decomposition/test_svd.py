@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2015-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -17,6 +14,7 @@
 import numpy as np
 from numpy import testing
 from sklearn.utils.extmath import svd_flip
+
 from fluctmatch.decomposition.svd import SVD
 
 # Constants
@@ -64,13 +62,17 @@ def test_trunc_randomized():
     svd = SVD(n_components=N_COMPONENTS_, svd_solver="randomized")
     Utest = svd.fit_transform(X)
     testing.assert_array_almost_equal(Utest, US[:, :N_COMPONENTS_], decimal=6)
-    testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_], decimal=6)
-    testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_],
+                                      decimal=6)
+    testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_],
+                                      decimal=6)
 
 
 def test_trunc_arpack():
     svd = SVD(n_components=N_COMPONENTS_, svd_solver="arpack")
     Utest = svd.fit_transform(X)
     testing.assert_array_almost_equal(Utest, US[:, :N_COMPONENTS_], decimal=6)
-    testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_], decimal=6)
-    testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_], decimal=6)
+    testing.assert_array_almost_equal(svd.singular_values_, S[:N_COMPONENTS_],
+                                      decimal=6)
+    testing.assert_array_almost_equal(svd.components_, VT[:N_COMPONENTS_],
+                                      decimal=6)

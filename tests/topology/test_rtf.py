@@ -32,12 +32,13 @@
 from pathlib import Path
 from typing import Union
 
+import MDAnalysis as mda
 import pytest
 from numpy import testing
-import MDAnalysis as mda
 
-import fluctmatch
-from ..datafiles import PSF, COR, RTF
+from ..datafiles import COR
+from ..datafiles import PSF
+from ..datafiles import RTF
 
 
 class TestRTFWriter(object):

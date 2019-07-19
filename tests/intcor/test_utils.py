@@ -29,14 +29,15 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import MDAnalysis as mda
 import numpy as np
 import pandas as pd
 import pytest
-import MDAnalysis as mda
 from numpy.testing import assert_allclose
 
 from fluctmatch.intcor.utils import create_empty_table
-from tests.datafiles import PSF, COR
+from tests.datafiles import COR
+from tests.datafiles import PSF
 
 
 class TestICUtils:

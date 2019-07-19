@@ -30,12 +30,11 @@
 #
 """Test additional MDAnalysis selection options."""
 
-import pytest
 import MDAnalysis as mda
+import pytest
 from numpy import testing
 
-import fluctmatch.models.selection
-from ..datafiles import GRO, PDB_dna, DMA
+from ..datafiles import GRO
 
 
 class TestProteinSelections:
@@ -74,6 +73,7 @@ class TestProteinSelections:
     def test_hsidechain(self, universe):
         sel: mda.AtomGroup = universe.select_atoms("hsidechain")
         testing.assert_equal(sel.n_atoms, 4374, "Number of atoms don't match.")
+
 
 class TestSolvent:
     @pytest.fixture(scope='class')

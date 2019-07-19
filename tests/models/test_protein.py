@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -44,7 +42,8 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import protein
-from ..datafiles import TPR, XTC
+from ..datafiles import TPR
+from ..datafiles import XTC
 
 
 class TestCalpha:
@@ -173,11 +172,11 @@ class TestPolar:
             "(protein and name N O OT1) or cbeta or bioion").n_atoms
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites not equal.")
-    
+
     def test_positions(self, u: mda.Universe, system: protein.Polar):
         cg_universe: mda.Universe = system.transform(u)
         beads: List[mda.AtomGroup] = []
-    
+
         for residue in u.select_atoms("protein or bioion").residues:
             for sel in system._mapping.values():
                 if isinstance(sel, dict):
@@ -188,19 +187,19 @@ class TestPolar:
                     bead: mda.AtomGroup = residue.atoms.select_atoms(sel)
                 if bead:
                     beads.append(bead)
-    
+
         positions: List[np.ndarray] = np.asarray([
             bead.center_of_mass()
             for bead in beads
             if bead
         ])
-    
+
         testing.assert_allclose(cg_universe.atoms.positions, positions,
                                 err_msg="The coordinates do not match.")
-    
+
     def test_trajectory(self, u: mda.Universe, system: protein.Polar):
         cg_universe: mda.Universe = system.transform(u)
-    
+
         testing.assert_equal(
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
