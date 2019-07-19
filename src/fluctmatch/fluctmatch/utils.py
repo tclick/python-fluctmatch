@@ -20,12 +20,12 @@ import tempfile
 import textwrap
 from contextlib import ExitStack
 from pathlib import Path
+from typing import Mapping
 
 import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
 import click
 import numpy as np
-import pandas as pd
 
 from fluctmatch.fluctmatch.data import charmm_split
 
@@ -63,10 +63,11 @@ class AverageStructure(analysis.AnalysisBase):
         self.result /= self._nframes
 
 
-class BondAverage(analysis.AnalysisBase):
-    def __init__(self, atomgroup, **kwargs):
-        """Calculate the average bond length.
+class BondStats(analysis.AnalysisBase):
+    """Calculate the average and fluctuations of bond distances."""
 
+    def __init__(self, atomgroup: mda.AtomGroup, **kwargs: Mapping):
+        """
         Parameters
         ----------
         atomgroup : :class:`~MDAnalysis.Universe.AtomGroup`
@@ -81,67 +82,37 @@ class BondAverage(analysis.AnalysisBase):
             Turn on verbosity
         """
         super().__init__(atomgroup.universe.trajectory, **kwargs)
-        self._ag = atomgroup
-        self._nframes = atomgroup.universe.trajectory.n_frames
+
+        self._ag: mda.AtomGroup = atomgroup
+        self._nframes: int = atomgroup.universe.trajectory.n_frames
+        self._nbonds: int = len(self._ag.universe.bonds)
 
     def _prepare(self):
-        self.result = np.zeros_like(self._ag.bonds.bonds())
+        self.result: np.recarray = np.recarray((self._nbonds,),
+                                               dtype=[("x", float),
+                                                      ("x2", float)])
+        self.result.x: np.ndarray = np.zeros(self._nbonds)
+        self.result.x2: np.ndarray = np.zeros(self._nbonds)
 
     def _single_frame(self):
-        self.result += self._ag.bonds.bonds()
+        self.result.x += self._ag.bonds.bonds()
+        self.result.x2 += np.square(self._ag.bonds.bonds())
 
     def _conclude(self):
-        self.result = np.rec.fromarrays(
-            [
-                self._ag.bonds.atom1.names,
-                self._ag.bonds.atom2.names,
-                self.result / self._nframes,
-            ],
-            names=["I", "J", "r_IJ"],
-        )
-        self.result = pd.DataFrame.from_records(self.result)
+        results: np.recarray = np.recarray((self._nbonds,),
+                                           dtype=[("average", float),
+                                                  ("stddev", float)])
+        results.average = self.result.x / self._nframes
 
-
-class BondStd(analysis.AnalysisBase):
-    def __init__(self, atomgroup, average, **kwargs):
-        """Calculate the fluctuation in bond lengths.
-
-        Parameters
-        ----------
-        atomgroup : :class:`~MDAnalysis.Universe.AtomGroup`
-            An AtomGroup
-        average : float or ""lass:`~numpy.array`
-            Average bond length
-        start : int, optional
-            start frame of analysis
-        stop : int, optional
-            stop frame of analysis
-        step : int, optional
-            number of frames to skip between each analysed frame
-        verbose : bool, optional
-            Turn on verbosity
-        """
-        super().__init__(atomgroup.universe.trajectory, **kwargs)
-        self._ag = atomgroup
-        self._nframes = atomgroup.universe.trajectory.n_frames
-        self._average = average
-
-    def _prepare(self):
-        self.result = np.zeros_like(self._ag.bonds.bonds())
-
-    def _single_frame(self):
-        self.result += np.square(self._ag.bonds.bonds() - self._average)
-
-    def _conclude(self):
-        self.result = np.rec.fromarrays(
-            [
-                self._ag.bonds.atom1.names,
-                self._ag.bonds.atom2.names,
-                np.sqrt(self.result / self._nframes),
-            ],
-            names=["I", "J", "r_IJ"],
-        )
-        self.result = pd.DataFrame.from_records(self.result)
+        # Polynomial expansion of standard deviation.
+        # sum(x - m)^2 = nx^2 - 2nxm + nm^2, where n is the number of frames.
+        # The summation of x and x^2 occur in the _single_frame method, so the
+        # equation can be reduced to sum(x - m)^2 = x^2 - 2xm + nm^2.
+        results.stddev = (self.result.x2 - 2 * results.average * self.result.x +
+                          self._nframes * np.square(results.average))
+        results.stddev /= self._nframes
+        results.stddev = np.sqrt(results.stddev)
+        self.result = results.copy()
 
 
 def write_charmm_files(

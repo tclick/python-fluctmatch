@@ -32,26 +32,20 @@ def test_average_structure():
     )
 
 
-def test_average_bonds():
+def test_bond_stats():
     universe = mda.Universe(TPR, XTC)
     avg_bonds = np.mean(
         [universe.bonds.bonds() for _ in universe.trajectory], axis=0)
-    bonds = fmutils.BondAverage(universe).run().result
+    bond_fluct = np.std(
+        [universe.bonds.bonds() for _ in universe.trajectory], axis=0)
+    bonds = fmutils.BondStats(universe.atoms).run().result
     testing.assert_allclose(
-        bonds["r_IJ"],
+        bonds.average,
         avg_bonds,
         err_msg="Average bond distances don't match.",
     )
-
-
-def test_bond_fluctuation():
-    universe = mda.Universe(TPR, XTC)
-    bond_fluct = np.std(
-        [universe.bonds.bonds() for _ in universe.trajectory], axis=0)
-    average = fmutils.BondAverage(universe).run().result
-    std = fmutils.BondStd(universe, average).run().result
     testing.assert_allclose(
-        std["r_IJ"],
+        bonds.stddev,
         bond_fluct,
         err_msg="Bond fluctuations don't match.",
     )
