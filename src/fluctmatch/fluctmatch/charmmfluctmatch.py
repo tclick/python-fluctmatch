@@ -29,50 +29,27 @@ version (< c36).
 
 """
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict,
-    open,
-    range,
-    super,
-)
-from future.utils import (
-    PY2,
-    native_str,
-    raise_with_traceback,
-)
-
 import copy
 import logging
 import os
+import shutil
 import subprocess
 import textwrap
 import time
 from os import path
 
+import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-from scipy import constants
-import MDAnalysis as mda
-from MDAnalysis.lib import util
 from MDAnalysis.coordinates.core import reader
+from scipy import constants
+
 from fluctmatch.fluctmatch import base as fmbase
-from fluctmatch.fluctmatch import utils as fmutils
-from fluctmatch.fluctmatch.data import (
-    charmm_init,
-    charmm_nma,
-    charmm_thermo,
-)
+from fluctmatch.fluctmatch.data import charmm_init
+from fluctmatch.fluctmatch.data import charmm_nma
+from fluctmatch.fluctmatch.data import charmm_thermo
 from fluctmatch.intcor import utils as icutils
 from fluctmatch.parameter import utils as prmutils
-
-if PY2:
-    FileNotFoundError = IOError
 
 logger = logging.getLogger(__name__)
 
@@ -153,35 +130,33 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         super().__init__(*args, **kwargs)
         self.dynamic_params = dict()
         self.filenames = dict(
-            init_input=path.join(self.outdir, "fluctinit.inp"),
-            init_log=path.join(self.outdir, "fluctinit.log"),
-            init_avg_ic=path.join(self.outdir, "init.average.ic"),
-            init_fluct_ic=path.join(self.outdir, "init.fluct.ic"),
-            avg_ic=path.join(self.outdir, "average.ic"),
-            fluct_ic=path.join(self.outdir, "fluct.ic"),
-            dynamic_prm=path.join(self.outdir, "{}.dist.prm".format(
-                self.prefix)),
-            fixed_prm=path.join(self.outdir, ".".join((self.prefix, "prm"))),
-            psf_file=path.join(self.outdir, ".".join((self.prefix, "psf"))),
-            xplor_psf_file=path.join(self.outdir, ".".join((self.prefix,
-                                                            "xplor", "psf"))),
-            crd_file=path.join(self.outdir, ".".join((self.prefix, "cor"))),
-            stream_file=path.join(self.outdir, ".".join((self.prefix,
-                                                         "stream"))),
-            topology_file=path.join(self.outdir, ".".join((self.prefix,
-                                                           "rtf"))),
-            nma_crd=path.join(self.outdir, ".".join((self.prefix, "mini",
-                                                     "cor"))),
-            nma_vib=path.join(self.outdir, ".".join((self.prefix, "vib"))),
-            charmm_input=path.join(self.outdir, ".".join((self.prefix,
-                                                          "inp"))),
-            charmm_log=path.join(self.outdir, ".".join((self.prefix, "log"))),
-            error_data=path.join(self.outdir, "error.dat"),
-            thermo_input=path.join(self.outdir, "thermo.inp"),
-            thermo_log=path.join(self.outdir, "thermo.log"),
-            thermo_data=path.join(self.outdir, "thermo.dat"),
-            traj_file=self.args[1] if len(self.args) > 1 else path.join(self.outdir, "cg.dcd")
+            init_input=self.outdir / "fluctinit.inp",
+            init_log=self.outdir / "fluctinit.log",
+            init_avg_ic=self.outdir / "init.average.ic",
+            init_fluct_ic=self.outdir / "init.fluct.ic",
+            avg_ic=self.outdir / "average.ic",
+            fluct_ic=self.outdir / "fluct.ic",
+            dynamic_prm=self.outdir / self.prefix.with_prefix(".dist.prm"),
+            fixed_prm=self.outdir / self.prefix.with_prefix(".prm"),
+            psf_file=self.outdir / self.prefix.with_prefix(".psf"),
+            xplor_psf_file=self.outdir / self.prefix.with_prefix(".xplor.psf"),
+            crd_file=self.outdir / self.prefix.with_prefix(".cor"),
+            stream_file=self.outdir / self.prefix.with_prefix(".stream"),
+            topology_file=self.outdir / self.prefix.with_prefix(".rtf"),
+            nma_crd=self.outdir / self.prefix.with_prefix(".mini.cor"),
+            nma_vib=self.outdir / self.prefix.with_prefix(".vib"),
+            charmm_input=self.outdir / self.prefix.with_prefix(".inp"),
+            charmm_log=self.outdir / self.prefix.with_prefix(".log"),
+            error_data=self.outdir / "error.dat",
+            thermo_input=self.outdir / "thermo.inp",
+            thermo_log=self.outdir / "thermo.log",
+            thermo_data=self.outdir / "thermo.dat",
+            traj_file=(
+                self.args[1] if len(self.args) > 1 else self.outdir / "cg.dcd")
         )
+
+        # Location of CHARMM executable
+        self.charmmexec = os.environ.get("CHARMMEXEC", shutil.which("charmm"))
 
         # Boltzmann constant
         self.BOLTZ = self.temperature * (constants.k * constants.N_A /
@@ -201,10 +176,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         table = icutils.create_empty_table(universe.atoms)
         hdr = table.columns
         table.set_index(self.bond_def, inplace=True)
-        table.drop(
-            [
-                "r_IJ",
-            ], axis=1, inplace=True)
+        table.drop(["r_IJ", ], axis=1, inplace=True)
         table = pd.concat([table, data["r_IJ"]], axis=1)
         return table.reset_index()[hdr]
 
@@ -221,12 +193,11 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         """
         if not restart:
             # Write CHARMM input file.
-            if not path.exists(self.filenames["init_input"]):
+            if not self.filenames["init_input"].exists():
                 version = self.kwargs.get("charmm_version", 41)
                 dimension = (
                     "dimension chsize 1000000" if version >= 36 else "")
-                with open(
-                    self.filenames["init_input"], mode="wb") as charmm_file:
+                with open(self.filenames["init_input"], "w") as charmm_file:
                     logger.info("Writing CHARMM input file.")
                     charmm_inp = charmm_init.init.format(
                         flex="flex" if version else "",
@@ -234,10 +205,9 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                         dimension=dimension,
                         **self.filenames)
                     charmm_inp = textwrap.dedent(charmm_inp[1:])
-                    charmm_file.write(charmm_inp.encode())
+                    charmm_file.write(charmm_inp)
 
-            charmm_exec = (os.environ.get("CHARMMEXEC", util.which("charmm"))
-                           if nma_exec is None else nma_exec)
+            charmm_exec = self.charmmexec if nma_exec is None else nma_exec
             with open(self.filenames["init_log"], "w") as log_file:
                 subprocess.check_call(
                     [charmm_exec, "-i", self.filenames["init_input"]],
@@ -257,7 +227,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             universe = mda.Universe(
                 self.filenames["xplor_psf_file"], self.filenames["crd_file"]
             )
-            self.target = prmutils.create_empty_parameters(universe, **self.kwargs)
+            self.target = prmutils.create_empty_parameters(universe,
+                                                           **self.kwargs)
             target.columns = self.target["BONDS"].columns
             self.target["BONDS"] = target.copy(deep=True)
             self.parameters = copy.deepcopy(self.target)
@@ -274,7 +245,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                     self.filenames["dynamic_prm"]))
                 prm.write(self.dynamic_params)
         else:
-            if not path.exists(self.filenames["fixed_prm"]):
+            if not self.filenames["fixed_prm"].exists():
                 self.initialize(nma_exec, restart=False)
             try:
                 # Read the parameter files.
@@ -300,8 +271,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                 table.columns = self.target["BONDS"].columns
                 self.target["BONDS"] = table.copy(deep=True).reset_index()
             except (FileNotFoundError, IOError):
-                raise_with_traceback(
-                    (IOError("Some files are missing. Unable to restart.")))
+                raise IOError("Some files are missing. Unable to restart.")
 
     def run(self, nma_exec=None, tol=1.e-4, n_cycles=250):
         """Perform a self-consistent fluctuation matching.
@@ -316,33 +286,28 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             number of fluctuation matching cycles
         """
         # Find CHARMM executable
-        charmm_exec = (os.environ.get("CHARMMEXEC", util.which("charmm"))
-                       if nma_exec is None else nma_exec)
+        charmm_exec = self.charmmexec if nma_exec is None else nma_exec
         if charmm_exec is None:
             logger.exception(
                 "Please set CHARMMEXEC with the location of your CHARMM "
                 "executable file or add the charmm path to your PATH "
                 "environment.")
-            raise_with_traceback(
-                OSError(
-                    "Please set CHARMMEXEC with the location of your CHARMM "
+            OSError("Please set CHARMMEXEC with the location of your CHARMM "
                     "executable file or add the charmm path to your PATH "
-                    "environment."))
+                    "environment.")
 
         # Read the parameters
         if not self.parameters:
             try:
                 self.initialize(nma_exec, restart=True)
             except IOError:
-                raise_with_traceback(
-                    (IOError("Some files are missing. Unable to restart.")))
+                IOError("Some files are missing. Unable to restart.")
 
         # Write CHARMM input file.
-        if not path.exists(self.filenames["charmm_input"]):
+        if not self.filenames["charmm_input"].exists():
             version = self.kwargs.get("charmm_version", 41)
             dimension = ("dimension chsize 1000000" if version >= 36 else "")
-            with open(
-                    self.filenames["charmm_input"], mode="wb") as charmm_file:
+            with open(self.filenames["charmm_input"], "w") as charmm_file:
                 logger.info("Writing CHARMM input file.")
                 charmm_inp = charmm_nma.nma.format(
                     temperature=self.temperature,
@@ -351,7 +316,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                     dimension=dimension,
                     **self.filenames)
                 charmm_inp = textwrap.dedent(charmm_inp[1:])
-                charmm_file.write(charmm_inp.encode())
+                charmm_file.write(charmm_inp)
 
         # Set the indices for the parameter tables.
         self.target["BONDS"].set_index(self.bond_def, inplace=True)
@@ -359,8 +324,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
 
         # Check for restart.
         try:
-            if os.stat(self.filenames["error_data"]).st_size > 0:
-                with open(self.filenames["error_data"], "rb") as data:
+            if self.filenames["error_data"].stat().st_size > 0:
+                with open(self.filenames["error_data"]) as data:
                     error_info = pd.read_csv(
                         data,
                         header=0,
@@ -371,13 +336,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             else:
                 raise FileNotFoundError
         except (FileNotFoundError, OSError):
-            with open(self.filenames["error_data"], "wb") as data:
-                np.savetxt(
-                    data, [
-                        self.error_hdr,
-                    ],
-                    fmt=native_str("%10s"),
-                    delimiter=native_str(""))
+            with open(self.filenames["error_data"], "w") as data:
+                np.savetxt(data, [self.error_hdr, ], fmt="%10s", delimiter="")
         self.error["step"] += 1
 
         # Run simulation
@@ -420,8 +380,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             optimized *= self.BOLTZ * self.KFACTOR
             vib_ic[bond_values[0]] = (self.parameters["BONDS"][bond_values[0]]
                                       - optimized[bond_values[0]])
-            vib_ic[bond_values[0]] = (vib_ic[bond_values[0]].where(
-                vib_ic[bond_values[0]] >= 0., 0.))
+            vib_ic[bond_values[0]] = vib_ic[bond_values[0]].apply(
+                lambda x: np.clip(x, a_min=0, a_max=None))
 
             # r.m.s.d. between previous and current force constant
             diff = self.dynamic_params["BONDS"] - vib_ic
@@ -446,8 +406,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                 np.savetxt(
                     error_file,
                     self.error,
-                    fmt=native_str("%10d%10.6f%10.6f%10.6f", ),
-                    delimiter=native_str(""),
+                    fmt="%10d%10.6f%10.6f%10.6f",
+                    delimiter="",
                 )
 
             if (self.error[self.error.columns[1]] < tol).bool():
@@ -466,25 +426,21 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             executable file for normal mode analysis
         """
         # Find CHARMM executable
-        charmm_exec = (os.environ.get("CHARMMEXEC", util.which("charmm"))
-                       if nma_exec is None else nma_exec)
+        charmm_exec = self.charmmexec if nma_exec is None else nma_exec
         if charmm_exec is None:
             logger.exception(
                 "Please set CHARMMEXEC with the location of your CHARMM "
                 "executable file or add the charmm path to your PATH "
                 "environment.")
-            raise_with_traceback(
-                OSError(
-                    "Please set CHARMMEXEC with the location of your CHARMM "
+            OSError("Please set CHARMMEXEC with the location of your CHARMM "
                     "executable file or add the charmm path to your PATH "
-                    "environment."))
+                    "environment.")
 
-        if not path.exists(self.filenames["thermo_input"]):
+        if not self.filenames["thermo_input"].exists():
             version = self.kwargs.get("charmm_version", 41)
             dimension = ("dimension chsize 500000 maxres 3000000"
                          if version >= 36 else "")
-            with open(
-                    self.filenames["thermo_input"], mode="wb") as charmm_file:
+            with open(self.filenames["thermo_input"], "w") as charmm_file:
                 logger.info("Writing CHARMM input file.")
                 charmm_inp = charmm_thermo.thermodynamics.format(
                     trajectory=path.join(self.outdir, self.args[-1]),
@@ -494,7 +450,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                     dimension=dimension,
                     **self.filenames)
                 charmm_inp = textwrap.dedent(charmm_inp[1:])
-                charmm_file.write(charmm_inp.encode())
+                charmm_file.write(charmm_inp)
 
         # Calculate thermodynamic properties of the trajectory.
         with open(self.filenames["thermo_log"], "w") as log_file:
@@ -513,7 +469,7 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         thermo = []
 
         # Read log file
-        with open(self.filenames["thermo_log"], "rb") as log_file:
+        with open(self.filenames["thermo_log"]) as log_file:
             logger.info("Reading CHARMM log file.")
             for line in log_file:
                 if line.find(header) < 0:
@@ -531,11 +487,11 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         thermo = thermo.astype(np.float)
 
         # Write data to file
-        with open(self.filenames["thermo_data"], "wb") as data_file:
+        with open(self.filenames["thermo_data"], "w") as data_file:
             logger.info("Writing thermodynamics data file.")
             thermo = thermo.to_csv(
                 index=True,
-                sep=native_str(" "),
-                float_format=native_str("%.4f"),
+                sep=" ",
+                float_format="%.4f",
                 encoding="utf-8")
-            data_file.write(thermo.encode())
+            data_file.write(thermo))

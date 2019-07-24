@@ -14,22 +14,12 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict, )
-from future.utils import (
-    with_metaclass, )
-
 import abc
 import os
+from pathlib import Path
 
 
-class FluctMatch(with_metaclass(abc.ABCMeta, object)):
+class FluctMatch(metaclass=abc.ABCMeta):
     """Base class for fluctuation matching."""
 
     def __init__(self, *args, **kwargs):
@@ -107,17 +97,16 @@ class FluctMatch(with_metaclass(abc.ABCMeta, object)):
         self.parameters = dict()
         self.target = dict()
 
-        self.outdir = kwargs.get("outdir", os.getcwd())
-        self.prefix = kwargs.get("prefix", "fluctmatch")
+        self.outdir = Path(kwargs.get("outdir", os.getcwd()))
+        self.prefix = Path(kwargs.get("prefix", "fluctmatch"))
         self.temperature = kwargs.get("temperature", 300.0)
+        if self.temperature < 0:
+            raise IOError("Temperature cannot be negative.")
         self.args = args
         self.kwargs = kwargs
 
         # Attempt to create the necessary subdirectory
-        try:
-            os.makedirs(self.outdir)
-        except OSError:
-            pass
+        self.outdir.mkdir(exist_ok=True, parents=True)
 
     @abc.abstractmethod
     def initialize(self, nma_exec=None, restart=False):
