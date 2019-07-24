@@ -440,10 +440,9 @@ class PSFWriter(base.TopologyWriterBase):
         with open(self.filename, mode="w") as psffile:
             print(header, file=psffile)
             print(file=psffile)
-            n_title: int = len(self._title)
+            n_title: int = len(self._title.split("\n"))
             print(self.sect_hdr.format(n_title, "NTITLE"), file=psffile)
-            for title in self._title:
-                print(title, file=psffile)
+            print(self._title, file=psffile)
             print(file=psffile)
             self._write_atoms(psffile)
             for section in self.sections:

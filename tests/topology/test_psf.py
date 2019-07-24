@@ -57,7 +57,8 @@ class TestPSFWriter(object):
         # Write out a copy of the Universe, and compare this against the original
         # This is more rigorous than simply checking the coordinates as it checks
         # all formatting
-        u.atoms.write(outfile)
+        with mda.Writer(outfile) as w:
+            w.write(u.atoms)
 
         def PSF_iter(fn: str):
             with open(fn) as inf:
@@ -65,7 +66,7 @@ class TestPSFWriter(object):
                     if not line.startswith('*'):
                         yield line
 
-        for ref, other in zip(PSF_iter(PSF), PSF_iter(outfile)):
+        for ref, other in zip(PSF_iter(PSF), PSF_iter(outfile.as_posix())):
             assert ref == other
 
     def test_write_atoms(self, u: mda.Universe, outfile: Path):
