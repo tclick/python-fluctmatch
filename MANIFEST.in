@@ -7,6 +7,7 @@ include .bumpversion.cfg
 include .coveragerc
 include .cookiecutterrc
 include .editorconfig
+include .flake8
 
 include AUTHORS.rst
 include CHANGELOG.rst
@@ -16,4 +17,7 @@ include README.rst
 
 include tox.ini .travis.yml appveyor.yml requirements.txt
 
-global-exclude *.py[cod] __pycache__ *.so *.dylib
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store .*.npz
+
+# added by check_manifest.py
+include *.yaml
