@@ -31,7 +31,7 @@ is_release = "dev" not in RELEASE
 major, minor = sys.version_info[:2]
 if (major, minor) < (3, 6):
     print(
-        f"dnapersist requires Python 3.6 or better. "
+        f"fluctmatch requires Python 3.6 or better. "
         f"Python {major:d}.{minor:d} detected"
     )
     print("Please upgrade your version of Python.")
