@@ -69,7 +69,6 @@ if __name__ == "__main__":
         include_package_data=True,
         zip_safe=False,
         classifiers=[
-            # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: BSD License",
@@ -81,8 +80,7 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
-            "Topic :: Scientific/Engineering :: Chemistry",
-        ],
+            "Topic :: Scientific/Engineering :: Chemistry", ],
         keywords=["elastic network model", "fluctuation matching"],
         install_requires=[
             "click",
@@ -90,10 +88,8 @@ if __name__ == "__main__":
             "numpy",
             "pandas",
             "scipy",
-            "scikit-learn",
-        ],
-        extras_require={
-            "dev": ["MDAnalysisTests", "pytest", "tox", "coverage", "coveralls"]
-        },
+            "scikit-learn", ],
+        extras_require=dict(
+            dev=["MDAnalysisTests", "pytest", "tox", "coverage", "coveralls"]),
         entry_points={"console_scripts": ["fluctmatch = fluctmatch.cli:main"]},
     )

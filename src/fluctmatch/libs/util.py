@@ -62,12 +62,12 @@ def asiterable(obj: typing.Any) -> typing.Tuple:
 
 def center2D(X: np.ndarray) -> np.ndarray:
     """Subtract the mean from both columns and rows.
-    
+
     Parameters
     ----------
     X : array-like
         Any 2-D array
-    
+
     Returns
     -------
     X_new : array-like

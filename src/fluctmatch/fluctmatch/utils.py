@@ -108,8 +108,8 @@ class BondStats(analysis.AnalysisBase):
         # sum(x - m)^2 = nx^2 - 2nxm + nm^2, where n is the number of frames.
         # The summation of x and x^2 occur in the _single_frame method, so the
         # equation can be reduced to sum(x - m)^2 = x^2 - 2xm + nm^2.
-        results.stddev = (self.result.x2 - 2 * results.average * self.result.x +
-                          self._nframes * np.square(results.average))
+        results.stddev = (self.result.x2 - 2 * results.average * self.result.x
+                          + self._nframes * np.square(results.average))
         results.stddev /= self._nframes
         results.stddev = np.sqrt(results.stddev)
         self.result = results.copy()

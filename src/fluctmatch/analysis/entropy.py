@@ -51,7 +51,6 @@ class Entropy(object):
         following equations:
 
         .. math::
-
             P^t_{IJ} = K^t_{IJ} / \sum {K^t_{IJ}}
             S = \sum {P^t_{IJ} ln(P^t_{IJ}}
 

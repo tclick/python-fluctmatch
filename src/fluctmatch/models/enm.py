@@ -35,10 +35,12 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Class for elastic network model."""
 
+from typing import ClassVar
 from typing import List
 from typing import Optional
 from typing import Tuple
 
+import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Angles
 from MDAnalysis.core.topologyattrs import Atomtypes
@@ -97,7 +99,6 @@ class Enm(ModelBase):
         The transformed universe
 
     """
-
     model: ClassVar[str] = "ENM"
     describe: ClassVar[str] = "Elastic network model"
 
@@ -138,7 +139,7 @@ class Enm(ModelBase):
             charges = np.zeros(n_atoms)
             self.universe.add_TopologyAttr(Charges(charges))
 
-        atomtypes: np.ndarray = np.arange(n_atoms, dtype=int) + 1
+        self.atomtypes: np.ndarray = np.arange(n_atoms, dtype=int) + 1
         self.universe.add_TopologyAttr(Atomtypes(self.universe.atoms.names))
 
     def add_trajectory(self, universe: mda.Universe):

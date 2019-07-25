@@ -25,24 +25,29 @@ from copy import deepcopy
 
 import numpy as np
 from scipy import linalg
+from sklearn.decomposition import FastICA
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.decomposition import PCA, FastICA
-from sklearn.pipeline import make_pipeline
-from sklearn.utils.validation import (
-    as_float_array, check_array, check_is_fitted, check_random_state, FLOAT_DTYPES
-)
+
+from sklearn.utils.validation import FLOAT_DTYPES
+from sklearn.utils.validation import as_float_array
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_random_state
 
 logger: logging.Logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
 
 
-def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
-             w_change: float=1e-12, anneal_deg: float=60., anneal_step: float=0.9,
-             extended: bool=True, n_subgauss: int=1, kurt_size: int=6000,
-             ext_blocks: int=1, max_iter:int =200, whiten=True,
-             random_state: np.random.RandomState=None, blowup: float=1e4,
-             blowup_fac: float=0.5, n_small_angle: int=20, use_bias: bool=True,
-             verbose: bool=None) -> np.ndarray:
+def _infomax(X, n_components: int = None, l_rate: float = None,
+             weights: np.ndarray = None, block: float = None,
+             w_change: float = 1e-12, anneal_deg: float = 60.,
+             anneal_step: float = 0.9, extended: bool = True,
+             n_subgauss: int = 1, kurt_size: int = 6000,
+             ext_blocks: int = 1, max_iter: int = 200, whiten=True,
+             random_state: np.random.RandomState = None, blowup: float = 1e4,
+             blowup_fac: float = 0.5, n_small_angle: int = 20,
+             use_bias: bool = True,
+             verbose: bool = None) -> np.ndarray:
     """Run (extended) Infomax ICA decomposition on raw data.
 
     Parameters
@@ -184,10 +189,8 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
     lastt = (nblock - 1) * block + 1
 
     # initialize training
-    if weights is None:
-        weights = np.identity(n_features, dtype=np.float64)
-    else:
-        weights = weights.T
+    weights = (np.identity(n_features,
+                           dtype=np.float64) if weights is None else weights.T)
 
     BI = block * np.identity(n_features, dtype=np.float64)
     bias = np.zeros((n_features, 1), dtype=np.float64)
@@ -199,14 +202,12 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
     wts_blowup = False
     blockno = 0
     signcount = 0
-    initial_ext_blocks = ext_blocks   # save the initial value in case of reset
+    initial_ext_blocks = ext_blocks  # save the initial value in case of reset
 
     # for extended Infomax
     if extended:
         signs = np.ones(n_features)
-
-        for k in range(n_subgauss):
-            signs[k] = -1
+        signs[:n_subgauss] = -1
 
         kurt_size = min(kurt_size, n_samples)
         old_kurt = np.zeros(n_features, dtype=np.float64)
@@ -215,7 +216,6 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
     # trainings loop
     olddelta, oldchange = 1., 0.
     while step < max_iter:
-
         # shuffle data at each step
         permute = random_permutation(n_samples, rng)
 
@@ -228,136 +228,132 @@ def _infomax(X, l_rate: float=None, weights: np.ndarray=None, block: float=None,
             if extended:
                 # extended ICA update
                 y = np.tanh(u)
-                weights += l_rate * np.dot(weights,
-                                           BI -
-                                           signs[None, :] * np.dot(u.T, y) -
-                                           np.dot(u.T, u))
-                if use_bias:
-                    bias += l_rate * np.reshape(np.sum(y, axis=0,
-                                                dtype=np.float64) * -2.0,
-                                                (n_features, 1))
-
-            else:
-                # logistic ICA weights update
-                y = 1.0 / (1.0 + np.exp(-u))
-                weights += l_rate * np.dot(weights,
-                                           BI + np.dot(u.T, (1.0 - 2.0 * y)))
-
-                if use_bias:
-                    bias += l_rate * np.reshape(np.sum((1.0 - 2.0 * y), axis=0,
-                                                dtype=np.float64),
-                                                (n_features, 1))
-
-            # check change limit
-            max_weight_val = np.max(np.abs(weights))
-            if max_weight_val > max_weight:
-                wts_blowup = True
-
-            blockno += 1
-            if wts_blowup:
-                break
-
-            # ICA kurtosis estimation
-            if extended:
-                if ext_blocks > 0 and blockno % ext_blocks == 0:
-                    if kurt_size < n_samples:
-                        rp = np.floor(rng.uniform(0, 1, kurt_size) *
-                                      (n_samples - 1))
-                        tpartact = np.dot(X[rp.astype(int), :], weights).T
-                    else:
-                        tpartact = np.dot(X, weights).T
-
-                    # estimate kurtosis
-                    kurt = kurtosis(tpartact, axis=1, fisher=True)
-
-                    if extmomentum != 0:
-                        kurt = (extmomentum * old_kurt +
-                                (1.0 - extmomentum) * kurt)
-                        old_kurt = kurt
-
-                    # estimate weighted signs
-                    signs = np.sign(kurt + signsbias)
-
-                    ndiff = (signs - oldsigns != 0).sum()
-                    if ndiff == 0:
-                        signcount += 1
-                    else:
-                        signcount = 0
-                    oldsigns = signs
-
-                    if signcount >= signcount_threshold:
-                        ext_blocks = np.fix(ext_blocks * signcount_step)
-                        signcount = 0
-
-        # here we continue after the for loop over the ICA training blocks
-        # if weights in bounds:
-        if not wts_blowup:
-            oldwtchange = weights - oldweights
-            step += 1
-            angledelta = 0.0
-            delta = oldwtchange.reshape(1, n_features_square)
-            change = np.sum(delta * delta, dtype=np.float64)
-            if step > 2:
-                angledelta = np.arccos(np.sum(delta * olddelta) /
-                                       np.sqrt(change * oldchange))
-                angledelta *= degconst
-
-            if verbose:
-                logger.info(
-                    'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg'
-                    % (step, l_rate, change, angledelta))
-
-            # anneal learning rate
-            oldweights = weights.copy()
-            if angledelta > anneal_deg:
-                l_rate *= anneal_step    # anneal learning rate
-                # accumulate angledelta until anneal_deg reaches l_rate
-                olddelta = delta
-                oldchange = change
-                count_small_angle = 0  # reset count when angledelta is large
-            else:
-                if step == 1:  # on first step only
-                    olddelta = delta  # initialize
-                    oldchange = change
-
-                if n_small_angle is not None:
-                    count_small_angle += 1
-                    if count_small_angle > n_small_angle:
-                        max_iter = step
-
-            # apply stopping rule
-            if step > 2 and change < w_change:
-                step = max_iter
-            elif change > blowup:
-                l_rate *= blowup_fac
-
-        # restart if weights blow up (for lowering l_rate)
+                j = BI - signs[None, :] * np.dot(u.T, y) - np.dot(u.T, u)
+                weights += l_rate * np.dot(weights, j)
+            if use_bias:
+                bias += l_rate * np.reshape(
+                    np.sum(y, axis=0, dtype=float) * -2.0, (n_features, 1))
         else:
-            step = 0  # start again
-            wts_blowup = 0  # re-initialize variables
-            blockno = 1
-            l_rate *= restart_fac  # with lower learning rate
-            weights = startweights.copy()
-            oldweights = startweights.copy()
-            olddelta = np.zeros((1, n_features_square), dtype=np.float64)
-            bias = np.zeros((n_features, 1), dtype=np.float64)
+            # logistic ICA weights update
+            y = 1.0 / (1.0 + np.exp(-u))
+            j = BI + np.dot(u.T, (1.0 - 2.0 * y))
+            weights += l_rate * np.dot(weights, j)
 
-            ext_blocks = initial_ext_blocks
+            if use_bias:
+                bias += l_rate * np.reshape(np.sum((1.0 - 2.0 * y), axis=0,
+                                                   dtype=float),
+                                            (n_features, 1))
 
-            # for extended Infomax
-            if extended:
-                signs = np.ones(n_features)
-                for k in range(n_subgauss):
-                    signs[k] = -1
-                oldsigns = np.zeros(n_features)
+        # check change limit
+        max_weight_val = np.max(np.abs(weights))
+        if max_weight_val > max_weight:
+            wts_blowup = True
 
-            if l_rate > min_l_rate:
-                if verbose:
-                    logger.info('... lowering learning rate to %g'
-                                '\n... re-starting...' % l_rate)
-            else:
-                raise ValueError('Error in Infomax ICA: unmixing_matrix matrix'
-                                 'might not be invertible!')
+        blockno += 1
+        if wts_blowup:
+            break
+
+        # ICA kurtosis estimation
+        if extended:
+            if ext_blocks > 0 and blockno % ext_blocks == 0:
+                if kurt_size < n_samples:
+                    rp = np.floor(rng.uniform(0, 1, kurt_size) *
+                                  (n_samples - 1))
+                    tpartact = np.dot(X[rp.astype(int), :], weights).T
+                else:
+                    tpartact = np.dot(X, weights).T
+
+                # estimate kurtosis
+                kurt = kurtosis(tpartact, axis=1, fisher=True)
+
+                if extmomentum != 0:
+                    kurt = (extmomentum * old_kurt +
+                            (1.0 - extmomentum) * kurt)
+                    old_kurt = kurt
+
+                # estimate weighted signs
+                signs = np.sign(kurt + signsbias)
+
+                ndiff = (signs - oldsigns != 0).sum()
+                if ndiff == 0:
+                    signcount += 1
+                else:
+                    signcount = 0
+                oldsigns = signs
+
+                if signcount >= signcount_threshold:
+                    ext_blocks = np.fix(ext_blocks * signcount_step)
+                    signcount = 0
+
+    # here we continue after the for loop over the ICA training blocks
+    # if weights in bounds:
+    if not wts_blowup:
+        oldwtchange = weights - oldweights
+        step += 1
+        angledelta = 0.0
+        delta = oldwtchange.reshape(1, n_features_square)
+        change = np.sum(delta * delta, dtype=np.float64)
+        if step > 2:
+            angledelta = np.arccos(np.sum(delta * olddelta) /
+                                   np.sqrt(change * oldchange))
+            angledelta *= degconst
+
+        if verbose:
+            logger.info(
+                'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg'
+                % (step, l_rate, change, angledelta))
+
+        # anneal learning rate
+        oldweights = weights.copy()
+        if angledelta > anneal_deg:
+            l_rate *= anneal_step  # anneal learning rate
+            # accumulate angledelta until anneal_deg reaches l_rate
+            olddelta = delta
+            oldchange = change
+            count_small_angle = 0  # reset count when angledelta is large
+        else:
+            if step == 1:  # on first step only
+                olddelta = delta  # initialize
+                oldchange = change
+
+            if n_small_angle is not None:
+                count_small_angle += 1
+                if count_small_angle > n_small_angle:
+                    max_iter = step
+
+        # apply stopping rule
+        if step > 2 and change < w_change:
+            step = max_iter
+        elif change > blowup:
+            l_rate *= blowup_fac
+
+    # restart if weights blow up (for lowering l_rate)
+    else:
+        step = 0  # start again
+        wts_blowup = 0  # re-initialize variables
+        blockno = 1
+        l_rate *= restart_fac  # with lower learning rate
+        weights = startweights.copy()
+        oldweights = startweights.copy()
+        olddelta = np.zeros((1, n_features_square), dtype=np.float64)
+        bias = np.zeros((n_features, 1), dtype=np.float64)
+
+        ext_blocks = initial_ext_blocks
+
+        # for extended Infomax
+        if extended:
+            signs = np.ones(n_features)
+            for k in range(n_subgauss):
+                signs[k] = -1
+            oldsigns = np.zeros(n_features)
+
+        if l_rate > min_l_rate:
+            if verbose:
+                logger.info('... lowering learning rate to %g'
+                            '\n... re-starting...' % l_rate)
+        else:
+            raise ValueError('Error in Infomax ICA: unmixing_matrix matrix'
+                             'might not be invertible!')
 
     # prepare return values
     return weights.T
@@ -532,6 +528,7 @@ class ICA(BaseEstimator, TransformerMixin):
            subgaussian and supergaussian sources. Neural computation, 11(2),
            pp.417-441.
     """
+
     def __init__(self, whiten=True, n_components=None, random_state=None,
                  method='fastica', fit_params=None, max_iter=200,
                  verbose=None):
@@ -540,8 +537,7 @@ class ICA(BaseEstimator, TransformerMixin):
             raise ValueError('`method` must be "%s". You passed: "%s"' %
                              ('" or "'.join(methods), method))
 
-        if isinstance(n_components, float) \
-                and not 0 < n_components <= 1:
+        if isinstance(n_components, float) and not 0 < n_components <= 1:
             raise ValueError('Selecting ICA components by explained variance '
                              'needs values between 0.0 and 1.0 ')
 
@@ -557,10 +553,12 @@ class ICA(BaseEstimator, TransformerMixin):
             raise ValueError("'extended' parameter provided. You should "
                              "rather use method='extended-infomax'.")
         if method == 'fastica':
-            update = {'algorithm': 'parallel', 'fun': 'logcosh',
-                      'fun_args': None}
+            update = {
+                'algorithm': 'parallel', 'fun': 'logcosh',
+                'fun_args': None
+            }
             fit_params.update(dict((k, v) for k, v in update.items() if k
-                              not in fit_params))
+                                   not in fit_params))
         elif method == 'infomax':
             fit_params.update({'extended': False})
         elif method == 'extended-infomax':
@@ -614,7 +612,7 @@ class ICA(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, data: np.ndarray, copy: bool=True) -> np.ndarray:
+    def transform(self, data: np.ndarray, copy: bool = True) -> np.ndarray:
         """Compute sources from data (operates inplace)."""
         check_is_fitted(self, 'mixing_')
 
@@ -624,7 +622,8 @@ class ICA(BaseEstimator, TransformerMixin):
         sources = np.dot(data, self.components_.T)
         return sources
 
-    def inverse_transform(self, data: np.ndarray, copy: bool=True) -> np.ndarray:
+    def inverse_transform(self, data: np.ndarray,
+                          copy: bool = True) -> np.ndarray:
         check_is_fitted(self, 'mixing_')
 
         data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)

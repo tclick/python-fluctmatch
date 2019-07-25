@@ -18,9 +18,9 @@ import logging.config
 import os
 from os import path
 
+import MDAnalysis as mda
 import click
 import pandas as pd
-import MDAnalysis as mda
 
 
 @click.command(

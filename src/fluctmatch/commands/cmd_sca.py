@@ -25,9 +25,10 @@ import click
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
-from ..analysis.paramtable import ParamTable
-from ..analysis import fluctsca
+
 from fluctmatch.decomposition import ica
+from ..analysis import fluctsca
+from ..analysis.paramtable import ParamTable
 
 
 @click.command(
@@ -152,7 +153,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
             "detailed": {
                 "class": "logging.Formatter",
                 "format":
-                "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
                 "datefmt": "%m-%d-%y %H:%M",
             },
         },
@@ -236,7 +237,8 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
 
     # Determine the number of eigenmodes if kpos = 0
     Lsca, Vsca = fluctsca.eigenVect(Csca)
-    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand, stddev=std) if kpos == 0 else kpos
+    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand,
+                                     stddev=std) if kpos == 0 else kpos
     logger.info("Selecting {:d} eigenmodes".format(_kpos))
 
     # Calculate IC sectors
@@ -244,7 +246,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
     time_info = ica.ICA(n_components=_kpos, method=ictype,
                         max_iter=ntrials, whiten=False)
     try:
-        Vpica: np.ndarray = time_info.fit_transform(Vsca[:,:_kpos])
+        Vpica: np.ndarray = time_info.fit_transform(Vsca[:, :_kpos])
     except IndexError:
         logger.error(f"An error occurred while using {ictype}. Exiting...")
         sys.exit(os.EX_DATAERR)
@@ -256,7 +258,8 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
                 f"sectors: {percentage:.2f}%")
 
     logger.info("Calculating the ICA for the windows.")
-    Usca: np.ndarray = U.dot(Vsca[:,:_kpos]).dot(np.diag(1/np.sqrt(Lsca[:_kpos])))
+    Usca: np.ndarray = U.dot(Vsca[:, :_kpos]).dot(
+        np.diag(1 / np.sqrt(Lsca[:_kpos])))
     Upica: np.ndarray = time_info.mixing_.dot(Usca.T).T
     for k in range(Upica.shape[1]):
         Upica[:, k] /= np.sqrt(Upica[:, k].T.dot(Upica[:, k]))

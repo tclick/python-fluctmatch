@@ -14,14 +14,10 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-import numpy as np
-import pandas as pd
-
-
-init = ("""
+init = """
     * Calculate the initial equilibrium distance and force constant for an ENM
     * structure. The original CHARMM code was written by Prof. Jhih-Wei Chu.
-    * 
+    *
     
     {dimension}
 
@@ -56,7 +52,7 @@ init = ("""
     ! Load the trajectories
     open read unit @fileu file name {traj_file}
     
-    ! Gather information from the first trajectory assuming that all 
+    ! Gather information from the first trajectory assuming that all
     ! trajectories are similar.
     ! Calculate the beginning and final times for a trajectory sequence.
     traj query unit @fileu
@@ -74,4 +70,4 @@ init = ("""
     close unit @fileu
     
     stop
-""")
+"""

@@ -16,24 +16,28 @@
 #
 import numpy as np
 from scipy import linalg
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
+from sklearn.utils.validation import FLOAT_DTYPES
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
 
-from ..libs.center import Center2D
 from fluctmatch.decomposition.ica import ICA
+from ..libs.center import Center2D
+
 
 class FluctSCA(BaseEstimator, TransformerMixin):
-    def __init__(self, n_components: int=None, max_iter: int=1000,
-                 whiten: bool=True, stddev: float = 2.0,
-                 method: str="extended-infomax"):
+    def __init__(self, n_components: int = None, max_iter: int = 1000,
+                 whiten: bool = True, stddev: float = 2.0,
+                 method: str = "extended-infomax"):
         super().__init__()
-        self.n_components_: int= n_components
-        self.max_iter: int= max_iter
-        self.stddev: float= stddev
+        self.n_components_: int = n_components
+        self.max_iter: int = max_iter
+        self.stddev: float = stddev
         self.whiten = whiten
-        self.method: str= method
+        self.method: str = method
 
     def _randomize(self, X: np.ndarray) -> np.ndarray:
         """Calculates eigenvalues from a random matrix.
@@ -46,9 +50,9 @@ class FluctSCA(BaseEstimator, TransformerMixin):
         _, n_windows = X.shape
 
         mean: np.ndarray = np.mean(X, axis=-1)[:, None]
-        mean: np.ndarray = np.tile(mean, (1, n_windows)),
+        mean: np.ndarray = np.tile(mean, (1, n_windows))
         std: np.ndarray = np.std(X, axis=-1)[:, None]
-        std: np.ndarray = np.tile(std, (1, n_windows)),
+        std: np.ndarray = np.tile(std, (1, n_windows))
         positive = np.all(X >= 0.)
 
         Lrand = np.empty((self.max_iter, np.min(X.shape)), dtype=X.dtype)
@@ -68,7 +72,8 @@ class FluctSCA(BaseEstimator, TransformerMixin):
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
         value: float = X[:, 1].mean() + ((self.stddev + 1) * X[:, 1].std())
-        self.n_components_: int = self.singular_values_[self.singular_values_ > value].size
+        self.n_components_: int = self.singular_values_[
+            self.singular_values_ > value].size
 
     def fit(self, X: np.ndarray) -> "FluctSCA":
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
@@ -84,7 +89,7 @@ class FluctSCA(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X: np.ndarray, copy: bool=True):
+    def transform(self, X: np.ndarray, copy: bool = True):
         check_is_fitted(self, "Lsca")
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,

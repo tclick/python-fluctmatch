@@ -16,12 +16,11 @@
 #
 
 import numpy as np
-from scipy.sparse import issparse, linalg
-
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_random_state
+from scipy.sparse import linalg
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.utils import check_array
-from sklearn.utils.extmath import randomized_svd, svd_flip
+
 
 class Eigh(BaseEstimator, TransformerMixin):
     """Hermitian eigenvalue decomposition.
@@ -71,6 +70,7 @@ class Eigh(BaseEstimator, TransformerMixin):
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
     """
+
     def __init__(self, copy=True):
         self.copy = copy
 

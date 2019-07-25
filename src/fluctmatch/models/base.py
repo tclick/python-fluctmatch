@@ -158,7 +158,7 @@ class ModelBase(abc.ABC):
 
     def create_topology(self, universe: mda.Universe):
         """Deteremine the topology attributes and initialize the universe.
-        
+
         Parameters
         ----------
         universe : :class:`~MDAnalysis.Universe`
@@ -191,14 +191,16 @@ class ModelBase(abc.ABC):
         atomnames: Atomnames = Atomnames(atomnames)
 
         # Residue
-        resids: np.ndarray = np.asarray([bead.resids[0] for bead in beads], dtype=int)
+        resids: np.ndarray = np.asarray([bead.resids[0] for bead in beads],
+                                        dtype=int)
         resnames: np.ndarray = np.asarray(
             [bead.resnames[0] for bead in beads], dtype=object
         )
         segids: np.ndarray = np.asarray(
             [bead.segids[0].split("_")[-1] for bead in beads], dtype=object
         )
-        residx, (new_resids, new_resnames, perres_segids) = topbase.change_squash(
+        residx, (
+            new_resids, new_resnames, perres_segids) = topbase.change_squash(
             (resids, resnames, segids), (resids, resnames, segids)
         )
 
@@ -251,7 +253,7 @@ class ModelBase(abc.ABC):
 
     def add_trajectory(self, universe: mda.Universe):
         """Add coordinates to the new system.
-        
+
         Parameters
         ----------
         universe: :class:`~MDAnalysis.Universe`
@@ -337,7 +339,7 @@ class ModelBase(abc.ABC):
 
         Topologies are generated, bead connections are determined, and positions
         are read. This is a wrapper for the other three methods.
-        
+
         Parameters
         ----------
         universe: :class:`~MDAnalysis.Universe`
@@ -373,7 +375,8 @@ class ModelBase(abc.ABC):
                 dtype=np.float32,
             )
         except (AttributeError, mda.NoDataError):
-            masses: np.ndarray = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
+            masses: np.ndarray = np.zeros(self.universe.atoms.n_atoms,
+                                          dtype=np.float32)
 
         self.universe.add_TopologyAttr(Masses(masses))
 
@@ -412,7 +415,8 @@ class ModelBase(abc.ABC):
 
     def _add_dihedrals(self):
         try:
-            dihedrals: TopologyGroup = guessers.guess_dihedrals(self.universe.angles)
+            dihedrals: TopologyGroup = guessers.guess_dihedrals(
+                self.universe.angles)
             self.universe.add_TopologyAttr(Dihedrals(dihedrals))
         except AttributeError:
             pass
@@ -456,7 +460,8 @@ def Merge(*args: MDUniverse) -> mda.Universe:
     trajectory.ts.has_velocities: bool = (trajectory1.ts.has_velocities)
     trajectory.ts.has_forces: bool = trajectory1.ts.has_forces
     frames: np.ndarray = np.fromiter(
-        [u.trajectory.n_frames == trajectory1.n_frames for u in args], dtype=bool
+        [u.trajectory.n_frames == trajectory1.n_frames for u in args],
+        dtype=bool
     )
     if not all(frames):
         msg: str = "The trajectories are not the same length."
@@ -477,7 +482,8 @@ def Merge(*args: MDUniverse) -> mda.Universe:
 
         # Accumulate coordinates, velocities, and forces.
         for u in args:
-            positions.append([ts.positions for ts in u.trajectory if ts.has_positions])
+            positions.append(
+                [ts.positions for ts in u.trajectory if ts.has_positions])
             velocities.append(
                 [ts.velocities for ts in u.trajectory if ts.has_velocities]
             )
@@ -493,7 +499,8 @@ def Merge(*args: MDUniverse) -> mda.Universe:
             logger.info(
                 f"The new universe has {n_beads:d} beads in " f"{n_frames:d} frames."
             )
-            universe.load_new(positions, format=MemoryReader, dimensions=dimensions)
+            universe.load_new(positions, format=MemoryReader,
+                              dimensions=dimensions)
 
         if trajectory.ts.has_velocities:
             velocities: np.ndarray = np.concatenate(velocities, axis=1)
