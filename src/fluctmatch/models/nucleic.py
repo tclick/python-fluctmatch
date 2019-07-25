@@ -36,11 +36,15 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes for various nucleic acid models."""
 
-from typing import ClassVar, List, Tuple, Mapping
+from typing import ClassVar
+from typing import List
+from typing import Mapping
+from typing import Tuple
 
-import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Bonds, Charges
+import numpy as np
+from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Charges
 
 from .base import ModelBase
 

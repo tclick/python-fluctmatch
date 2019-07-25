@@ -19,9 +19,11 @@ import os
 from os import path
 
 import click
-from fluctmatch import _DESCRIBE, _MODELS
-from fluctmatch.models.core import modeller
+
+from fluctmatch import _DESCRIBE
+from fluctmatch import _MODELS
 from fluctmatch.fluctmatch.utils import write_charmm_files
+from fluctmatch.models.core import modeller
 
 
 @click.command("convert",

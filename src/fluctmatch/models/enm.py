@@ -40,8 +40,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
 from MDAnalysis.core.topologyattrs import Angles
 from MDAnalysis.core.topologyattrs import Atomtypes
 from MDAnalysis.core.topologyattrs import Bonds

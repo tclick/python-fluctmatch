@@ -18,8 +18,8 @@ import logging.config
 import os
 from os import path
 
-import MDAnalysis as mda
 import click
+import MDAnalysis as mda
 import pandas as pd
 
 

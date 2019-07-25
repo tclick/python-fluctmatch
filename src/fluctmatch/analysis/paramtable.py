@@ -14,15 +14,10 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-from future.builtins import (
-    dict, )
-from future.utils import native_str
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import functools
 import glob
@@ -31,6 +26,8 @@ from os import path
 
 import numpy as np
 import pandas as pd
+from future.builtins import dict
+from future.utils import native_str
 from MDAnalysis.coordinates.core import reader
 from MDAnalysis.lib.util import openany
 

@@ -40,6 +40,7 @@ from MDAnalysisTests.topology.base import ParserBase
 from numpy.testing import assert_equal
 
 from fluctmatch.topology import PSFParser
+
 from ..datafiles import COR
 from ..datafiles import PSF
 

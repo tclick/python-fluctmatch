@@ -37,7 +37,8 @@
 from typing import ClassVar
 
 import numpy as np
-from MDAnalysis.core import selection, AtomGroup
+from MDAnalysis.core import AtomGroup
+from MDAnalysis.core import selection
 
 
 class BioIonSelection(selection.Selection):

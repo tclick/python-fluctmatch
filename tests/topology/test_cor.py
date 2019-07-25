@@ -40,6 +40,7 @@ from typing import List
 from MDAnalysisTests.topology.base import ParserBase
 
 from fluctmatch.topology.CORParser import CORParser
+
 from ..datafiles import COR
 
 

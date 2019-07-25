@@ -37,15 +37,17 @@
 
 import logging
 
-__version__: str = "3.4.1"
-
-_MODELS: dict = {}
-_DESCRIBE: dict = {}
+from .coordinates import COR
+from .intcor import IC
+from .libs.register import _DESCRIBE
+from .libs.register import _MODELS
+from .parameter import PRM
+from .topology import CORParser
+from .topology import PSFParser
+from .topology import RTF
+from .topology import STR
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-from .coordinates import COR
-from .intcor import IC
-from .parameter import PRM
-from .topology import CORParser, PSFParser, RTF, STR
+__version__: str = "3.4.1"

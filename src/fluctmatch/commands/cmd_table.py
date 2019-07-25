@@ -20,6 +20,7 @@ from os import path
 
 import click
 from MDAnalysis.lib.util import filename
+
 from fluctmatch.analysis import paramtable
 
 

@@ -39,6 +39,7 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import enm
+
 from ..datafiles import DCD
 from ..datafiles import PSF
 

@@ -22,9 +22,9 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Mapping
 
+import click
 import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
-import click
 import numpy as np
 
 from fluctmatch.fluctmatch.data import charmm_split

@@ -20,13 +20,15 @@ import numbers
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
-
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.decomposition.pca import _infer_dimension_
 from sklearn.decomposition.truncated_svd import TruncatedSVD
-from sklearn.utils import check_random_state
 from sklearn.utils import check_array
-from sklearn.utils.extmath import randomized_svd, stable_cumsum, svd_flip
+from sklearn.utils import check_random_state
+from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import svd_flip
 
 logger = logging.getLogger(__name__)
 

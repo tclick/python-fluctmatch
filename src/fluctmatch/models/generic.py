@@ -30,13 +30,15 @@
 #
 """Model a generic system of heavy atoms excluding certain types."""
 
-from typing import ClassVar, List, Tuple
+from typing import ClassVar
+from typing import List
+from typing import Tuple
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
+from MDAnalysis.coordinates.memory import MemoryReader
 from MDAnalysis.core.topologyattrs import Bonds
 from MDAnalysis.topology import guessers
-from MDAnalysis.coordinates.memory import MemoryReader
 
 from . import base
 

@@ -25,6 +25,7 @@ from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
 
 from fluctmatch.decomposition.ica import ICA
+
 from ..libs.center import Center2D
 
 

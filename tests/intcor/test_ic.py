@@ -35,9 +35,9 @@ import MDAnalysis as mda
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
+from tests.datafiles import IC
 
 from fluctmatch.intcor.IC import IntcorReader
-from tests.datafiles import IC
 
 
 class TestICWriter:

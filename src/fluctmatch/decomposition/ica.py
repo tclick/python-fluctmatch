@@ -25,9 +25,9 @@ from copy import deepcopy
 
 import numpy as np
 from scipy import linalg
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.decomposition import FastICA
-from sklearn.base import BaseEstimator, TransformerMixin
-
 from sklearn.utils.validation import FLOAT_DTYPES
 from sklearn.utils.validation import as_float_array
 from sklearn.utils.validation import check_array

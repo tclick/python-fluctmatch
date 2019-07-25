@@ -36,6 +36,7 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import solvent
+
 from ..datafiles import DMA
 from ..datafiles import TIP3P
 

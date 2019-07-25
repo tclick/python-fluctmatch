@@ -18,12 +18,12 @@ import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
+from tests.datafiles import TPR
+from tests.datafiles import XTC
 
 from fluctmatch.models.base import Merge
 from fluctmatch.models.base import ModelBase
 from fluctmatch.models.base import rename_universe
-from tests.datafiles import TPR
-from tests.datafiles import XTC
 
 
 def test_universe():

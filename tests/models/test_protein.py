@@ -42,6 +42,7 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import protein
+
 from ..datafiles import TPR
 from ..datafiles import XTC
 

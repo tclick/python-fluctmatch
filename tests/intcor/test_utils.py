@@ -34,10 +34,10 @@ import numpy as np
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
-
-from fluctmatch.intcor.utils import create_empty_table
 from tests.datafiles import COR
 from tests.datafiles import PSF
+
+from fluctmatch.intcor.utils import create_empty_table
 
 
 class TestICUtils:

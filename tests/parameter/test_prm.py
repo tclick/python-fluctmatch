@@ -38,9 +38,9 @@ import MDAnalysis as mda
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
+from tests.datafiles import PRM
 
 from fluctmatch.parameter.PRM import ParamReader
-from tests.datafiles import PRM
 
 
 class TestPRMWriter(object):

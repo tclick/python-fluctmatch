@@ -36,10 +36,13 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Classes defining various ion types."""
 
-from typing import ClassVar, List, MutableMapping
+from typing import ClassVar
+from typing import List
+from typing import MutableMapping
 
 import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
 
 from .base import ModelBase
 

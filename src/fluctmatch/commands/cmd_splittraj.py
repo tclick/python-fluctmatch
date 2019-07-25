@@ -23,6 +23,7 @@ from os import path
 
 import click
 from MDAnalysis.lib import util as mdutil
+
 from fluctmatch.fluctmatch import utils
 
 _CONVERT = dict(GMX=utils.split_gmx, CHARMM=utils.split_charmm)

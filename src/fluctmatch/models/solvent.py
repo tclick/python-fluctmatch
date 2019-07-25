@@ -36,10 +36,14 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Tests for solvent ion model."""
 
-from typing import ClassVar, List, Mapping, Tuple
+from typing import ClassVar
+from typing import List
+from typing import Mapping
+from typing import Tuple
 
 import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
 
 from .base import ModelBase
 

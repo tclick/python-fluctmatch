@@ -17,10 +17,10 @@ from MDAnalysis import _MULTIFRAME_WRITERS
 from MDAnalysis import _READERS
 from MDAnalysis import _SINGLEFRAME_WRITERS
 
-from .. import _DESCRIBE
-from .. import _MODELS
-
 logger: logging.Logger = logging.getLogger(__name__)
+
+_MODELS: dict = {}
+_DESCRIBE: dict = {}
 
 
 def register_model(target_class: object):

@@ -19,6 +19,7 @@ import os
 from os import path
 
 import click
+
 from fluctmatch.analysis.paramstats import ParamStats
 from fluctmatch.analysis.paramtable import ParamTable
 

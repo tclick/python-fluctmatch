@@ -20,6 +20,7 @@ from os import path
 
 import click
 import numpy as np
+
 from fluctmatch.analysis import paramtable
 
 logger = logging.getLogger(__name__)

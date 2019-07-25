@@ -16,6 +16,7 @@ import numpy as np
 from numpy import testing
 
 from fluctmatch.fluctmatch import utils as fmutils
+
 from ..datafiles import TPR
 from ..datafiles import XTC
 

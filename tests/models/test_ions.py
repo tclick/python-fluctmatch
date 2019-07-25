@@ -44,6 +44,7 @@ import pytest
 from numpy import testing
 
 from fluctmatch.models import ions
+
 from ..datafiles import IONS
 
 
