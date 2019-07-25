@@ -42,10 +42,10 @@ from .intcor import IC
 from .libs.register import _DESCRIBE
 from .libs.register import _MODELS
 from .parameter import PRM
-from .topology import CORParser
-from .topology import PSFParser
 from .topology import RTF
 from .topology import STR
+from .topology import CORParser
+from .topology import PSFParser
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
