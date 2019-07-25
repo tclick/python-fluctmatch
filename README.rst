@@ -14,7 +14,6 @@ Overview
         | |coveralls| |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
 
 .. |docs| image:: https://readthedocs.org/projects/python-fluctmatch/badge/?style=flat
     :target: https://readthedocs.org/projects/python-fluctmatch
@@ -42,23 +41,19 @@ Overview
 
 .. |version| image:: https://img.shields.io/pypi/v/fluctmatch.svg
     :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/fluctmatch
-
-.. |commits-since| image:: https://img.shields.io/github/commits-since/tclick/python-fluctmatch/v3.4.1.svg
-    :alt: Commits since latest release
-    :target: https://github.com/tclick/python-fluctmatch/compare/v3.4.1...master
+    :target: https://test.pypi.org/project/fluctmatch
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/fluctmatch.svg
     :alt: PyPI Wheel
-    :target: https://pypi.python.org/pypi/fluctmatch
+    :target: https://test.pypi.org/project/fluctmatch
 
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/fluctmatch.svg
     :alt: Supported versions
-    :target: https://pypi.python.org/pypi/fluctmatch
+    :target: https://test.pypi.org/project/fluctmatch
 
 .. |supported-implementations| image:: https://img.shields.io/pypi/implementation/fluctmatch.svg
     :alt: Supported implementations
-    :target: https://pypi.python.org/pypi/fluctmatch
+    :target: https://test.pypi.org/project/fluctmatch
 
 
 .. end-badges
@@ -124,3 +119,4 @@ Note, to combine the coverage data from all the tox environments run:
       - ::
 
             PYTEST_ADDOPTS=--cov-append tox
+
