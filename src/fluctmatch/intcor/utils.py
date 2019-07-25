@@ -108,11 +108,11 @@ def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
             zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_angles, 5),
                                                         dtype=np.float))
             cols: pd.DataFrame = pd.DataFrame([
-                atom1.segids, atom1.resnums, atom1.names, atom2.segids,
-                atom2.resnums, atom2.names, atom3.segids, atom3.resnums,
-                atom3.names, ["??", ] * n_angles, ["??", ] * n_angles,
-                             ["??", ] * n_angles
-            ]).T
+                atom1.segids, atom1.resnums, atom1.names,
+                atom2.segids, atom2.resnums, atom2.names,
+                atom3.segids, atom3.resnums, atom3.names,
+                ["??", ] * n_angles, ["??", ] * n_angles,
+                ["??", ] * n_angles]).T
             table: pd.DataFrame = pd.concat([table, cols, zeros], axis=1)
     else:
         n_dihedrals: int = len(dihedrals)

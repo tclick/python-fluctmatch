@@ -213,9 +213,11 @@ class CORWriter(CRD.CRDWriter):
             # Write all atoms
             current_resid: int = 1
             resids: List[int] = attrs["resids"]
-            for i, pos, resname, name, chainID, resid, tempfactor in zip(
-                range(n_atoms), coor, attrs["resnames"], attrs["names"],
-                attrs["chainIDs"], attrs["resids"], attrs["tempfactors"]):
+            for (i, pos, resname, name, chainID,
+                 resid, tempfactor) in zip(range(n_atoms), coor,
+                                           attrs["resnames"], attrs["names"],
+                                           attrs["chainIDs"], attrs["resids"],
+                                           attrs["tempfactors"]):
                 if not i == 0 and resids[i] != resids[i - 1]:
                     current_resid += 1
 

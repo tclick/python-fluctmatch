@@ -141,8 +141,8 @@ def cli(logfile, top1, top2, coord, table, outfile):
     resnI = []
     resnJ = []
     for segidI, resI, segidJ, resJ in constants[columns].values:
-        resnI.append(resnames.loc[(segidI, resI),])
-        resnJ.append(resnames.loc[(segidJ, resJ),])
+        resnI.append(resnames.loc[(segidI, resI)])
+        resnJ.append(resnames.loc[(segidJ, resJ)])
     constants["resnI"] = pd.concat(resnI).values
     constants["resnJ"] = pd.concat(resnJ).values
 
