@@ -35,6 +35,8 @@ from typing import Union
 import MDAnalysis as mda
 import pytest
 
+from fluctmatch.coordinates import COR
+
 from ..datafiles import COR
 from ..datafiles import PSF
 from ..datafiles import STR

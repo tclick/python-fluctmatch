@@ -93,8 +93,7 @@ class STRWriter(topbase.TopologyWriterBase):
             "title", f"""
             * Created by fluctmatch on {date}"
             * User: {user}""")
-        self._title = [_ for _ in filter(lambda x: x, self._title.split("\n"))]
-        self._title = "\n".join(self._title)
+        self._title = textwrap.dedent(self._title.strip("\n"))
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.
@@ -108,26 +107,24 @@ class STRWriter(topbase.TopologyWriterBase):
         # Create the table
         data: Union[pd.DataFrame, np.ndarray]
         try:
-            dist: np.ndarray = np.zeros_like(universe.atoms.bonds.bonds(),
-                                             dtype=float)
+            n_bonds: int = universe.atoms.bonds.bonds()
+            dist: np.ndarray = np.zeros_like(n_bonds, dtype=float)
             if self._version >= 36:
                 a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: pd.DataFrame = pd.concat((
-                    a1.segids[:, np.newaxis], a1.resids[:, np.newaxis],
-                    a1.names[:, np.newaxis], a2.segids[:, np.newaxis],
-                    a2.resids[:, np.newaxis], a2.names[:, np.newaxis],
-                    dist[:, np.newaxis]), axis="columns")
+                data: pd.DataFrame = pd.DataFrame.from_dict(dict(
+                    segidI=a1.segids, resI=a1.resids, I=a1.names,
+                    segidJ=a2.segids, resJ=a2.resids, J=a2.names, b0=dist))
             else:
                 data: pd.DataFrame = pd.DataFrame(
                     universe._topology.bonds.values)
-                data: pd.DataFrame = pd.concat((data, dist), axis="columns")
+                data: pd.DataFrame = pd.concat((data, pd.Series(dist)),
+                                               axis="columns")
         except AttributeError:
             AttributeError("No bonds were found.")
 
         # Write the data to the file.
         with open(self.filename, "w") as stream_file:
-            for title in self._title:
-                print(title, file=stream_file)
+            print(self._title, file=stream_file)
             np.savetxt(stream_file, data,
                        fmt=textwrap.dedent(self.fmt.strip("\n")))
             print("RETURN", file=stream_file)

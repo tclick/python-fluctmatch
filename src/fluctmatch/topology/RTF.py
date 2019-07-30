@@ -219,8 +219,7 @@ class RTFWriter(topbase.TopologyWriterBase):
         self._atoms: mda.AtomGroup = universe.atoms
         with self.filename.open(mode="w") as self.rtffile:
             # Write the title and header information.
-            for _ in self._title:
-                print(_, file=self.rtffile)
+            print(self._title, file=self.rtffile)
             print(self.fmt["HEADER"].format(36, 1), file=self.rtffile)
             print(file=self.rtffile)
 

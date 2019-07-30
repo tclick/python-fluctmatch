@@ -36,6 +36,8 @@ import MDAnalysis as mda
 import pytest
 from numpy import testing
 
+from fluctmatch.coordinates import COR
+
 from ..datafiles import COR
 from ..datafiles import PSF
 from ..datafiles import RTF
