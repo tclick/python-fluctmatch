@@ -15,11 +15,10 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
-import click
 import MDAnalysis as mda
+import click
 import pandas as pd
 
 
@@ -32,56 +31,47 @@ import pandas as pd
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "table_convert.log"),
-    type=click.Path(exists=False, file_okay=True, resolve_path=True),
+    default=Path.cwd() / "table_convert.log",
+    type=click.Path(resolve_path=True),
     help="Log file",
 )
 @click.option(
     "-s1",
     "top1",
     metavar="FILE",
-    default=path.join(os.getcwd(), "cg.xplor.psf"),
+    default=Path.cwd() / "cg.xplor.psf",
     show_default=True,
-    type=click.Path(exists=True, file_okay=True, resolve_path=True),
+    type=click.Path(exists=True, resolve_path=True),
     help="Topology file",
 )
 @click.option(
     "-s2",
     "top2",
     metavar="FILE",
-    default=path.join(os.getcwd(), "fluctmatch.xplor.psf"),
+    default=Path.cwd() / "fluctmatch.xplor.psf",
     show_default=True,
-    type=click.Path(exists=True, file_okay=True, resolve_path=True),
+    type=click.Path(exists=True, resolve_path=True),
     help="Topology file",
-)
-@click.option(
-    "-f",
-    "coord",
-    metavar="FILE",
-    default=path.join(os.getcwd(), "cg.dcd"),
-    show_default=True,
-    type=click.Path(exists=True, file_okay=True, resolve_path=True),
-    help="Coordinate file",
 )
 @click.option(
     "-t",
     "--table",
     metavar="FILE",
-    default=path.join(os.getcwd(), "kb.txt"),
+    default=Path.cwd() / "kb.txt",
     show_default=True,
-    type=click.Path(exists=True, file_okay=True, resolve_path=True),
+    type=click.Path(exists=True, resolve_path=True),
     help="Coordinate file",
 )
 @click.option(
     "-o",
     "--outfile",
     metavar="OUTFILE",
-    default=path.join(os.getcwd(), "kb_aa.txt"),
+    default=Path.cwd() / "kb_aa.txt",
     show_default=True,
-    type=click.Path(exists=False, file_okay=True, resolve_path=True),
+    type=click.Path(resolve_path=True),
     help="Table file",
 )
-def cli(logfile, top1, top2, coord, table, outfile):
+def cli(logfile, top1, top2, table, outfile):
     # Setup logger
     logging.config.dictConfig(
         {
@@ -106,7 +96,7 @@ def cli(logfile, top1, top2, coord, table, outfile):
                 },
                 "file": {
                     "class": "logging.FileHandler",
-                    "filename": path.join(os.getcwd(), logfile),
+                    "filename": Path.cwd() / logfile,
                     "level": "INFO",
                     "mode": "w",
                     "formatter": "detailed",
@@ -117,16 +107,16 @@ def cli(logfile, top1, top2, coord, table, outfile):
     )
     logger = logging.getLogger(__name__)
 
-    cg = mda.Universe(top1, coord)
-    fluctmatch = mda.Universe(top2, coord)
+    cg = mda.Universe(top1)
+    fluctmatch = mda.Universe(top2)
     convert = dict(zip(fluctmatch.atoms.names, cg.atoms.names))
     resnames = pd.DataFrame.from_records(
         zip(cg.residues.segids, cg.residues.resnums, cg.residues.resnames),
         columns=["segid", "res", "resn"],
     ).set_index(["segid", "res"])
 
-    with open(table, "rb") as tbl:
-        logger.info("Loading {}.".format(table))
+    with open(table) as tbl:
+        logger.info(f"Loading {table}.")
         constants = pd.read_csv(
             tbl, header=0, skipinitialspace=True, delim_whitespace=True
         )
@@ -150,8 +140,8 @@ def cli(logfile, top1, top2, coord, table, outfile):
     cols = ["segidI", "resI", "resnI", "I", "segidJ", "resJ", "resnJ", "J"]
     constants.set_index(cols, inplace=True)
 
-    with open(outfile, "wb") as output:
-        logger.info("Writing updated table to {}.".format(outfile))
+    with open(outfile, "w") as output:
+        logger.info(f"Writing updated table to {outfile}.")
         constants = constants.to_csv(
             header=True, index=True, sep=" ", float_format="%.4f"
         )
