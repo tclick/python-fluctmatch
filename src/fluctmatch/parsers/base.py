@@ -43,14 +43,10 @@ from MDAnalysis.coordinates.base import IOBase
 from MDAnalysis.coordinates.base import _Readermeta
 from MDAnalysis.coordinates.base import _Writermeta
 
-from ..libs.register import register_reader
-from ..libs.register import register_writer
-
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
     def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
-        register_reader(cls)
 
     def read(self):  # pragma: no cover
         """Read the file"""
@@ -60,7 +56,6 @@ class TopologyReaderBase(IOBase, metaclass=_Readermeta):
 class TopologyWriterBase(IOBase, metaclass=_Writermeta):
     def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
-        register_writer(cls)
 
     def __init__(self):
         self.title: str = f"""
