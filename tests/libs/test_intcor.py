@@ -37,10 +37,10 @@ from numpy.testing import assert_allclose
 from tests.datafiles import COR
 from tests.datafiles import PSF
 
-from fluctmatch.intcor.utils import create_empty_table
+from fluctmatch.libs.intcor import create_empty_table
 
 
-class TestICUtils:
+class TestIntcorUtils:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
         return mda.Universe(PSF, COR)
