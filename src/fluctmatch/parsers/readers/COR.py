@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -34,59 +32,35 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
+"""CHARMM coordinate file reader for viewing in VMD."""
 
-import importlib
 import logging
-import pkgutil
+from pathlib import Path
+from typing import ClassVar
+from typing import Dict
+from typing import Mapping
+from typing import Optional
+from typing import Union
 
-import MDAnalysis as mda
+from MDAnalysis.coordinates import CRD
 
-import fluctmatch.parsers.parsers
-import fluctmatch.parsers.readers
-import fluctmatch.parsers.writers
-
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-__version__: str = "4.0.0"
+logger = logging.getLogger(__name__)
 
 
-def iter_namespace(ns_pkg):
-    """Iterate over a namespace package.
+class Reader(CRD.CRDReader):
+    """CRD reader that implements the extended CRD coordinate formats
 
-    Parameters
-    ----------
-    ns_pkg : namespace
-
-    References
-    ----------
-    .. [1] https://packaging.python.org/guides/creating-and-discovering-plugins/
+    .. versionchanged:: 0.11.0
+       Now returns a ValueError instead of FormatError.
+       Frames now 0-based instead of 1-based.
     """
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+    format: ClassVar[str] = "COR"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(
+        time=None, length="Angstrom")
 
-
-# Update the parsers in MDAnalysis
-mda._PARSERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.parsers)
-})
-mda._PARSERS["COR"] = mda._PARSERS["CRD"]
-
-# Update the readers in MDAnalysis
-mda._READERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.readers)
-})
-
-# Update the writers in MDAnalysis
-mda._SINGLEFRAME_WRITERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Writer
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.writers)
-})
+    def __init__(self,
+                 filename: Union[str, Path],
+                 convert_units: bool = None,
+                 n_atoms: int = None,
+                 **kwargs: Mapping):
+        super().__init__(filename, convert_units, n_atoms, **kwargs)

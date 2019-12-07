@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -35,58 +33,48 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
 
-import importlib
-import logging
-import pkgutil
+import os
+import time
+from typing import Mapping
+from typing import Union
 
 import MDAnalysis as mda
+from MDAnalysis.coordinates.base import IOBase
+from MDAnalysis.coordinates.base import _Readermeta
+from MDAnalysis.coordinates.base import _Writermeta
 
-import fluctmatch.parsers.parsers
-import fluctmatch.parsers.readers
-import fluctmatch.parsers.writers
-
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-__version__: str = "4.0.0"
+from ..libs.register import register_reader
+from ..libs.register import register_writer
 
 
-def iter_namespace(ns_pkg):
-    """Iterate over a namespace package.
+class TopologyReaderBase(IOBase, metaclass=_Readermeta):
+    def __init_subclass__(cls, **kwargs: Mapping):
+        super().__init_subclass__(**kwargs)
+        register_reader(cls)
 
-    Parameters
-    ----------
-    ns_pkg : namespace
-
-    References
-    ----------
-    .. [1] https://packaging.python.org/guides/creating-and-discovering-plugins/
-    """
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+    def read(self):  # pragma: no cover
+        """Read the file"""
+        raise NotImplementedError("Override this in each subclass")
 
 
-# Update the parsers in MDAnalysis
-mda._PARSERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.parsers)
-})
-mda._PARSERS["COR"] = mda._PARSERS["CRD"]
+class TopologyWriterBase(IOBase, metaclass=_Writermeta):
+    def __init_subclass__(cls, **kwargs: Mapping):
+        super().__init_subclass__(**kwargs)
+        register_writer(cls)
 
-# Update the readers in MDAnalysis
-mda._READERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.readers)
-})
+    def __init__(self):
+        self.title: str = f"""
+            * Created by fluctmatch on {time.asctime(time.localtime())}
+            * User: {os.environ["USER"]}
+            """.strip("\n")
 
-# Update the writers in MDAnalysis
-mda._SINGLEFRAME_WRITERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Writer
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.writers)
-})
+    def write(self, selection: Union[mda.Universe, mda.AtomGroup]):
+        """Write selection at current trajectory frame to file.
+
+        Parameters
+        ----------
+        selection : AtomGroup
+             group of atoms to be written
+
+        """
+        raise NotImplementedError("Override this in each subclass")
