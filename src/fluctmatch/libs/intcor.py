@@ -128,5 +128,5 @@ def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
         ]).T
         table: pd.DataFrame = pd.concat([table, cols, zeros], axis=1)
 
-    table.columns: pd.Index = _HEADER
+    table.columns = _HEADER
     return table
