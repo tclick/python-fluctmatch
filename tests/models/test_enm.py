@@ -38,8 +38,7 @@ import MDAnalysis as mda
 import pytest
 from numpy import testing
 
-from fluctmatch.models import enm
-
+from fluctmatch.core.models import enm
 from ..datafiles import DCD
 from ..datafiles import PSF
 
@@ -50,29 +49,29 @@ class TestEnm:
         return mda.Universe(PSF, DCD)
 
     @pytest.fixture(scope="class")
-    def system(self) -> enm.Enm:
-        return enm.Enm()
+    def system(self) -> enm.Model:
+        return enm.Model()
 
-    def test_creation(self, u: mda.Universe, system: enm.Enm):
+    def test_creation(self, u: mda.Universe, system: enm.Model):
         cg_universe: mda.Universe = system.transform(u)
         n_atoms: int = u.atoms.n_atoms
 
         testing.assert_equal(cg_universe.atoms.n_atoms, n_atoms,
                              err_msg="The number of beads don't match.")
 
-    def test_names(self, u: mda.Universe, system: enm.Enm):
+    def test_names(self, u: mda.Universe, system: enm.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_string_equal(cg_universe.atoms[0].name, "A001")
         testing.assert_string_equal(cg_universe.residues[0].resname, "A001")
 
-    def test_positions(self, u: mda.Universe, system: enm.Enm):
+    def test_positions(self, u: mda.Universe, system: enm.Model):
         cg_universe = system.transform(u)
 
         testing.assert_allclose(cg_universe.atoms.positions, u.atoms.positions,
                                 err_msg="Coordinates don't match.")
 
-    def test_bonds(self, u: mda.Universe, system: enm.Enm):
+    def test_bonds(self, u: mda.Universe, system: enm.Model):
         cg_universe = system.transform(u)
 
         assert len(cg_universe.bonds) > len(u.bonds)

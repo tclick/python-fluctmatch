@@ -50,9 +50,9 @@ from MDAnalysis.core.topologyattrs import Dihedrals
 from MDAnalysis.core.topologyattrs import Impropers
 from MDAnalysis.lib import distances
 
-from fluctmatch.core.base import ModelBase
-from fluctmatch.core.base import rename_universe
-from fluctmatch.core.selection import *
+from ..base import ModelBase
+from ..base import rename_universe
+from ..selection import *
 
 
 class Model(ModelBase):
@@ -115,17 +115,17 @@ class Model(ModelBase):
             An all-atom universe
         """
         try:
-            self.universe = universe.copy()
+            self.universe: mda.Universe = universe.copy()
         except TypeError:
-            self.universe = mda.Universe(
+            self.universe: mda.Universe = mda.Universe(
                 universe.filename, universe.trajectory.filename
             )
 
         rename_universe(self.universe)
-        n_atoms = self.universe.atoms.n_atoms
+        n_atoms: int = self.universe.atoms.n_atoms
 
         if not self._charges:
-            charges = np.zeros(n_atoms)
+            charges: np.ndarray = np.zeros(n_atoms)
             self.universe.add_TopologyAttr(Charges(charges))
 
         self.atomtypes: np.ndarray = np.arange(n_atoms, dtype=int) + 1

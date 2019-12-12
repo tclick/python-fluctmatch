@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -32,49 +34,51 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
-"""Tests for various protein core."""
+"""Class for 4-bead nucleic acid."""
 
-import MDAnalysis as mda
-import numpy as np
-import pytest
-from numpy import testing
+from typing import List
+from typing import Mapping
+from typing import NoReturn
+from typing import Tuple
 
-from fluctmatch.core.models import generic
-from ..datafiles import DMA
+from MDAnalysis.core.topologyattrs import Bonds
+
+from ..base import ModelBase
+from ..selection import *
 
 
-class TestGeneric:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        return mda.Universe(DMA)
+class Model(ModelBase):
+    """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
 
-    @pytest.fixture(scope="class")
-    def system(self) -> generic.Model:
-        return generic.Model()
+    description: ClassVar[str] = (
+        "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of nucleic acid"
+    )
 
-    def test_creation(self, u: mda.Universe, system: generic.Model):
-        system.create_topology(u)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        n_atoms = u.select_atoms(system._mapping).n_atoms
-        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
-                             err_msg="Number of sites don't match.")
+        self._mapping["P"]: str = "nucleicphosphate and not name H*"
+        self._mapping["C4'"]: str = "name C4'"
+        self._mapping["C2'"]: str = "name C2'"
+        self._mapping["C5"]: str = "nucleiccenter and not name H*"
+        self._selection: Mapping[str, str] = {
+            "P": "nucleicphosphate",
+            "C4'": "sugarC4",
+            "C2'": "sugarC2",
+            "C5": "hnucleicbase",
+        }
 
-    def test_positions(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
+    def _add_bonds(self) -> NoReturn:
+        bonds: List[Tuple[int, int]] = []
+        for segment in self.universe.segments:
+            atom1 = segment.atoms.select_atoms("name P")
+            atom2 = segment.atoms.select_atoms("name C4'")
+            atom3 = segment.atoms.select_atoms("name C2'")
+            atom4 = segment.atoms.select_atoms("name C5")
 
-        positions: np.ndarray = u.select_atoms(system._mapping).positions
+            bonds.extend(list(zip(atom1.ix, atom2.ix)))
+            bonds.extend(list(zip(atom2.ix, atom3.ix)))
+            bonds.extend(list(zip(atom2.ix, atom4.ix)))
+            bonds.extend(list(zip(atom2.ix[:-1], atom1.ix[1:])))
 
-        testing.assert_allclose(cg_universe.atoms.positions, positions,
-                                err_msg="The coordinates do not match.")
-
-    def test_trajectory(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames, u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.")
-
-    def test_bonds(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        assert len(cg_universe.bonds) > 0
+        self.universe.add_TopologyAttr(Bonds(bonds))

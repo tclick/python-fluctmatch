@@ -35,47 +35,33 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
-"""Class definition for beads using C-alpha and C-beta positions"""
-
-from typing import List
-from typing import Mapping
-from typing import NoReturn
-from typing import Tuple
+"""Model a generic system of heavy atoms."""
 
 import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Bonds
 
-from ..base import ModelBase
+from . import generic
 from ..selection import *
 
 
-class Model(ModelBase):
-    """Universe consisting of the C-alpha and sidechains of a protein."""
+class UnitedAtom(generic.Model):
+    """Universe consisting of all heavy atoms in proteins and nucleic acids."""
 
-    description: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
+    description: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._mapping: Mapping[str, str] = dict(
-            CA="calpha", CB="hsidechain and not name H*", ions="bioion"
-        )
-        self._selection: Mapping[str, str] = dict(
-            CA="hbackbone", CB="hsidechain", ions="bioion"
-        )
+    def create_topology(self, universe: mda.Universe):
+        """Determine the topology attributes and initialize the universe.
 
-    def _add_bonds(self) -> NoReturn:
-        bonds: List[Tuple[int, int]] = []
+        Parameters
+        ----------
+        universe : :class:`~MDAnalysis.Universe`
+            An all-atom universe
+        """
+        self._mapping = "(protein or nucleic or bioion) and not name H*"
+        ag: mda.AtomGroup = universe.select_atoms(self._mapping)
+        self.universe: mda.Universe = mda.Merge(ag)
 
-        # Create bonds intraresidue C-alpha and C-beta atoms.
-        residues = self.universe.select_atoms("protein and not resname GLY").residues
-        atom1: mda.AtomGroup = residues.atoms.select_atoms("calpha")
-        atom2: mda.AtomGroup = residues.atoms.select_atoms("cbeta")
-        bonds.extend(list(zip(atom1.ix, atom2.ix)))
-
-        # Create interresidue C-alpha bonds within a segment
-        for segment in self.universe.segments:
-            atoms: mda.AtomGroup = segment.atoms.select_atoms("calpha")
-            bonds.extend(list(zip(atoms.ix[1:], atoms.ix[:-1])))
-
-        self.universe.add_TopologyAttr(Bonds(bonds))
+    def _add_bonds(self):
+        pass

@@ -28,15 +28,16 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-"""Tests for different solvent models."""
+"""Tests for different solvent core."""
 
 import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.models import solvent
-
+from fluctmatch.core.models import dma
+from fluctmatch.core.models import tip3p
+from fluctmatch.core.models import water
 from ..datafiles import DMA
 from ..datafiles import TIP3P
 
@@ -47,10 +48,10 @@ class TestWater:
         return mda.Universe(TIP3P)
 
     @pytest.fixture(scope="class")
-    def system(self) -> solvent.Water:
-        return solvent.Water()
+    def system(self) -> water.Model:
+        return water.Model()
 
-    def test_creation(self, u: mda.Universe, system: solvent.Water):
+    def test_creation(self, u: mda.Universe, system: water.Model):
         system.create_topology(u)
 
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
@@ -59,7 +60,7 @@ class TestWater:
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_positions(self, u: mda.Universe, system: solvent.Water):
+    def test_positions(self, u: mda.Universe, system: water.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -75,15 +76,15 @@ class TestWater:
             err_msg="The coordinates do not match.",
         )
 
-    def test_bonds(self, u: mda.Universe, system: solvent.Water):
+    def test_bonds(self, u: mda.Universe, system: water.Model):
         aa_universe: mda.Universe = mda.Universe(TIP3P)
-        water: solvent.Water = solvent.Water()
-        cg_universe: mda.Universe = water.transform(aa_universe)
+        system: water.Model = water.Model()
+        cg_universe: mda.Universe = system.transform(aa_universe)
 
         testing.assert_equal(len(cg_universe.bonds), 0,
                              err_msg="No bonds should exist.")
 
-    def test_mass(self, u: mda.Universe, system: solvent.Water):
+    def test_mass(self, u: mda.Universe, system: water.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         masses: np.ndarray = np.fromiter([
@@ -96,14 +97,14 @@ class TestWater:
         testing.assert_allclose(cg_universe.atoms.masses, masses,
                                 err_msg="The masses do not match.")
 
-    def test_charges(self, u: mda.Universe, system: solvent.Water):
+    def test_charges(self, u: mda.Universe, system: water.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_allclose(cg_universe.atoms.charges,
                                 np.zeros(cg_universe.atoms.n_atoms),
                                 err_msg="The masses do not match.")
 
-    def test_creation_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+    def test_creation_from_tip4p(self, u: mda.Universe, system: water.Model):
         system.create_topology(u)
 
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
@@ -112,7 +113,7 @@ class TestWater:
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_positions_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+    def test_positions_from_tip4p(self, u: mda.Universe, system: water.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -128,7 +129,7 @@ class TestWater:
             err_msg="The coordinates do not match.",
         )
 
-    def test_bonds_from_tip4p(self, u: mda.Universe, system: solvent.Water):
+    def test_bonds_from_tip4p(self, u: mda.Universe, system: water.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(len(cg_universe.bonds), 0,
@@ -141,10 +142,10 @@ class TestTip3p:
         return mda.Universe(TIP3P)
 
     @pytest.fixture(scope="class")
-    def system(self) -> solvent.Tip3p:
-        return solvent.Tip3p()
+    def system(self) -> tip3p.Model:
+        return tip3p.Model()
 
-    def test_creation(self, u: mda.Universe, system: solvent.Tip3p):
+    def test_creation(self, u: mda.Universe, system: tip3p.Model):
         system.create_topology(u)
 
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
@@ -153,7 +154,7 @@ class TestTip3p:
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_tip3p_positions(self, u: mda.Universe, system: solvent.Tip3p):
+    def test_tip3p_positions(self, u: mda.Universe, system: tip3p.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -169,7 +170,7 @@ class TestTip3p:
             err_msg="The coordinates do not match.",
         )
 
-    def test_tip3p_bonds(self, u: mda.Universe, system: solvent.Tip3p):
+    def test_tip3p_bonds(self, u: mda.Universe, system: tip3p.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(len(cg_universe.bonds),
@@ -193,10 +194,10 @@ class TestDma:
         return mda.Universe(DMA)
 
     @pytest.fixture()
-    def system(self) -> solvent.Dma:
-        return solvent.Dma()
+    def system(self) -> dma.Model:
+        return dma.Model()
 
-    def test_creation(self, u: mda.Universe, system: solvent.Dma):
+    def test_creation(self, u: mda.Universe, system: dma.Model):
         system.create_topology(u)
 
         n_atoms: int = sum(u.select_atoms(select).residues.n_residues
@@ -205,7 +206,7 @@ class TestDma:
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_positions(self, u: mda.Universe, system: solvent.Dma):
+    def test_positions(self, u: mda.Universe, system: dma.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -220,7 +221,7 @@ class TestDma:
             err_msg="The coordinates do not match.",
         )
 
-    def test_bonds(self, u: mda.Universe, system: solvent.Dma):
+    def test_bonds(self, u: mda.Universe, system: dma.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(len(cg_universe.bonds),

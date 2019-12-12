@@ -37,15 +37,16 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using N, carboxyl oxygens, and sidechains."""
 
-from typing import ClassVar
 from typing import List
 from typing import Mapping
 from typing import NoReturn
 from typing import Tuple
 
+import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
+from ..selection import *
 
 
 class Model(ModelBase):
@@ -71,21 +72,21 @@ class Model(ModelBase):
 
         # Create bonds intraresidue atoms
         residues = self.universe.select_atoms("protein").residues
-        atom1 = residues.atoms.select_atoms("name N")
-        atom2 = residues.atoms.select_atoms("name O")
+        atom1: mda.AtomGroup = residues.atoms.select_atoms("name N")
+        atom2: mda.AtomGroup = residues.atoms.select_atoms("name O")
         bonds.extend(list(zip(atom1.ix, atom2.ix)))
 
         residues = residues.atoms.select_atoms("not resname GLY").residues
-        atom1 = residues.atoms.select_atoms("name N")
-        atom2 = residues.atoms.select_atoms("name O")
-        atom3 = residues.atoms.select_atoms("cbeta")
+        atom1: mda.AtomGroup = residues.atoms.select_atoms("name N")
+        atom2: mda.AtomGroup = residues.atoms.select_atoms("name O")
+        atom3: mda.AtomGroup = residues.atoms.select_atoms("cbeta")
         bonds.extend(list(zip(atom1.ix, atom2.ix)))
         bonds.extend(list(zip(atom2.ix, atom3.ix)))
 
         # Create interresidue bonds
         for segment in self.universe.segments:
-            atom1 = segment.atoms.select_atoms("name O")
-            atom2 = segment.atoms.select_atoms("name N")
+            atom1: mda.AtomGroup = segment.atoms.select_atoms("name O")
+            atom2: mda.AtomGroup = segment.atoms.select_atoms("name N")
             bonds.extend(list(zip(atom1.ix[:-1], atom2.ix[1:])))
 
         self.universe.add_TopologyAttr(Bonds(bonds))

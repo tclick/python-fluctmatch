@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -29,52 +31,36 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
-"""Tests for various protein core."""
+"""Tests for a united atom water model."""
 
-import MDAnalysis as mda
-import numpy as np
-import pytest
-from numpy import testing
+from typing import NoReturn
 
-from fluctmatch.core.models import generic
-from ..datafiles import DMA
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
+
+from ..base import ModelBase
+from ..selection import *
 
 
-class TestGeneric:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        return mda.Universe(DMA)
+class Model(ModelBase):
+    """Create a universe consisting of the water oxygen."""
 
-    @pytest.fixture(scope="class")
-    def system(self) -> generic.Model:
-        return generic.Model()
+    description: ClassVar[str] = "c.o.m./c.o.g. of whole water molecule"
 
-    def test_creation(self, u: mda.Universe, system: generic.Model):
-        system.create_topology(u)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        n_atoms = u.select_atoms(system._mapping).n_atoms
-        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
-                             err_msg="Number of sites don't match.")
+        self._guess: bool = False
+        self._mapping["OW"]: str = "water"
+        self._selection.update(self._mapping)
 
-    def test_positions(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
+    def _add_atomtypes(self) -> NoReturn:
+        n_atoms: int = self.universe.atoms.n_atoms
+        atomtypes: Atomtypes = Atomtypes(np.ones(n_atoms))
+        self.universe.add_TopologyAttr(atomtypes)
 
-        positions: np.ndarray = u.select_atoms(system._mapping).positions
-
-        testing.assert_allclose(cg_universe.atoms.positions, positions,
-                                err_msg="The coordinates do not match.")
-
-    def test_trajectory(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames, u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.")
-
-    def test_bonds(self, u: mda.Universe, system: generic.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        assert len(cg_universe.bonds) > 0
+    def _add_bonds(self) -> NoReturn:
+        self.universe.add_TopologyAttr(Bonds([]))

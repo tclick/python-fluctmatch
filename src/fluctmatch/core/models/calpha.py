@@ -37,15 +37,16 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using C-alpha positions"""
 
-from typing import ClassVar
 from typing import List
 from typing import Mapping
 from typing import NoReturn
 from typing import Tuple
 
+import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
+from ..selection import *
 
 
 class Model(ModelBase):
@@ -64,6 +65,6 @@ class Model(ModelBase):
 
         # Create bonds between C-alphas in adjacent residues
         for segment in self.universe.segments:
-            atoms = segment.atoms.select_atoms("calpha")
+            atoms: mda.AtomGroup = segment.atoms.select_atoms("calpha")
             bonds.extend(list(zip(atoms.ix[1:], atoms.ix[:-1])))
         self.universe.add_TopologyAttr(Bonds(bonds))

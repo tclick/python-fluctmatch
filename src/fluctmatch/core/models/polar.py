@@ -37,13 +37,13 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using N, carboxyl oxygens, and polar sidechains."""
 
-from typing import ClassVar
 from typing import Mapping
 
-from fluctmatch.core.models import ncsc
+from . import ncsc
+from ..selection import *
 
 
-class Polar(ncsc.Model):
+class Model(ncsc.Model):
     """Universe consisting of the amine, carboxyl, and polar regions."""
 
     description: ClassVar[str] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"

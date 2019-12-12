@@ -32,7 +32,7 @@
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
-"""Tests for various protein models."""
+"""Tests for various protein core."""
 
 from typing import List
 
@@ -41,8 +41,10 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.models import protein
-
+from fluctmatch.core.models import calpha
+from fluctmatch.core.models import caside
+from fluctmatch.core.models import ncsc
+from fluctmatch.core.models import polar
 from ..datafiles import TPR
 from ..datafiles import XTC
 
@@ -53,17 +55,17 @@ class TestCalpha:
         return mda.Universe(TPR, XTC)
 
     @pytest.fixture(scope="class")
-    def system(self) -> protein.Calpha:
-        return protein.Calpha()
+    def system(self) -> calpha.Model:
+        return calpha.Model()
 
-    def test_creation(self, u: mda.Universe, system: protein.Calpha):
+    def test_creation(self, u: mda.Universe, system: calpha.Model):
         system.create_topology(u)
 
         n_atoms = u.select_atoms("calpha or bioion").n_atoms
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_positions(self, u: mda.Universe, system: protein.Calpha):
+    def test_positions(self, u: mda.Universe, system: calpha.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -76,7 +78,7 @@ class TestCalpha:
         testing.assert_allclose(cg_universe.atoms.positions, positions,
                                 err_msg="The coordinates do not match.")
 
-    def test_trajectory(self, u: mda.Universe, system: protein.Calpha):
+    def test_trajectory(self, u: mda.Universe, system: calpha.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
@@ -90,17 +92,17 @@ class TestCaside:
         return mda.Universe(TPR, XTC)
 
     @pytest.fixture(scope="class")
-    def system(self) -> protein.Caside:
-        return protein.Caside()
+    def system(self) -> caside.Model:
+        return caside.Model()
 
-    def test_creation(self, u: mda.Universe, system: protein.Caside):
+    def test_creation(self, u: mda.Universe, system: caside.Model):
         system.create_topology(u)
 
         n_atoms = u.select_atoms("calpha or cbeta or bioion").n_atoms
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites not equal.")
 
-    def test_positions(self, u: mda.Universe, system: protein.Caside):
+    def test_positions(self, u: mda.Universe, system: caside.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -113,7 +115,7 @@ class TestCaside:
         testing.assert_allclose(cg_universe.atoms.positions, positions,
                                 err_msg="The coordinates do not match.")
 
-    def test_trajectory(self, u: mda.Universe, system: protein.Caside):
+    def test_trajectory(self, u: mda.Universe, system: caside.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
@@ -127,17 +129,17 @@ class TestNcsc:
         return mda.Universe(TPR, XTC)
 
     @pytest.fixture(scope="class")
-    def system(self) -> protein.Ncsc:
-        return protein.Ncsc()
+    def system(self) -> ncsc.Model:
+        return ncsc.Model()
 
-    def test_creation(self, u: mda.Universe, system: protein.Ncsc):
+    def test_creation(self, u: mda.Universe, system: ncsc.Model):
         system.create_topology(u)
         n_atoms = u.select_atoms(
             "(protein and name N O OT1) or cbeta or bioion").n_atoms
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites not equal.")
 
-    def test_positions(self, u: mda.Universe, system: protein.Ncsc):
+    def test_positions(self, u: mda.Universe, system: ncsc.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = np.asarray([
@@ -150,7 +152,7 @@ class TestNcsc:
         testing.assert_allclose(cg_universe.atoms.positions, positions,
                                 err_msg="The coordinates do not match.")
 
-    def test_trajectory(self, u: mda.Universe, system: protein.Ncsc):
+    def test_trajectory(self, u: mda.Universe, system: ncsc.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
@@ -164,17 +166,21 @@ class TestPolar:
         return mda.Universe(TPR, XTC)
 
     @pytest.fixture(scope="class")
-    def system(self) -> protein.Polar:
-        return protein.Polar()
+    def system(self) -> polar.Model:
+        return polar.Model()
 
-    def test_creation(self, u: mda.Universe, system: protein.Polar):
+    @pytest.fixture(scope="class")
+    def other(self) -> ncsc.Model:
+        return ncsc.Model()
+
+    def test_creation(self, u: mda.Universe, system: polar.Model):
         system.create_topology(u)
         n_atoms = u.select_atoms(
             "(protein and name N O OT1) or cbeta or bioion").n_atoms
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites not equal.")
 
-    def test_positions(self, u: mda.Universe, system: protein.Polar):
+    def test_positions(self, u: mda.Universe, system: polar.Model):
         cg_universe: mda.Universe = system.transform(u)
         beads: List[mda.AtomGroup] = []
 
@@ -189,7 +195,7 @@ class TestPolar:
                 if bead:
                     beads.append(bead)
 
-        positions: List[np.ndarray] = np.asarray([
+        positions: np.ndarray = np.asarray([
             bead.center_of_mass()
             for bead in beads
             if bead
@@ -198,18 +204,17 @@ class TestPolar:
         testing.assert_allclose(cg_universe.atoms.positions, positions,
                                 err_msg="The coordinates do not match.")
 
-    def test_trajectory(self, u: mda.Universe, system: protein.Polar):
+    def test_trajectory(self, u: mda.Universe, system: polar.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
 
-    def test_ncsc_polar_positions(self, u: mda.Universe, system: protein.Polar):
+    def test_ncsc_polar_positions(self, u: mda.Universe, system: polar.Model, other: ncsc.Model):
         polar_universe: mda.Universe = system.transform(u)
 
-        ncsc: protein.Ncsc = protein.Ncsc()
-        ncsc_universe: mda.Universe = ncsc.transform(u)
+        ncsc_universe: mda.Universe = other.transform(u)
 
         testing.assert_raises(AssertionError, testing.assert_allclose,
                               polar_universe.atoms.positions,
