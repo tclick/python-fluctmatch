@@ -85,7 +85,7 @@ class TestPSFParser(ParserBase):
     """
     parser: ClassVar[PSFParser.Reader] = PSFParser.Reader
     ref_filename: ClassVar[str] = PSF
-    expected_attrs: ClassVar[List[str]] = ["ids", "names", "types", "masses",
+    expected_attrs: ClassVar[List[str]] = ["ids", "names", "core", "masses",
                                            "charges", "resids", "resnames",
                                            "segids", "bonds", "angles",
                                            "dihedrals", "impropers"]

@@ -62,7 +62,7 @@ class Writer(base.TopologyWriterBase):
     Requires the following attributes to be present:
     - ids
     - names
-    - types
+    - core
     - masses
     - charges
     - resids

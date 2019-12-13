@@ -73,7 +73,7 @@ class Reader(PSFParser.PSFParser):
     Creates a Topology with the following Attributes:
     - ids
     - names
-    - types
+    - core
     - masses
     - charges
     - resids
@@ -189,7 +189,7 @@ class Reader(PSFParser.PSFParser):
         http://www.ks.uiuc.edu/Research/vmd/current/devel.html :
 
         psfplugin: Added more logic to the PSF plugin to determine cases where
-        the CHARMM "EXTended" PSF format cannot accomodate long atom types, and
+        the CHARMM "EXTended" PSF format cannot accomodate long atom core, and
         we add a "NAMD" keyword to the PSF file flags line at the top of the
         file. Upon reading, if we detect the "NAMD" flag there, we know that it
         is possible to parse the file correctly using a simple space-delimited
