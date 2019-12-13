@@ -43,7 +43,7 @@ from . import generic
 from ..selection import *
 
 
-class UnitedAtom(generic.Model):
+class Model(generic.Model):
     """Universe consisting of all heavy atoms in proteins and nucleic acids."""
 
     description: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"

@@ -28,36 +28,45 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
+#  doi:10.1016/bs.mie.2016.05.024.
+"""Class defining biological ions."""
 
-import MDAnalysis as mda
-import pytest
-from numpy import testing
+from typing import List
+from typing import MutableMapping
+from typing import NoReturn
 
-from fluctmatch.models import core
-from fluctmatch.models import protein
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
 
-from ..datafiles import TPR
-from ..datafiles import XTC
+from ..base import ModelBase
+from ..selection import *
 
 
-class TestModeller:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        return mda.Universe(TPR, XTC)
+class Model(ModelBase):
+    """Select ions normally found within biological systems."""
 
-    @pytest.fixture(scope="class")
-    def u2(self) -> mda.Universe:
-        return core.modeller(TPR, XTC)
+    description: ClassVar[str] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
-    @pytest.fixture(scope="class")
-    def system(self) -> protein.Polar:
-        return protein.Polar()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    def test_creation(self, u: mda.Universe, u2: mda.Universe,
-                      system: protein.Polar):
-        u3 = system.transform(u)
+        self._guess: bool = False
+        self._mapping["ions"]: str = "bioion"
+        self._selection.update(self._mapping)
 
-        testing.assert_raises(AssertionError, testing.assert_equal,
-                              (u.atoms.n_atoms,), (u2.atoms.n_atoms,))
-        testing.assert_equal(u2.atoms.names, u3.atoms.names,
-                             err_msg="Universes don't match.")
+    def _add_atomtypes(self) -> NoReturn:
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 20)
+        }
+
+        atomtypes: List[int] = [
+            restypes[atom.name] for atom in self.universe.atoms
+        ]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
+
+    def _add_bonds(self) -> NoReturn:
+        self.universe.add_TopologyAttr(Bonds([]))

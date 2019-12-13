@@ -21,9 +21,9 @@ from numpy import testing
 from tests.datafiles import TPR
 from tests.datafiles import XTC
 
-from fluctmatch.models.base import Merge
-from fluctmatch.models.base import ModelBase
-from fluctmatch.models.base import rename_universe
+from fluctmatch.core.base import Merge
+from fluctmatch.core.base import ModelBase
+from fluctmatch.core.base import rename_universe
 
 
 def test_universe():

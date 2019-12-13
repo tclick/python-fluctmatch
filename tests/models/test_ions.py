@@ -43,8 +43,7 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.models import ions
-
+from fluctmatch.core.models import solventions
 from ..datafiles import IONS
 
 
@@ -54,10 +53,10 @@ class TestIons:
         return mda.Universe(IONS)
 
     @pytest.fixture(scope="class")
-    def system(self) -> ions.SolventIons:
-        return ions.SolventIons()
+    def system(self) -> solventions.Model:
+        return solventions.Model()
 
-    def test_creation(self, u: mda.Universe, system: ions.SolventIons):
+    def test_creation(self, u: mda.Universe, system: solventions.Model):
         system.create_topology(u)
 
         n_atoms: int = sum(u.select_atoms(sel).residues.n_residues
@@ -66,7 +65,7 @@ class TestIons:
         testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
                              err_msg="Number of sites don't match.")
 
-    def test_positions(self, u: mda.Universe, system: ions.SolventIons):
+    def test_positions(self, u: mda.Universe, system: solventions.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: List[np.ndarray] = [
@@ -81,7 +80,7 @@ class TestIons:
             err_msg="The coordinates do not match.",
         )
 
-    def test_bonds(self, u: mda.Universe, system: ions.SolventIons):
+    def test_bonds(self, u: mda.Universe, system: solventions.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(len(cg_universe.bonds), 0,

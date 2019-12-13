@@ -1,4 +1,3 @@
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,47 +29,45 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Class defining solvent ions."""
 
-import logging
+from typing import ClassVar
+from typing import List
+from typing import MutableMapping
+from typing import NoReturn
 
-from .enm import Enm
-from .generic import Generic
-from .generic import UnitedAtom
-from .ions import BioIons
-from .ions import NobleAtoms
-from .ions import SolventIons
-from .nucleic import Nucleic3
-from .nucleic import Nucleic4
-from .nucleic import Nucleic6
-from .protein import Calpha
-from .protein import Caside
-from .protein import Ncsc
-from .protein import Polar
-from .solvent import Dma
-from .solvent import Tip3p
-from .solvent import Water
+import numpy as np
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
 
-__all__ = [
-    "Calpha",
-    "Caside",
-    "Ncsc",
-    "Polar",
-    "Enm",
-    "Generic",
-    "Nucleic3",
-    "Nucleic4",
-    "Nucleic6",
-    "Water",
-    "Tip3p",
-    "Dma",
-    "SolventIons",
-    "BioIons",
-    "NobleAtoms",
-    "UnitedAtom",
-]
+from ..base import ModelBase
 
-logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+
+class Model(ModelBase):
+    """Select ions within the solvent."""
+
+    description: ClassVar[str] = "Common ions within solvent (Li K Na F Cl Br I)"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._guess: bool = False
+        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
+        self._selection.update(self._mapping)
+
+    def _add_atomtypes(self) -> NoReturn:
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 10)
+        }
+
+        atomtypes: List[int] = [
+            restypes[residue.resname] for residue in self.universe.residues
+        ]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
+
+    def _add_bonds(self) -> NoReturn:
+        self.universe.add_TopologyAttr(Bonds([]))

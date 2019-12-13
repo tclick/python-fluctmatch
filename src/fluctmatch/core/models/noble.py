@@ -1,4 +1,3 @@
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -30,58 +29,43 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+#  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
+"""Class defining noble gases."""
 
-import logging
-import traceback
+from typing import ClassVar
 from typing import List
+from typing import MutableMapping
+from typing import NoReturn
 
-import MDAnalysis as mda
+import numpy as np
+from MDAnalysis.core.topologyattrs import Atomtypes
+from MDAnalysis.core.topologyattrs import Bonds
 
-from .. import _MODELS
-from .base import Merge
-from .base import ModelBase
-
-logger: logging.Logger = logging.getLogger(__name__)
+from ..base import ModelBase
 
 
-def modeller(*args, **kwargs) -> mda.Universe:
-    """Create coarse-grain model from universe selection.
+class Model(ModelBase):
+    """Select atoms column VIII of the periodic table."""
 
-    Parameters
-    ----------
-    topology : str
-        A topology file containing atomic information about a system.
-    trajectory : str
-        A trajectory file with coordinates of atoms
-    model : list[str], optional
-        Name(s) of coarse-grain models
+    description: ClassVar[str] = "Noble gases (He Ne Kr Xe)"
 
-    Returns
-    -------
-    A coarse-grain model
-    """
-    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar"])]
-    try:
-        if "ENM" in models:
-            logger.warning("ENM model detected. All other models are " "being ignored.")
-            model: ModelBase = _MODELS["ENM"]()
-            return model.transform(mda.Universe(*args, **kwargs))
-    except Exception as exc:
-        logger.exception(
-            "An error occurred while trying to create the universe.")
-        raise RuntimeError from exc
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    try:
-        universe: List[mda.Universe] = [
-            _MODELS[_]().transform(mda.Universe(*args, **kwargs)) for _ in models
-        ]
-    except KeyError:
-        tb: List[str] = traceback.format_exc()
-        msg = f"One of the models is not implemented. Please try {_MODELS.keys()}"
-        logger.exception(msg)
-        raise KeyError(msg).with_traceback(tb)
-    else:
-        return Merge(*universe)
+        self._guess: bool = False
+        self._mapping["noble"]: str = "name HE NE KR XE"
+        self._selection.update(self._mapping)
+
+    def _add_atomtypes(self) -> NoReturn:
+        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+        restypes: MutableMapping[str, int] = {
+            k: v for k, v in zip(resnames, np.arange(resnames.size) + 40)
+        }
+
+        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
+        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
+
+    def _add_bonds(self) -> NoReturn:
+        self.universe.add_TopologyAttr(Bonds([]))

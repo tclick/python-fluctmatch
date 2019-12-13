@@ -1,4 +1,3 @@
-#
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
 #
@@ -35,18 +34,21 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  doi:10.1016/bs.mie.2016.05.024.
-"""Base class for all models."""
+"""Base class for all core."""
 
 import abc
 import itertools
 import logging
 import string
+import warnings
 from collections import OrderedDict
 from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import MutableMapping
+from typing import NoReturn
 from typing import TypeVar
+from typing import Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -76,7 +78,7 @@ MDUniverse = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
 
 
 class ModelBase(abc.ABC):
-    """Base class for creating coarse-grain models.
+    """Base class for creating coarse-grain core.
 
     Parameters
     ----------
@@ -109,14 +111,7 @@ class ModelBase(abc.ABC):
     universe : :class:`~MDAnalysis.Universe`
         The transformed universe
     """
-    def __init__(
-            self,
-            xplor: bool = True,
-            extended: bool = True,
-            com: bool = True,
-            guess_angles: bool = True,
-            cutoff: float = 10.0,
-    ):
+    def __init__(self, **kwargs):
         """Initialise like a normal MDAnalysis Universe but give the mapping and
         com keywords.
 
@@ -134,21 +129,28 @@ class ModelBase(abc.ABC):
         # Make a blank Universe for myself.
         super().__init__()
 
-        self.universe: mda.Universe = None
-        self._xplor: bool = xplor
-        self._extended: bool = extended
-        self._com: bool = com
-        self._guess: bool = guess_angles
-        self._cutoff: float = cutoff
+        self.universe: Union[mda.Universe, None] = None
+        self._xplor: bool = kwargs.pop("xplor", True)
+        self._extended: bool = kwargs.pop("extended", True)
+        self._com: bool = kwargs.pop("com", True)
+        self._guess: bool = kwargs.pop("guess_angles", True)
+        self._rmin: float = kwargs.pop("rmin", 0.0)
+        if self._rmin < 0.0:
+            warnings.warn("rmin < 0 Å; setting to 0.0 Å")
+            self._rmin = 0.0
+        self._rmax: float = kwargs.pop("rmax", 10.0)
+        if self._rmax < 0.0:
+            warnings.warn("rmax < 0 Å; setting to 10.0 Å")
+            self._rmax = 10.0
 
         # Dictionary for specific bead selection
         self._mapping: MutableMapping[str, StrMapping] = OrderedDict()
 
         # Dictionary for all-atom to bead selection. This is particularly useful
         # for mass and charge topology attributes.
-        self._selection: MutableMapping[str, StrMapping] = {}
+        self._selection: MutableMapping[str, StrMapping] = dict()
 
-    def create_topology(self, universe: mda.Universe):
+    def create_topology(self, universe: mda.Universe) -> NoReturn:
         """Deteremine the topology attributes and initialize the universe.
 
         Parameters
@@ -202,23 +204,14 @@ class ModelBase(abc.ABC):
 
         # Create universe and add attributes
         self.universe: mda.Universe = mda.Universe.empty(
-            len(atomids),
-            n_residues=len(new_resids),
-            n_segments=len(segids),
-            atom_resindex=residx,
-            residue_segindex=segidx,
-            trajectory=True,
+            len(atomids), n_residues=len(new_resids), n_segments=len(segids),
+            atom_resindex=residx, residue_segindex=segidx, trajectory=True,
         )
 
         # Add additonal attributes
         attrs: List[TopologyAttr] = [
-            atomids,
-            atomnames,
-            vdwradii,
-            residueids,
-            residuenums,
-            residuenames,
-            segids,
+            atomids, atomnames, vdwradii,  residueids,
+            residuenums, residuenames, segids,
         ]
         for attr in attrs:
             self.universe.add_TopologyAttr(attr)
@@ -226,7 +219,7 @@ class ModelBase(abc.ABC):
         self._add_masses(universe)
         self._add_charges(universe)
 
-    def generate_bonds(self):
+    def generate_bonds(self) -> NoReturn:
         """Generate connectivity information for the new system."""
         if not hasattr(self, "universe"):
             raise AttributeError("Topologies need to be created before bonds "
@@ -237,7 +230,7 @@ class ModelBase(abc.ABC):
             self._add_dihedrals()
             self._add_impropers()
 
-    def add_trajectory(self, universe: mda.Universe):
+    def add_trajectory(self, universe: mda.Universe) -> NoReturn:
         """Add coordinates to the new system.
 
         Parameters
@@ -336,12 +329,12 @@ class ModelBase(abc.ABC):
         self.add_trajectory(universe)
         return self.universe
 
-    def _add_atomtypes(self):
+    def _add_atomtypes(self) -> NoReturn:
         n_atoms: int = self.universe.atoms.n_atoms
         atomtypes: Atomtypes = Atomtypes(np.arange(n_atoms) + 100)
         self.universe.add_TopologyAttr(atomtypes)
 
-    def _add_masses(self, universe: mda.Universe):
+    def _add_masses(self, universe: mda.Universe) -> NoReturn:
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: Iterator = itertools.product(residues,
                                                       self._selection.values())
@@ -361,7 +354,7 @@ class ModelBase(abc.ABC):
 
         self.universe.add_TopologyAttr(Masses(masses))
 
-    def _add_charges(self, universe: mda.Universe):
+    def _add_charges(self, universe: mda.Universe) -> NoReturn:
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
         select_residues: Iterator = itertools.product(residues,
                                                       self._selection.values())
@@ -382,17 +375,17 @@ class ModelBase(abc.ABC):
         self.universe.add_TopologyAttr(Charges(charges))
 
     @abc.abstractmethod
-    def _add_bonds(self):
+    def _add_bonds(self) -> NoReturn:
         pass
 
-    def _add_angles(self):
+    def _add_angles(self) -> NoReturn:
         try:
             angles: TopologyGroup = guessers.guess_angles(self.universe.bonds)
             self.universe.add_TopologyAttr(Angles(angles))
         except AttributeError:
             pass
 
-    def _add_dihedrals(self):
+    def _add_dihedrals(self) -> NoReturn:
         try:
             dihedrals: TopologyGroup = guessers.guess_dihedrals(
                 self.universe.angles)
@@ -400,7 +393,7 @@ class ModelBase(abc.ABC):
         except AttributeError:
             pass
 
-    def _add_impropers(self):
+    def _add_impropers(self) -> NoReturn:
         try:
             impropers: TopologyGroup = guessers.guess_improper_dihedrals(
                 self.universe.angles)
@@ -485,7 +478,7 @@ def Merge(*args: MDUniverse) -> mda.Universe:
     return universe
 
 
-def rename_universe(universe: mda.Universe):
+def rename_universe(universe: mda.Universe) -> NoReturn:
     """Rename the atoms and residues within a universe.
 
     Standardizes naming of the universe by renaming atoms and residues based
@@ -499,7 +492,7 @@ def rename_universe(universe: mda.Universe):
     universe : :class:`~MDAnalysis.Universe`
         A collection of atoms in a universe.
     """
-    logger.info("Renaming atom names and atom types within the universe.")
+    logger.info("Renaming atom names and atom core within the universe.")
     atomnames: np.ndarray = np.array([
         "{}{:0>3d}".format(lett, i)
         for lett, segment in zip(string.ascii_uppercase, universe.segments)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -37,65 +36,6 @@
 
 import importlib
 import logging
-import pkgutil
-from typing import MutableMapping
-
-import MDAnalysis as mda
-
-import fluctmatch.core.models
-import fluctmatch.parsers.parsers
-import fluctmatch.parsers.readers
-import fluctmatch.parsers.writers
-
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-__version__: str = "4.0.0"
-
-
-def iter_namespace(ns_pkg):
-    """Iterate over a namespace package.
-
-    Parameters
-    ----------
-    ns_pkg : namespace
-
-    References
-    ----------
-    .. [1] https://packaging.python.org/guides/creating-and-discovering-plugins/
-    """
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
-
-
-# Update the parsers in MDAnalysis
-mda._PARSERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.parsers)
-})
-mda._PARSERS["COR"] = mda._PARSERS["CRD"]
-
-# Update the readers in MDAnalysis
-mda._READERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.readers)
-})
-
-# Update the writers in MDAnalysis
-mda._SINGLEFRAME_WRITERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Writer
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.writers)
-})
-
-_MODELS: MutableMapping = {
-    name.split(".")[-1].upper(): importlib.import_module(name).Model
-    for _, name, _
-    in iter_namespace(fluctmatch.core.models)
-}

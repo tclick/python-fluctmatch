@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #  python-fluctmatch -
 #  Copyright (c) 2019 Timothy H. Click, Ph.D.
@@ -35,67 +34,55 @@
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
 
-import importlib
 import logging
-import pkgutil
-from typing import MutableMapping
+import traceback
+from typing import List
 
 import MDAnalysis as mda
 
-import fluctmatch.core.models
-import fluctmatch.parsers.parsers
-import fluctmatch.parsers.readers
-import fluctmatch.parsers.writers
-
+from .base import Merge
+from .base import ModelBase
+from .. import _MODELS
 
 logger: logging.Logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-__version__: str = "4.0.0"
 
 
-def iter_namespace(ns_pkg):
-    """Iterate over a namespace package.
+def modeller(*args, **kwargs) -> mda.Universe:
+    """Create coarse-grain model from universe selection.
 
     Parameters
     ----------
-    ns_pkg : namespace
+    topology : str
+        A topology file containing atomic information about a system.
+    trajectory : str
+        A trajectory file with coordinates of atoms
+    model : list[str], optional
+        Name(s) of coarse-grain core
 
-    References
-    ----------
-    .. [1] https://packaging.python.org/guides/creating-and-discovering-plugins/
+    Returns
+    -------
+    A coarse-grain model
     """
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar"])]
+    try:
+        if "ENM" in models:
+            logger.warning("ENM model detected. All other core are " "being ignored.")
+            model: ModelBase = _MODELS["ENM"]()
+            return model.transform(mda.Universe(*args, **kwargs))
+    except Exception as exc:
+        logger.exception(
+            "An error occurred while trying to create the universe.")
+        raise RuntimeError from exc
 
-
-# Update the parsers in MDAnalysis
-mda._PARSERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.parsers)
-})
-mda._PARSERS["COR"] = mda._PARSERS["CRD"]
-
-# Update the readers in MDAnalysis
-mda._READERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.readers)
-})
-
-# Update the writers in MDAnalysis
-mda._SINGLEFRAME_WRITERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Writer
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.writers)
-})
-
-_MODELS: MutableMapping = {
-    name.split(".")[-1].upper(): importlib.import_module(name).Model
-    for _, name, _
-    in iter_namespace(fluctmatch.core.models)
-}
+    try:
+        universe: List[mda.Universe] = [
+            _MODELS[_]().transform(mda.Universe(*args, **kwargs))
+            for _ in models
+        ]
+    except KeyError:
+        tb: List[str] = traceback.format_exc()
+        msg = f"One of the core is not implemented. Please try {_MODELS.keys()}"
+        logger.exception(msg)
+        raise KeyError(msg).with_traceback(tb)
+    else:
+        return Merge(*universe)

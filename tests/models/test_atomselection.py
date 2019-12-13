@@ -33,6 +33,7 @@
 import MDAnalysis as mda
 import pytest
 from numpy import testing
+from fluctmatch.core.selection import *
 
 from ..datafiles import GRO
 
