@@ -1,6 +1,4 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -14,46 +12,37 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import functools
 import glob
 import multiprocessing as mp
 from os import path
+from pathlib import Path
+from typing import Union
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from future.builtins import open
-from future.utils import native_str
 
-from fluctmatch.fluctmatch import charmmfluctmatch
+from ..fluctmatch.plugins import charmm
 
 
-def calculate_thermo(subdir, **kwargs):
-    topology = path.join(subdir, kwargs.pop("topology",
-                                            "fluctmatch.xplor.psf"))
-    trajectory = path.join(subdir, kwargs.pop("trajectory", "cg.dcd"))
-    window = path.basename(subdir)
+def calculate_thermo(subdir: Union[str, Path], **kwargs) -> Tuple[Path, pd.DataFrame]:
+    topology: Path = Path(subdir) / kwargs.pop("topology", "fluctmatch.xplor.psf")
+    trajectory: Path = Path(subdir) / kwargs.pop("trajectory", "cg.dcd")
+    window: Path = Path(subdir).name
 
-    cfm = charmmfluctmatch.CharmmFluctMatch(
-        topology, trajectory, outdir=subdir, **kwargs)
+    cfm = charmm.FluctMatch(topology, trajectory, outdir=subdir, **kwargs)
     cfm.calculate_thermo(nma_exec=kwargs.get("nma_exec"))
 
-    with open(cfm.filenames["thermo_data"], "rb") as data_file:
-        table = pd.read_csv(
-            data_file,
-            header=0,
-            index_col=["segidI", "resI"],
-            skipinitialspace=True,
-            delim_whitespace=True)
+    with open(cfm.filenames["thermo_data"], "r") as data_file:
+        table = pd.read_csv(data_file, header=0, index_col=["segidI", "resI"],
+                            skipinitialspace=True, delim_whitespace=True)
 
-    return (window, table)
+    return window, table
 
 
-def create_thermo_tables(datadir, outdir, **kwargs):
+def create_thermo_tables(datadir: Union[str, Path], outdir: Union[str, Path],
+                         **kwargs):
     """Create several thermodynamics tables from CHARMM calculations.
 
     Parameters
@@ -113,46 +102,22 @@ def create_thermo_tables(datadir, outdir, **kwargs):
         temperature = kwargs.get("temperature", 300.)
         gibbs = enthalpy - (temperature * entropy)
 
-        filename = path.join(outdir, "entropy.txt")
-        with open(filename, mode="wb") as thermo:
-            table = entropy.to_csv(
-                header=True,
-                index=True,
-                sep=native_str(" "),
-                float_format=native_str("%.4f"),
-                encoding="utf-8",
-            )
-            thermo.write(table.encode())
+        filename = Path(outdir) / "entropy.txt"
+        with open(filename, mode="w") as thermo:
+            entropy.to_csv(thermo,  header=True, index=True,
+                           float_format="%.4f", encoding="utf-8")
 
-        filename = path.join(outdir, "enthalpy.txt")
-        with open(filename, mode="wb") as thermo:
-            table = enthalpy.to_csv(
-                header=True,
-                index=True,
-                sep=native_str(" "),
-                float_format=native_str("%.4f"),
-                encoding="utf-8",
-            )
-            thermo.write(table.encode())
+        filename = Path(outdir) / "enthalpy.txt"
+        with open(filename, mode="w") as thermo:
+            enthalpy.to_csv(thermo, header=True, index=True,
+                            float_format="%.4f", encoding="utf-8")
 
-        filename = path.join(outdir, "heat_capacity.txt")
-        with open(filename, mode="wb") as thermo:
-            table = heat.to_csv(
-                header=True,
-                index=True,
-                sep=native_str(" "),
-                float_format=native_str("%.4f"),
-                encoding="utf-8",
-            )
-            thermo.write(table.encode())
+        filename = Path(outdir) / "heat_capacity.txt"
+        with open(filename, mode="w") as thermo:
+            heat.to_csv(thermo,  header=True, index=True,
+                        float_format="%.4f", encoding="utf-8")
 
-        filename = path.join(outdir, "gibbs.txt")
-        with open(filename, mode="wb") as thermo:
-            table = gibbs.to_csv(
-                header=True,
-                index=True,
-                sep=native_str(" "),
-                float_format=native_str("%.4f"),
-                encoding="utf-8",
-            )
-            thermo.write(table.encode())
+        filename = Path(outdir) / "gibbs.txt"
+        with open(filename, mode="w") as thermo:
+            gibbs.to_csv(thermo,  header=True, index=True,
+                         float_format="%.4f", encoding="utf-8")
