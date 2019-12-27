@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -14,8 +11,7 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-import os
-from os import path
+from pathlib import Path
 from typing import List
 from typing import Tuple
 
@@ -129,7 +125,7 @@ def get_correlation(X: np.ndarray) -> np.ndarray:
     return corr
 
 
-def eigenVect(M):
+def eigenVect(M: np.ndarray):
     """ Return the eigenvectors and eigenvalues, ordered by decreasing values of
     the eigenvalues, for a real symmetric matrix M. The sign of the eigenvectors
     is fixed so that the mean of its components is non-negative.
@@ -192,7 +188,7 @@ def chooseKpos(Lsca: np.ndarray, Lrand: np.ndarray, stddev: float = 2.0) -> int:
     return Lsca[Lsca > value].size
 
 
-def figUnits(v1, v2, v3, units, filename, fig_path=os.getcwd(), marker='o',
+def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
              dotsize=9, notinunits=1):
     ''' 3d scatter plot specified by 'units', which must be a list of elements
     in the class Unit_. See figColors_ for the color code. Admissible color
@@ -268,7 +264,7 @@ def figUnits(v1, v2, v3, units, filename, fig_path=os.getcwd(), marker='o',
     ax.set_ylabel('IC{:d}'.format(2))
     ax.set_zlabel('IC{:d}'.format(3))
     fig.tight_layout()
-    fig.savefig(path.join(fig_path, 'svd_ica', filename), dpi=600)
+    fig.savefig(Path(fig_path) / 'svd_ica' / filename, dpi=600)
 
 
 # From pySCA 6.0

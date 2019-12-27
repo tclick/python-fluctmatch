@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -14,14 +11,10 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np
 import pandas as pd
 from scipy import stats
+from typing import List
 
 from fluctmatch.analysis.paramtable import ParamTable
 
@@ -30,7 +23,7 @@ class Entropy(object):
     """Calculate various entropic contributions from the coupling strengths.
     """
 
-    def __init__(self, filename, ressep=3):
+    def __init__(self, filename, ressep: int=3):
         """
         Parameters
         ----------
@@ -39,10 +32,10 @@ class Entropy(object):
         ressep : int, optional
             Residue separation
         """
-        self._table = ParamTable(ressep=ressep)
+        self._table: pd.DataFrame = ParamTable(ressep=ressep)
         self._table.from_file(filename=filename)
 
-    def relative_entropy(self):
+    def relative_entropy(self) -> pd.DataFrame:
         """Calculate the relative entropy between windows.
 
         Calculate the relative entropy of a coarse-grain system by using the
@@ -65,16 +58,16 @@ class Entropy(object):
         -------
         Timeseries of relative entropy per residue
         """
-        header = ["segidI", "resI"]
+        header: List[str, str] = ["segidI", "resI"]
 
-        entropy = self._table._separate(self._table.table)
-        entropy = entropy.groupby(level=header).apply(lambda x: x / x.sum())
-        entropy = entropy.groupby(level=header).agg(stats.entropy)
+        entropy: pd.DataFrame = self._table._separate(self._table.table)
+        entropy: pd.DataFrame = entropy.groupby(level=header).apply(lambda x: x / x.sum())
+        entropy: pd.DataFrame = entropy.groupby(level=header).agg(stats.entropy)
         entropy.replace(-np.inf, 0., inplace=True)
 
         return entropy
 
-    def coupling_entropy(self):
+    def coupling_entropy(self) -> pd.DataFrame:
         """Calculate the entropic contributions between residues.
 
         Returns
@@ -82,11 +75,11 @@ class Entropy(object):
         Entropy of residue-residue interactions over time
         """
         # Transpose matrix because stats.entropy does row-wise calculation.
-        table = self._table.per_residue
-        entropy = stats.entropy(table.T)
+        table: pd.DataFrame = self._table.per_residue
+        entropy: pd.DataFrame = stats.entropy(table.T)
         return pd.DataFrame(entropy, index=table.index)
 
-    def windiff_entropy(self, bins=100):
+    def windiff_entropy(self, bins: int=100) -> pd.DataFrame:
         """Calculate the relative entropy between windows.
 
         Calculate the relative entropy of a coarse-grain system by using the
@@ -119,37 +112,37 @@ class Entropy(object):
         """
 
         # Calculate value of maximum probability and define penalty value.
-        def normalize(x):
+        def normalize(x: pd.DataFrame) -> pd.DataFrame:
             return x / x.sum()
 
-        header = ["segidI", "resI"]
-        table = self._table._separate(self._table.table)
-        hist, edges = np.histogram(
-            table, range=(1e-4, table.values.max()), bins=bins)
-        hist = (hist / table.size).astype(dtype=np.float)
-        xaxis = (edges[:-1] + edges[1:]) / 2
+        header: List[str, str] = ["segidI", "resI"]
+        table: pd.DataFrame = self._table._separate(self._table.table)
+        hist, edges = np.histogram(table, range=(1e-4, table.values.max()),
+                                   bins=bins)
+        hist: np.ndarray = (hist / table.size).astype(dtype=np.float)
+        xaxis: np.ndarray = (edges[:-1] + edges[1:]) / 2
         try:
-            penalty = xaxis[np.where(hist == hist.max())][0]
+            penalty: np.ndarray = xaxis[np.where(hist == hist.max())][0]
         except IndexError:
-            penalty = xaxis[-1]
+            penalty: np.ndarray = xaxis[-1]
 
         # Calculate average coupling strength per residue.
-        table[table == 0.] = penalty
+        table[table == 0.]: pd.DataFrame = penalty
         #     meanI = tmp.groupby(level=["resI"]).mean()
-        table = table.groupby(level=header).transform(normalize)
+        table: pd.DataFrame = table.groupby(level=header).transform(normalize)
 
         # Utilize the numpy arrays for calculations
-        P = table[table.columns[1:]]
-        Q = table[table.columns[:-1]]
+        P: pd.DataFrame = table[table.columns[1:]]
+        Q: pd.DataFrame = table[table.columns[:-1]]
         P.columns = Q.columns
 
         # Caclulate the relative entropy
-        S_P = P * np.log(P / Q)
-        S_Q = Q * np.log(P / Q)
+        S_P: pd.DataFrame = P * np.log(P / Q)
+        S_Q: pd.DataFrame = Q * np.log(P / Q)
         S_P.fillna(0., inplace=True)
         S_Q.fillna(0., inplace=True)
-        entropy = -(
-            S_P.groupby(level=header).sum() + S_Q.groupby(level=header).sum())
+        entropy: pd.DataFrame = -(S_P.groupby(level=header).sum() +
+                                  S_Q.groupby(level=header).sum())
         entropy[entropy == -0.0] = entropy[entropy == -0.0].abs()
 
         return entropy

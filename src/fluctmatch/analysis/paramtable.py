@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -14,55 +11,49 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import functools
 import glob
 import multiprocessing as mp
 from os import path
+from pathlib import Path
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from future.builtins import dict
-from future.utils import native_str
 from MDAnalysis.coordinates.core import reader
 from MDAnalysis.lib.util import openany
 
-_header = ["I", "J"]
-_index = dict(
+_header: List[str, str] = ["I", "J"]
+_index: Dict[str, List[str, ...]] = dict(
     general=["segidI", "resI", "I", "segidJ", "resJ", "J"],
     complete=["segidI", "resI", "resnI", "I", "segidJ", "resJ", "resnJ", "J"],
 )
 
 
-def _create_table(directory,
-                  intcor="average.ic",
-                  parmfile="fluctmatch.dist.prm",
-                  tbltype="Kb",
-                  verbose=False):
+def _create_table(directory: Union[str, Path],
+                  intcor: str="average.ic",
+                  parmfile: str="fluctmatch.dist.prm",
+                  tbltype: str="Kb",
+                  verbose: bool=False) -> pd.DataFrame:
     if path.isdir(directory):
         if verbose:
-            print("Reading directory {}".format(directory))
+            print(f"Reading directory {directory}")
         with reader(path.join(directory, intcor)) as ic_file:
             if verbose:
-                print("    Processing {}...".format(
-                    path.join(directory, intcor)))
-            ic_table = ic_file.read()
+                print(f"    Processing {Path(directory) / intcor}...")
+            ic_table: pd.DataFrame = ic_file.read()
             ic_table.set_index(_header, inplace=True)
-        with reader(path.join(directory, parmfile)) as prm_file:
+        with reader(Path(directory) / parmfile) as prm_file:
             if verbose:
-                print("    Processing {}...".format(
-                    path.join(directory, parmfile)))
-            prm_table = prm_file.read()["BONDS"].set_index(_header)
-        table = pd.concat([ic_table, prm_table], axis=1)
+                print(f"    Processing {Path(directory) / parmfile}...")
+            prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(_header)
+        table: pd.DataFrame = pd.concat([ic_table, prm_table], axis=1)
         table.reset_index(inplace=True)
-        table = table.set_index(_index["general"])[tbltype].to_frame()
-        table.columns = [
-            path.basename(directory),
-        ]
+        table: pd.DataFrame = table.set_index(_index["general"])[tbltype].to_frame()
+        table.columns = [Path(directory).name, ]
         return table
 
 
@@ -72,10 +63,10 @@ class ParamTable(object):
     """
 
     def __init__(self,
-                 prefix="fluctmatch",
-                 tbltype="Kb",
-                 ressep=3,
-                 datadir=path.curdir):
+                 prefix: str="fluctmatch",
+                 tbltype: str="Kb",
+                 ressep: int=3,
+                 datadir: Union[str, Path]=Path.cwd()):
         """
         Parameters
         ----------
@@ -88,36 +79,36 @@ class ParamTable(object):
         datadir : str, optional
             Directory with data subdirectories
         """
-        self._prefix = prefix
-        self._tbltype = tbltype
-        self._ressep = ressep
-        self._datadir = datadir
-        self.table = []
-        self._filenames = dict(
+        self._prefix: str = prefix
+        self._tbltype: str = tbltype
+        self._ressep: int = ressep
+        self._datadir: Union[str, Path] = datadir
+        self.table: pd.DataFrame = pd.DataFrame()
+        self._filenames: Dict[str, str] = dict(
             intcor="fluct.ic",
             param=".".join((self._prefix, "dist", "prm")),
         )
 
-    def __add__(self, other):
+    def __add__(self, other: "ParamTable") -> "ParamTable":
         return self.table.add(other.table, fill_value=0.0)
 
-    def __sub__(self, other):
+    def __sub__(self, other: "ParamTable") -> "ParamTable":
         return self.table.subtract(other.table, fill_value=0.0)
 
-    def __mul__(self, other):
+    def __mul__(self, other: "ParamTable") -> "ParamTable":
         return self.table.multiply(other.table, fill_value=0.0)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: "ParamTable") -> "ParamTable":
         return self.table.divide(other.table, fill_value=0.0)
 
-    def _separate(self, prm_table):
+    def _separate(self, prm_table: pd.DataFrame) -> pd.DataFrame:
         index = prm_table.index.names
-        table = prm_table.reset_index()
-        tmp = table[table["segidI"] == table["segidJ"]]
-        tmp = tmp[(tmp["resI"] >= tmp["resJ"] + self._ressep)
-                  | (tmp["resJ"] >= tmp["resI"] + self._ressep)]
-        diff = table[table["segidI"] != table["segidJ"]]
-        table = pd.concat([tmp, diff], axis=0)
+        table: pd.DataFrame = prm_table.reset_index()
+        tmp: pd.DataFrame = table[table["segidI"] == table["segidJ"]]
+        tmp: pd.DataFrame = tmp[(tmp["resI"] >= tmp["resJ"] + self._ressep)
+                                | (tmp["resJ"] >= tmp["resI"] + self._ressep)]
+        diff: pd.DataFrame = table[table["segidI"] != table["segidJ"]]
+        table: pd.DataFrame = pd.concat([tmp, diff], axis=0)
         table.set_index(index, inplace=True)
         return table
 
@@ -128,19 +119,19 @@ class ParamTable(object):
         -------
 
         """
-        revcol = ["segidJ", "resJ", "J", "segidI", "resI", "I"]
+        revcol: List[str, ...] = ["segidJ", "resJ", "J", "segidI", "resI", "I"]
 
-        columns = np.concatenate((revcol, self.table.columns[len(revcol):]))
-        temp = self.table.copy(deep=True)
-        same = temp[(temp["segidI"] == temp["segidJ"])
-                    & (temp["resI"] != temp["resJ"])]
+        columns: np.ndarray = np.concatenate((revcol, self.table.columns[len(revcol):]))
+        temp: pd.DataFrame = self.table.copy(deep=True)
+        same: pd.DataFrame = temp[(temp["segidI"] == temp["segidJ"])
+                                  & (temp["resI"] != temp["resJ"])]
 
-        diff = temp[temp["segidI"] != temp["segidJ"]]
-        temp = pd.concat([same, diff], axis=0)
+        diff: pd.DataFrame = temp[temp["segidI"] != temp["segidJ"]]
+        temp: pd.DataFrame = pd.concat([same, diff], axis=0)
         temp.columns = columns
-        self.table = pd.concat([self.table, temp], axis=0)
+        self.table: pd.DataFrame = pd.concat([self.table, temp], axis=0)
 
-    def run(self, verbose=False):
+    def run(self, verbose: bool=False):
         """Create the time series.
 
         Parameters
@@ -148,7 +139,7 @@ class ParamTable(object):
         verbose : bool, optional
             Print each directory as it is being processed
         """
-        directories = glob.iglob(path.join(self._datadir, "*"))
+        directories: Generator = glob.iglob(path.join(self._datadir, "*"))
         create_table = functools.partial(
             _create_table,
             intcor=self._filenames["intcor"],
@@ -156,15 +147,15 @@ class ParamTable(object):
             tbltype=self._tbltype,
             verbose=verbose,
         )
-        pool = mp.Pool()
+        pool: mp.Pool = mp.Pool()
         tables = pool.map_async(create_table, directories)
         pool.close()
         pool.join()
         tables.wait()
 
-        self.table = pd.concat(tables.get(), axis=1)
+        self.table: pd.DataFrame = pd.concat(tables.get(), axis=1)
         self.table.columns = self.table.columns.astype(np.int)
-        self.table = self.table[np.sort(self.table.columns)]
+        self.table: pd.DataFrame = self.table[np.sort(self.table.columns)]
         self.table.reset_index(inplace=True)
 
         self._complete_table()
@@ -172,7 +163,7 @@ class ParamTable(object):
         self.table.fillna(0., inplace=True)
         self.table.sort_index(kind="mergesort", inplace=True)
 
-    def from_file(self, filename):
+    def from_file(self, filename: Union[str, Path]):
         """Load a parameter table from a file.
 
         Parameters
@@ -180,20 +171,16 @@ class ParamTable(object):
         filename : str or stream
             Filename of the parameter table.
         """
-        with open(filename, mode="rb") as table:
-            self.table = pd.read_csv(
-                table.name,
-                skipinitialspace=True,
-                delim_whitespace=True,
-                header=0,
-            )
+        with open(filename, mode="r") as table:
+            self.table = pd.read_csv(table.name, skipinitialspace=True,
+                                     delim_whitespace=True, header=0)
             if "resnI" in self.table.columns:
                 self.table.set_index(_index["complete"], inplace=True)
             else:
                 self.table.set_index(_index["general"], inplace=True)
             self.table.columns = self.table.columns.astype(np.int)
 
-    def write(self, filename):
+    def write(self, filename: Union[str, Path]):
         """Write the parameter table to file.
 
         Parameters
@@ -202,17 +189,11 @@ class ParamTable(object):
             Location to write the parameter table.
         """
         with openany(filename, mode="w") as table:
-            self.table.to_csv(
-                table,
-                sep=native_str(" "),
-                header=True,
-                index=True,
-                float_format="%.6f",
-                encoding="utf-8",
-            )
+            self.table.to_csv(table, header=True, index=True,
+                              float_format="%.6f", encoding="utf-8")
 
     @property
-    def per_residue(self):
+    def per_residue(self) -> pd.DataFrame:
         """Create a single residue time series.
 
         Returns
@@ -220,24 +201,25 @@ class ParamTable(object):
         A table with values per residue.
         """
         # Separate by residue
-        table = self._separate(self.table)
-        table = 0.5 * table.groupby(level=["segidI", "resI"]).sum()
+        table: pd.DataFrame = self._separate(self.table)
+        table: pd.DataFrame = 0.5 * table.groupby(level=["segidI", "resI"]).sum()
         table.sort_index(axis=1, inplace=True)
-        table = table.reindex(
-            index=table.index, columns=np.sort(table.columns))
+        table: pd.DataFrame = table.reindex(index=table.index,
+                                            columns=np.sort(table.columns))
         return table
 
     @property
-    def interactions(self):
+    def interactions(self) -> pd.DataFrame:
         """Create a time series for the residue-residue interactions.
 
         Returns
         -------
         A table with residue-residue values.
         """
-        table = self._separate(self.table)
-        table = table.groupby(level=["segidI", "resI", "segidJ", "resJ"]).sum()
+        table: pd.DataFrame = self._separate(self.table)
+        table: pd.DataFrame = table.groupby(level=["segidI", "resI",
+                                                   "segidJ", "resJ"]).sum()
         table.sort_index(axis=1, inplace=True)
-        table = table.reindex(
-            index=table.index, columns=np.sort(table.columns))
+        table: pd.DataFrame = table.reindex(index=table.index,
+                                            columns=np.sort(table.columns))
         return table
