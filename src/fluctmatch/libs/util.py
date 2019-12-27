@@ -21,7 +21,7 @@ import numpy as np
 from sklearn.preprocessing import scale
 from sklearn.utils import check_array
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def iterable(obj: typing.Any) -> bool:

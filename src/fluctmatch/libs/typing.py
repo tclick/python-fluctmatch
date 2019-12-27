@@ -44,7 +44,7 @@ import MDAnalysis as mda
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Define a type checker
 Array = TypeVar("Array", np.ndarray, np.matrix, pd.DataFrame)
