@@ -15,7 +15,7 @@ import MDAnalysis as mda
 import numpy as np
 from numpy import testing
 
-from fluctmatch.fluctmatch import utils as fmutils
+from fluctmatch.libs import fluctmatch as fmutils
 
 from ..datafiles import TPR
 from ..datafiles import XTC
