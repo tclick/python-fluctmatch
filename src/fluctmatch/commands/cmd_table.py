@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,8 +13,7 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 from MDAnalysis.lib.util import filename
@@ -31,7 +28,7 @@ from fluctmatch.analysis import paramtable
     "--datadir",
     "data_dir",
     metavar="DIR",
-    default=path.join(os.getcwd(), "data"),
+    default=Path.cwd() / "data",
     show_default=True,
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Data directory",
@@ -41,7 +38,7 @@ from fluctmatch.analysis import paramtable
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "table.log"),
+    default=Path.cwd() / "table.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -49,7 +46,7 @@ from fluctmatch.analysis import paramtable
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Directory",
@@ -84,9 +81,10 @@ from fluctmatch.analysis import paramtable
 )
 @click.option("-v", "--verbose", is_flag=True)
 def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
-    pt = paramtable.ParamTable(
-        prefix=prefix, tbltype=tbltype, ressep=ressep, datadir=data_dir
-    )
+    pt = paramtable.ParamTable(prefix=prefix, tbltype=tbltype, ressep=ressep,
+                               datadir=data_dir)
+    outdir = Path(outdir)
+
     # Setup logger
     logging.config.dictConfig(
         {
@@ -120,31 +118,25 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     pt.run(verbose=verbose)
 
     # Write the various tables to different files.
-    fn = path.join(outdir, filename(tbltype.lower(), ext="txt", keep=True))
+    fn = outdir / filename(tbltype.lower(), ext="csv", keep=True)
     pt.write(fn)
 
     if tbltype == "Kb":
-        fn = path.join(outdir, filename("perres", ext="txt"))
-        with open(fn, mode="wb") as output:
+        fn = outdir / filename("perres", ext="csv")
+        with open(fn, mode="w") as output:
             logger.info("Writing per-residue data to {}.".format(fn))
-            table = pt.per_residue.to_csv(
-                header=True, index=True, sep=" ", float_format="%.4f",
-                encoding="utf-8"
-            )
-            output.write(table.encode())
+            pt.per_residue.to_csv(output, header=True, index=True,
+                                  float_format="%.4f", encoding="utf-8")
             logger.info("Table successfully written.")
 
-        fn = path.join(outdir, filename("interactions", ext="txt"))
-        with open(fn, mode="wb") as output:
+        fn = outdir / filename("interactions", ext="csv")
+        with open(fn, mode="w") as output:
             logger.info("Writing interactions to {}.".format(fn))
-            table = pt.interactions.to_csv(
-                header=True, index=True, sep=" ", float_format="%.4f",
-                encoding="utf-8"
-            )
-            output.write(table.encode())
+            pt.interactions.to_csv(output, header=True, index=True,
+                                   float_format="%.4f", encoding="utf-8")
             logger.info("Table successfully written.")

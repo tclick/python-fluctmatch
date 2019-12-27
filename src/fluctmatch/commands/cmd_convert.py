@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,15 +13,13 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 
-from fluctmatch import _DESCRIBE
 from fluctmatch import _MODELS
-from fluctmatch.fluctmatch.utils import write_charmm_files
-from fluctmatch.models.core import modeller
+from fluctmatch.core.utils import modeller
+from fluctmatch.libs.fluctmatch import write_charmm_files
 
 
 @click.command("convert",
@@ -32,7 +28,7 @@ from fluctmatch.models.core import modeller
     "-s",
     "topology",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.tpr"),
+    default=Path.cwd() / "md.tpr",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Gromacs topology file (e.g., tpr gro g96 pdb brk ent)",
@@ -41,7 +37,7 @@ from fluctmatch.models.core import modeller
     "-f",
     "trajectory",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.xtc"),
+    default=Path.cwd() / "md.xtc",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Trajectory file (e.g. xtc trr dcd)",
@@ -51,7 +47,7 @@ from fluctmatch.models.core import modeller
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "convert.log"),
+    default=Path.cwd() / "convert.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -60,7 +56,7 @@ from fluctmatch.models.core import modeller
     "--outdir",
     metavar="DIR",
     show_default=True,
-    default=os.getcwd(),
+    default=Path.cwd(),
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Directory",
 )
@@ -151,28 +147,11 @@ from fluctmatch.models.core import modeller
     "--list",
     "model_list",
     is_flag=True,
-    help="List available models with their descriptions",
+    help="List available core with their descriptions",
 )
-def cli(
-    topology,
-    trajectory,
-    logfile,
-    outdir,
-    prefix,
-    rmin,
-    rmax,
-    model,
-    charmm_version,
-    com,
-    extended,
-    resid,
-    cmap,
-    cheq,
-    nonbonded,
-    mass,
-    write_traj,
-    model_list,
-):
+def cli(topology, trajectory, logfile, outdir, prefix, rmin, rmax, model,
+        charmm_version, com, extended, resid, cmap, cheq, nonbonded, mass,
+        write_traj, model_list):
     logging.config.dictConfig(
         {
             "version": 1,
@@ -205,31 +184,30 @@ def cli(
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     if model_list:
-        for k, v in _DESCRIBE.items():
-            print("{:20}{}".format(k, v))
+        for k, v in _MODELS.items():
+            print(f"{k:20}{v.description}")
         return
 
-    kwargs = dict()
-    universe = modeller(topology, trajectory, com=com, model=model, **kwargs)
-
-    kwargs.update(
-        dict(
-            outdir=outdir,
-            prefix=prefix,
-            rmin=rmin,
-            rmax=rmax,
-            charmm_version=charmm_version,
-            extended=extended,
-            resid=not resid,
-            cmap=not cmap,
-            cheq=not cheq,
-            nonbonded=not nonbonded,
-            write_traj=write_traj,
-        )
+    kwargs = dict(
+        model=model,
+        outdir=outdir,
+        prefix=prefix,
+        com=com,
+        rmin=rmin,
+        rmax=rmax,
+        charmm_version=charmm_version,
+        extended=extended,
+        resid=not resid,
+        cmap=not cmap,
+        cheq=not cheq,
+        nonbonded=not nonbonded,
+        write_traj=write_traj,
     )
+    universe = modeller(topology, trajectory, **kwargs)
+
     if mass:
         logger.info("Setting all bead masses to 1.0.")
         universe.atoms.mass = 1.0

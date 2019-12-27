@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # pysca --- https://github.com/tclick/python-pysca
 # Copyright (c) 2015-2017 The pySCA Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -105,7 +103,7 @@ def cli(logfile, top1, top2, table, outfile):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     cg = mda.Universe(top1)
     fluctmatch = mda.Universe(top2)

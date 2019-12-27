@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -22,7 +20,7 @@ import click
 import MDAnalysis as mda
 
 
-@click.command("wordom", short_help="Convert between coordinate file types.")
+@click.command("wordom", short_help="Convert between coordinate file core.")
 @click.option(
     "-s",
     "topology",
@@ -113,7 +111,7 @@ def cli(topology, trajectory, logfile, outfile, start, stop, step, verbose):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     logger.info("Loading the universe.")
     universe = mda.Universe(topology, trajectory)

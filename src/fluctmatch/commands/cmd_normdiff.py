@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,15 +13,14 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 import numpy as np
 
 from fluctmatch.analysis import paramtable
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @click.command(
@@ -34,7 +31,7 @@ logger = logging.getLogger(__name__)
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "normdiff.log"),
+    default=Path.cwd() / "normdiff.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -42,7 +39,7 @@ logger = logging.getLogger(__name__)
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -100,7 +97,7 @@ def cli(logfile, outdir, ressep, kb, b0):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     resgrp = ["segidI", "resI"]
 
@@ -136,22 +133,16 @@ def cli(logfile, outdir, ressep, kb, b0):
     b0_table = 0.5 * b0_table.pow(2).groupby(level=resgrp).sum()
     b0_table = b0_table.apply(np.sqrt)
 
-    filename = path.join(outdir, "normed_kb.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing normed coupling strengths to {}".format(filename))
-        kb_table = kb_table.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(kb_table.encode())
+    filename = Path(outdir) / "normed_kb.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing normed coupling strengths to {filename}")
+        kb_table.to_csv(output, header=True, index=True, float_format="%.4f",
+                        encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "normed_b0.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing normed distances to {}".format(filename))
-        b0_table = b0_table.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(b0_table.encode())
+    filename = Path(outdir) / "normed_b0.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing normed distances to {filename}")
+        b0_table.to_csv(output, header=True, index=True, float_format="%.4f",
+                        encoding="utf-8")
         logger.info("Table written successfully.")

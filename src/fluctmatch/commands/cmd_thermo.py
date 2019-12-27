@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,8 +13,7 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 from MDAnalysis.lib.util import which
@@ -47,7 +44,7 @@ from fluctmatch.analysis import thermodynamics
     "-d",
     "datadir",
     metavar="DIR",
-    default=path.join(os.getcwd(), "data"),
+    default=Path.cwd() / "data",
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -57,7 +54,7 @@ from fluctmatch.analysis import thermodynamics
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "thermo.log"),
+    default=Path.cwd() / "thermo.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -65,7 +62,7 @@ from fluctmatch.analysis import thermodynamics
     "-o",
     "outdir",
     metavar="DIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Directory",
@@ -100,16 +97,8 @@ from fluctmatch.analysis import thermodynamics
     type=click.IntRange(27, None, clamp=True),
     help="CHARMM version",
 )
-def cli(
-    datadir,
-    logfile,
-    outdir,
-    topology,
-    trajectory,
-    nma_exec,
-    temperature,
-    charmm_version,
-):
+def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
+        charmm_version):
     logging.config.dictConfig(
         {
             "version": 1,
@@ -142,23 +131,19 @@ def cli(
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     # Attempt to create the necessary subdirectory
     try:
-        os.makedirs(outdir)
+        Path.mkdir(outdir, parents=True)
     except OSError:
         pass
 
     logger.info("Calculating thermodynamic properties.")
-    logger.warning(
-        "Depending upon the size of the system, this may take a " "while.")
-    thermodynamics.create_thermo_tables(
-        datadir,
-        outdir,
-        topology=topology,
-        trajectory=trajectory,
-        temperature=temperature,
-        nma_exec=nma_exec,
-        charmm_version=charmm_version,
-    )
+    logger.warning("Depending upon the size of the system, this may take "
+                   "a while.")
+
+    kwargs = dict(topology=topology, trajectory=trajectory,
+                  temperature=temperature, nma_exec=nma_exec,
+                  charmm_version=charmm_version)
+    thermodynamics.create_thermo_tables(datadir, outdir, **kwargs)

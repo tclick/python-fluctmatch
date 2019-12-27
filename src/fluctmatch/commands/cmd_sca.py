@@ -1,6 +1,3 @@
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -177,7 +174,7 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
             "handlers": ["console", "file"]
         },
     })
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     # Load the table, separate by I,I+r, and if requested, create a subset.
     logger.info("Loading parameter table {}".format(

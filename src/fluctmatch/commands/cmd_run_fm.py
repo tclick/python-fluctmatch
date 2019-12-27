@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -13,15 +11,17 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
+import importlib
 import logging
 import logging.config
-import os
-from os import path
+from distutils.spawn import find_executable
+from pathlib import Path
+from typing import MutableMapping
 
 import click
-from MDAnalysis.lib.util import which
 
-from fluctmatch.fluctmatch import charmmfluctmatch
+import fluctmatch.fluctmatch.plugins
+from .. import iter_namespace
 
 
 @click.command("run_fm", short_help="Run fluctuation matching.")
@@ -29,7 +29,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "-s",
     "topology",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.tpr"),
+    default=Path.cwd() / "md.tpr",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Gromacs topology file (e.g., tpr gro g96 pdb brk ent)",
@@ -38,7 +38,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "-f",
     "trajectory",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.xtc"),
+    default=Path.cwd() / "md.xtc",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Trajectory file (e.g. xtc trr dcd)",
@@ -48,7 +48,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "charmmfm.log"),
+    default=Path.cwd() / "charmmfm.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -56,7 +56,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "-o",
     "outdir",
     metavar="DIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Directory",
@@ -67,7 +67,7 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     "nma_exec",
     metavar="FILE",
     envvar="CHARMMEXEC",
-    default=which("charmm"),
+    default=Path(find_executable("charmm")),
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="CHARMM executable file",
@@ -82,14 +82,22 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     help="Temperature of simulation",
 )
 @click.option(
-    "-n",
-    "--ncycles",
-    "n_cycles",
-    metavar="NCYCLES",
+    "--max",
+    "max_cycles",
+    metavar="MAXCYCLES",
     type=click.IntRange(1, None, clamp=True),
-    default=250,
+    default=300,
     show_default=True,
-    help="Number of simulation cycles",
+    help="maximum number of fluctuation matching cycles",
+)
+@click.option(
+    "--min",
+    "min_cycles",
+    metavar="MINCYCLES",
+    type=click.IntRange(1, None, clamp=True),
+    default=200,
+    show_default=True,
+    help="minimum number of fluctuation matching cycles",
 )
 @click.option(
     "--tol",
@@ -98,6 +106,15 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     default=1.0e-4,
     show_default=True,
     help="Tolerance level between simulations",
+)
+@click.option(
+    "--force",
+    "force_tol",
+    metavar="FORCE",
+    type=click.FLOAT,
+    default=2.0e-1,
+    show_default=True,
+    help="force constants <= force tolerance become zero after min_cycles",
 )
 @click.option(
     "-p",
@@ -136,23 +153,14 @@ from fluctmatch.fluctmatch import charmmfluctmatch
     default=True,
     help="Include segment IDs in internal coordinate files",
 )
-@click.option("--restart", is_flag=True, help="Restart simulation")
-def cli(
-    topology,
-    trajectory,
-    logfile,
-    outdir,
-    nma_exec,
-    temperature,
-    n_cycles,
-    tol,
-    prefix,
-    charmm_version,
-    extended,
-    resid,
-    nonbonded,
-    restart,
-):
+@click.option(
+    "--restart",
+    is_flag=True,
+    help="Restart simulation"
+)
+def cli(topology, trajectory, logfile, outdir, nma_exec, temperature,
+        max_cycles, min_cycles, tol, force_tol, prefix, charmm_version,
+        extended, resid, nonbonded, restart):
     logging.config.dictConfig(
         {
             "version": 1,
@@ -185,7 +193,13 @@ def cli(
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
+
+    FLUCTMATCH: MutableMapping = {
+        name.split(".")[-1].upper(): importlib.import_module(name).Model
+        for _, name, _
+        in iter_namespace(fluctmatch.fluctmatch.plugins)
+    }
 
     kwargs = dict(
         prefix=prefix,
@@ -196,10 +210,11 @@ def cli(
         resid=resid,
         nonbonded=nonbonded,
     )
-    cfm = charmmfluctmatch.CharmmFluctMatch(topology, trajectory, **kwargs)
+    cfm = FLUCTMATCH[nma_exec.name.upper()](topology, trajectory, **kwargs)
 
     logger.info("Initializing the parameters.")
     cfm.initialize(nma_exec=nma_exec, restart=restart)
     logger.info("Running fluctuation matching.")
-    cfm.run(nma_exec=nma_exec, tol=tol, n_cycles=n_cycles)
+    cfm.run(nma_exec=nma_exec, tol=tol, max_cycles=max_cycles,
+            min_cycles=min_cycles, force_tol=force_tol)
     logger.info("Fluctuation matching successfully completed.")

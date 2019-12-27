@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # pysca --- https://github.com/tclick/python-pysca
 # Copyright (c) 2015-2017 The pySCA Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,11 +13,10 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
-import click
 import MDAnalysis as mda
+import click
 
 
 @click.command("write_rtf",
@@ -28,7 +25,7 @@ import MDAnalysis as mda
     "-s",
     "topology",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.tpr"),
+    default=Path.cwd() / "md.tpr",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Gromacs topology file (e.g., tpr gro g96 pdb brk ent)",
@@ -37,7 +34,7 @@ import MDAnalysis as mda
     "-f",
     "trajectory",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.pdb"),
+    default=Path.cwd() / "md.pdb",
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Trajectory file (e.g. xtc trr dcd, crd, cor, pdb, tpr)",
@@ -47,7 +44,7 @@ import MDAnalysis as mda
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "write_rtf.log"),
+    default=Path.cwd() / "write_rtf.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -56,7 +53,7 @@ import MDAnalysis as mda
     "--outfile",
     metavar="FILE",
     show_default=True,
-    default=path.join(os.getcwd(), "md.rtf"),
+    default=Path.cwd() / "md.rtf",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="CHARMM topology file",
 )
@@ -102,7 +99,7 @@ def cli(topology, trajectory, logfile, outfile, decl, mass):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     kwargs = dict()
     universe = mda.Universe(topology, trajectory)

@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -13,20 +11,14 @@
 # Simulation. Meth Enzymology. 578 (2016), 327-342,
 # doi:10.1016/bs.mie.2016.05.024.
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
-import click
 import MDAnalysis as mda
+import click
 
-from fluctmatch.fluctmatch import utils as fmutils
+from fluctmatch.libs import fluctmatch as fmutils
 
 
 @click.command("write_charmm", short_help="Write various CHARMM files.")
@@ -49,7 +41,7 @@ from fluctmatch.fluctmatch import utils as fmutils
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "write_charmm.log"),
+    default=Path.cwd() / "write_charmm.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -103,19 +95,8 @@ from fluctmatch.fluctmatch import utils as fmutils
 )
 @click.option("--write", "write_traj", is_flag=True,
               help="Convert the trajectory file")
-def cli(
-    topology,
-    trajectory,
-    logfile,
-    outdir,
-    prefix,
-    charmm_version,
-    extended,
-    cmap,
-    cheq,
-    nonbonded,
-    write_traj,
-):
+def cli(topology, trajectory, logfile, outdir, prefix, charmm_version, extended,
+        cmap, cheq, nonbonded, write_traj):
     logging.config.dictConfig(
         {
             "version": 1,
@@ -148,7 +129,7 @@ def cli(
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     kwargs = dict(
         outdir=outdir,

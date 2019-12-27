@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,8 +13,7 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 
@@ -29,7 +26,7 @@ from fluctmatch.analysis import paramtable
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "diff.log"),
+    default=Path.cwd() / "diff.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -37,7 +34,7 @@ from fluctmatch.analysis import paramtable
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -90,7 +87,7 @@ def cli(logfile, outdir, ressep, table1, table2):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     logger.info("Loading {}".format(table1))
     table_1 = paramtable.ParamTable(ressep=ressep)
@@ -107,33 +104,23 @@ def cli(logfile, outdir, ressep, table1, table2):
     d_interactions = table_1.interactions.subtract(table_2.interactions,
                                                    fill_value=0.0)
 
-    filename = path.join(outdir, "dcoupling.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing table differences to {}".format(filename))
-        d_table = d_table.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_table.encode())
+    filename = Path(outdir) / "dcoupling.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing table differences to {filename}")
+        d_table.to_csv(output, header=True, index=True, float_format="%.4f",
+                       encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "dperres.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing per residue differences to {}".format(filename))
-        d_perres = d_perres.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_perres.encode())
+    filename = Path(outdir) / "dperres.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing per residue differences to {filename}")
+        d_perres.to_csv(output, header=True, index=True, float_format="%.4f",
+                        encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "dinteractions.txt")
-    with open(filename, mode="wb") as output:
-        logger.info(
-            "Writing residue-residue differences to {}".format(filename))
-        d_interactions = d_interactions.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_interactions.encode())
+    filename = Path(outdir) / "dinteractions.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing residue-residue differences to {filename}")
+        d_interactions.to_csv(output, header=True, index=True,
+                              float_format="%.4f", encoding="utf-8")
         logger.info("Table written successfully.")

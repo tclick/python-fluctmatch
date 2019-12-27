@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,8 +13,8 @@
 #
 import logging
 import logging.config
-import os
 from os import path
+from pathlib import Path
 
 import click
 
@@ -30,7 +28,7 @@ from fluctmatch.analysis import entropy
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "entropy.log"),
+    default=Path.cwd() / "entropy.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -38,7 +36,7 @@ from fluctmatch.analysis import entropy
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -91,38 +89,31 @@ def cli(logfile, outdir, ressep, table):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     logger.info("Loading {}".format(table))
     ent_table = entropy.Entropy(table, ressep=ressep)
 
-    filename = path.join(outdir, "coupling.entropy.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing coupling entropy to {}".format(filename))
-        ent = ent_table.coupling_entropy().to_csv(
-            index=True, header=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(ent.encode())
+    filename = Path(outdir) / "coupling.entropy.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing coupling entropy to {filename}")
+        ent_table.coupling_entropy().to_csv(output, index=True, header=True,
+                                            float_format="%.4f",
+                                            encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "relative.entropy.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing relative entropy to {}".format(filename))
-        ent = ent_table.relative_entropy().to_csv(
-            index=True, header=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(ent.encode())
+    filename = Path(outdir) / "relative.entropy.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing relative entropy to {filename}")
+        ent_table.relative_entropy().to_csv(output, index=True, header=True,
+                                            float_format="%.4f",
+                                            encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "windiff.entropy.txt")
-    with open(filename, mode="wb") as output:
-        logger.info(
-            "Writing entropy for window difference to {}".format(filename))
-        ent = ent_table.windiff_entropy().to_csv(
-            index=True, header=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(ent.encode())
+    filename = Path(outdir) / "windiff.entropy.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing entropy for window difference to {filename}")
+        ent_table.windiff_entropy().to_csv(output, index=True, header=True,
+                                           float_format="%.4f",
+                                           encoding="utf-8")
         logger.info("Table written successfully.")

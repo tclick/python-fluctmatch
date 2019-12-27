@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -24,9 +22,9 @@ from os import path
 import click
 from MDAnalysis.lib import util as mdutil
 
-from fluctmatch.fluctmatch import utils
+from ..libs import fluctmatch
 
-_CONVERT = dict(GMX=utils.split_gmx, CHARMM=utils.split_charmm)
+_CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
 
 
 @click.command("splittraj",
@@ -131,20 +129,8 @@ _CONVERT = dict(GMX=utils.split_gmx, CHARMM=utils.split_charmm)
     type=click.IntRange(2, None, clamp=True),
     help="Size of each subtrajectory",
 )
-def cli(
-    program,
-    toppar,
-    topology,
-    trajectory,
-    data,
-    index,
-    outfile,
-    logfile,
-    system,
-    start,
-    stop,
-    window_size,
-):
+def cli(program, toppar, topology, trajectory, data, index, outfile, logfile,
+        system, start, stop, window_size):
     logging.config.dictConfig(
         {
             "version": 1,
@@ -177,46 +163,30 @@ def cli(
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     if program == "GMX" and mdutil.which("gmx") is None:
-        logger.error(
-            "Gromacs 5.0+ is required. "
-            "If installed, please ensure that it is in your path."
-        )
-        raise OSError(
-            "Gromacs 5.0+ is required. "
-            "If installed, please ensure that it is in your path."
-        )
+        msg = ("Gromacs 5.0+ is required. If installed, please ensure that it "
+               "is in your path.")
+        logger.error(msg=msg)
+        raise OSError(msg)
     if program == "CHARMM" and mdutil.which("charmm") is None:
-        logger.error(
-            "CHARMM is required. If installed, "
-            "please ensure that it is in your path."
-        )
-        raise OSError(
-            "CHARMM is required. If installed, "
-            "please ensure that it is in your path."
-        )
+        msg = ("CHARMM is required. If installed, please ensure that it is in "
+               "your path.")
+        logger.error(msg=msg)
+        raise OSError(msg)
 
     half_size = window_size // 2
     beg = start - half_size if start >= window_size else start
-    values = zip(
-        range(beg, stop + 1, half_size),
-        range(beg + window_size - 1, stop + 1, half_size),
-    )
+    values = zip(range(beg, stop + 1, half_size),
+                 range(beg + window_size - 1, stop + 1, half_size))
     values = [((y // half_size) - 1, x, y) for x, y in values]
 
-    func = functools.partial(
-        _CONVERT[program],
-        data_dir=data,
-        topology=topology,
-        toppar=toppar,
-        trajectory=trajectory,
-        index=index,
-        outfile=outfile,
-        logfile=logfile,
-        system=system,
-    )
+    func = functools.partial(_CONVERT[program], data_dir=data,
+                             topology=topology, toppar=toppar,
+                             trajectory=trajectory, index=index,
+                             outfile=outfile, logfile=logfile,
+                             system=system)
 
     # Run multiple instances simultaneously
     pool = mp.Pool()

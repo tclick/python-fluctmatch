@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -15,8 +13,7 @@
 #
 import logging
 import logging.config
-import os
-from os import path
+from pathlib import Path
 
 import click
 
@@ -31,7 +28,7 @@ from fluctmatch.analysis import paramtable
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "framediff.log"),
+    default=Path.cwd() / "framediff.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -39,7 +36,7 @@ from fluctmatch.analysis import paramtable
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -92,7 +89,7 @@ def cli(logfile, outdir, ressep, table):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
     logger.info("Reading {}".format(table))
     table_1 = paramtable.ParamTable(ressep=ressep)
@@ -103,34 +100,23 @@ def cli(logfile, outdir, ressep, table):
     d_perres = table_1.per_residue.diff(axis=1).dropna(axis=1)
     d_interactions = table_1.interactions.diff(axis=1).dropna(axis=1)
 
-    filename = path.join(outdir, "dframe_coupling.txt")
-    with open(filename, mode="wb") as output:
-        logger.info("Writing frame differences to {}".format(filename))
-        d_table = d_table.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_table.encode())
+    filename = Path(outdir) / "dframe_coupling.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing frame differences to {filename}")
+        d_table.to_csv(output, header=True, index=True, float_format="%.4f",
+                       encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "dframe_perres.txt")
-    with open(filename, mode="wb") as output:
-        logger.info(
-            "Writing per residue frame differences to {}".format(filename))
-        d_perres = d_perres.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_perres.encode())
+    filename = Path(outdir) / "dframe_perres.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing per residue frame differences to {filename}")
+        d_perres.to_csv(output, header=True, index=True, float_format="%.4f",
+                        encoding="utf-8")
         logger.info("Table written successfully.")
 
-    filename = path.join(outdir, "dframe_interactions.txt")
-    with open(filename, mode="wb") as output:
-        logger.info(
-            "Writing residue-residue frame differences to {}".format(filename))
-        d_interactions = d_interactions.to_csv(
-            header=True, index=True, sep=" ", float_format="%.4f",
-            encoding="utf-8"
-        )
-        output.write(d_interactions.encode())
+    filename = Path(outdir) / "dframe_interactions.txt"
+    with open(filename, mode="w") as output:
+        logger.info(f"Writing residue-residue frame differences to {filename}")
+        d_interactions.to_csv(output, header=True, index=True, float_format="%.4f",
+                              encoding="utf-8")
         logger.info("Table written successfully.")

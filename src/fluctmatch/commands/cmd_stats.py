@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
 # fluctmatch --- https://github.com/tclick/python-fluctmatch
 # Copyright (c) 2013-2017 The fluctmatch Development Team and contributors
 # (see the file AUTHORS for the full list of names)
@@ -17,6 +15,7 @@ import logging
 import logging.config
 import os
 from os import path
+from pathlib import Path
 
 import click
 
@@ -30,7 +29,7 @@ from fluctmatch.analysis.paramtable import ParamTable
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=path.join(os.getcwd(), "convert.log"),
+    default=Path.cwd() /  "convert.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
@@ -42,7 +41,7 @@ from fluctmatch.analysis.paramtable import ParamTable
     "-o",
     "--outdir",
     metavar="OUTDIR",
-    default=os.getcwd(),
+    default=Path.cwd(),
     show_default=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help="Directory",
@@ -105,90 +104,61 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
             "root": {"level": "INFO", "handlers": ["console", "file"]},
         }
     )
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
 
-    logger.info("Reading {}".format(table))
+    logger.info(f"Reading {table}")
     pt = ParamTable(ressep=ressep)
     pt.from_file(table)
     ps = ParamStats(pt)
+    outdir = Path(outdir)
 
     if stats:
-        filename = path.join(outdir,
-                             "_".join((tbltype.lower(), "table", "stats.txt")))
-        with open(filename, mode="wb") as stat_file:
-            logger.info("Writing table statistics to {}".format(filename))
-            info = ps.table_stats().to_csv(
-                header=True, index=True, float_format="%.4f", sep=" ",
-                encoding="utf-8"
-            )
-            stat_file.write(info.encode())
+        filename = outdir / "_".join((tbltype.lower(), "table", "stats.csv"))
+        with open(filename, mode="w") as stat_file:
+            logger.info(f"Writing table statistics to {filename}")
+            ps.table_stats().to_csv(stat_file,  header=True, index=True,
+                                    float_format="%.4f", encoding="utf-8")
             logger.info("Table successfully written.")
 
         if tbltype == "Kb":
-            filename = path.join(outdir, "interaction_stats.txt")
-            with open(filename, mode="wb") as stat_file:
-                logger.info(
-                    "Writing residue-residue statistics to {}".format(filename))
+            filename = outdir / "interaction_stats.csv"
+            with open(filename, mode="w") as stat_file:
+                logger.info(f"Writing residue-residue statistics to {filename}")
                 ps._table._ressep = 0
-                info = ps.interaction_stats().to_csv(
-                    header=True,
-                    index=True,
-                    sep=" ",
-                    float_format="%.4f",
-                    encoding="utf-8",
-                )
-                stat_file.write(info.encode())
+                ps.interaction_stats().to_csv(stat_file, header=True, index=True,
+                                              float_format="%.4f", encoding="utf-8")
                 logger.info("Table successfully written.")
 
-            filename = path.join(outdir, "residue_stats.txt")
-            with open(filename, mode="wb") as stat_file:
-                logger.info(
-                    "Writing individual residue statistics to {}".format(
-                        filename)
-                )
+            filename = outdir / "residue_stats.csv"
+            with open(filename, mode="w") as stat_file:
+                logger.info(f"Writing individual residue statistics "
+                            f"to {filename}")
                 ps._table._ressep = ressep
-                info = ps.residue_stats().to_csv(
-                    header=True,
-                    index=True,
-                    sep=" ",
-                    float_format="%.4f",
-                    encoding="utf-8",
-                )
-                stat_file.write(info.encode())
+                ps.residue_stats().to_csv(stat_file, header=True, index=True,
+                                          float_format="%.4f", encoding="utf-8")
                 logger.info("Table successfully written.")
 
     if hist:
-        filename = path.join(outdir,
-                             "_".join((tbltype.lower(), "table", "hist.txt")))
-        with open(filename, mode="wb") as stat_file:
-            logger.info("Writing table histogram to {}".format(filename))
-            info = ps.table_hist().to_csv(
-                index=True, sep=" ", float_format="%.4f", encoding="utf-8"
-            )
-            stat_file.write(info.encode())
+        filename = outdir / "_".join((tbltype.lower(), "table", "hist.csv"))
+        with open(filename, mode="w") as stat_file:
+            logger.info(f"Writing table histogram to {filename}")
+            ps.table_hist().to_csv(stat_file, index=True, float_format="%.4f",
+                                   encoding="utf-8")
             logger.info("Table successfully written.")
 
         if tbltype == "Kb":
-            filename = path.join(outdir, "interaction_hist.txt")
-            with open(filename, mode="wb") as stat_file:
-                logger.info(
-                    "Writing residue-residue histogram to {}".format(filename))
+            filename = outdir / "interaction_hist.csv"
+            with open(filename, mode="w") as stat_file:
+                logger.info(f"Writing residue-residue histogram to {filename}")
                 ps._table._ressep = 0
-                info = ps.interaction_hist().to_csv(
-                    index=True, sep=" ", float_format="%.4f", encoding="utf-8"
-                )
-                stat_file.write(info.encode())
+                ps.interaction_hist().to_csv(stat_file, index=True,
+                                             float_format="%.4f", encoding="utf-8")
                 logger.info("Table successfully written.")
 
-            filename = path.join(outdir, "residue_hist.txt")
-            with open(filename, mode="wb") as stat_file:
-                logger.info(
-                    "Writing individual residue histogram to {}".format(
-                        filename)
-                )
+            filename = outdir / "residue_hist.csv"
+            with open(filename, mode="w") as stat_file:
+                logger.info(f"Writing individual residue histogram to {filename}")
                 ps._table._ressep = ressep
-                info = ps.residue_hist().to_csv(
-                    index=True, sep=" ", float_format="%.4f", encoding="utf-8"
-                )
-                stat_file.write(info.encode())
+                ps.residue_hist().to_csv(stat_file, index=True,
+                                         float_format="%.4f", encoding="utf-8")
                 logger.info("Table successfully written.")
