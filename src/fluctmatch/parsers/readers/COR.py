@@ -44,7 +44,7 @@ from typing import Union
 
 from MDAnalysis.coordinates import CRD
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Reader(CRD.CRDReader):

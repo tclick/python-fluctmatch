@@ -114,9 +114,9 @@ class Reader(TopologyReaderBase):
                 )
 
             # Read the internal coordinates
-            TableParser = FORTRANReader(self.fmt[key])
+            table_parser: FORTRANReader = FORTRANReader(self.fmt[key])
             table: pd.DataFrame = pd.DataFrame(
-                [TableParser.read(_) for _ in infile], dtype=np.object
+                [table_parser.read(_) for _ in infile], dtype=np.object
             ).set_index(0)
             table: pd.DataFrame = table[table != ":"].dropna(axis=1)
             table: pd.DataFrame = table.apply(pd.to_numeric, errors="ignore")
@@ -135,6 +135,6 @@ class Reader(TopologyReaderBase):
                 columns: np.ndarray = self.cols[idx]
             else:
                 columns: np.ndarray = self.cols
-            table.columns: np.ndarray = columns
+            table.columns = columns
             logger.info("Table read successfully.")
         return table

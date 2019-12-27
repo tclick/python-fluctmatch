@@ -66,26 +66,45 @@ class Reader(TopologyReaderBase):
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None,
                                                      length="Angstrom")
 
-    _prmindex: ClassVar[Dict[str, np.ndarray]] = dict(
-        ATOMS=np.arange(1, 4),
-        BONDS=np.arange(4),
-        ANGLES=np.arange(7),
-        DIHEDRALS=np.arange(6))
-    _prmcolumns: Dict[str, List[str]] = dict(
+    _prmindex: ClassVar[Dict[str, np.ndarray]] = dict(ATOMS=np.arange(1, 4),
+                                                      BONDS=np.arange(4),
+                                                      ANGLES=np.arange(7),
+                                                      DIHEDRALS=np.arange(6))
+    _prmcolumns: ClassVar[Dict[str, List[str]]] = dict(
         ATOMS=["hdr", "type", "atom", "mass"],
         BONDS=["I", "J", "Kb", "b0"],
         ANGLES=["I", "J", "K", "Ktheta", "theta0", "Kub", "S0"],
         DIHEDRALS=["I", "J", "K", "L", "Kchi", "n", "delta"],
         IMPROPER=["I", "J", "K", "L", "Kchi", "n", "delta"])
-    _dtypes: Dict[str, Dict] = dict(
-        ATOMS=dict(hdr=np.str, type=np.int, atom=np.str, mass=np.float, ),
+    _dtypes: ClassVar[Dict[str, Dict]] = dict(
+        ATOMS=dict(
+            hdr=np.str,
+            type=np.int,
+            atom=np.str,
+            mass=np.float,
+        ),
         BONDS=dict(I=np.str, J=np.str, Kb=np.float, b0=np.float),
-        ANGLES=dict(I=np.str, J=np.str, K=np.str, Ktheta=np.float,
-                    theta0=np.float, Kub=np.object, S0=np.object),
-        DIHEDRALS=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float,
-                       n=np.int, delta=np.float),
-        IMPROPER=dict(I=np.str, J=np.str, K=np.str, L=np.str, Kchi=np.float,
-                      n=np.int, delta=np.float),
+        ANGLES=dict(I=np.str,
+                    J=np.str,
+                    K=np.str,
+                    Ktheta=np.float,
+                    theta0=np.float,
+                    Kub=np.object,
+                    S0=np.object),
+        DIHEDRALS=dict(I=np.str,
+                       J=np.str,
+                       K=np.str,
+                       L=np.str,
+                       Kchi=np.float,
+                       n=np.int,
+                       delta=np.float),
+        IMPROPER=dict(I=np.str,
+                      J=np.str,
+                      K=np.str,
+                      L=np.str,
+                      Kchi=np.float,
+                      n=np.int,
+                      delta=np.float),
     )
     _na_values: ClassVar[Dict[str, Dict]] = dict(
         ATOMS=dict(type=-1, mass=0.0),
@@ -96,7 +115,7 @@ class Reader(TopologyReaderBase):
     )
 
     def __init__(self, filename: Union[str, Path]):
-        self.filename = Path(filename).with_suffix(".prm")
+        self.filename: Path = Path(filename).with_suffix(".prm")
         self._prmbuffers: Dict[str, TextIO] = dict(
             ATOMS=StringIO(),
             BONDS=StringIO(),
@@ -105,7 +124,7 @@ class Reader(TopologyReaderBase):
             IMPROPER=StringIO(),
         )
 
-    def read(self):
+    def read(self) -> Dict:
         """Parse the parameter file.
 
         Returns
@@ -128,10 +147,8 @@ class Reader(TopologyReaderBase):
                 if line in headers:
                     section: str = line
                     continue
-                elif (line.startswith("NONBONDED") or
-                      line.startswith("CMAP") or
-                      line.startswith("END") or
-                      line.startswith("end")):
+                elif (line.startswith("NONBONDED") or line.startswith("CMAP")
+                      or line.startswith("END") or line.startswith("end")):
                     break
 
                 print(line, file=self._prmbuffers[section])
@@ -139,10 +156,16 @@ class Reader(TopologyReaderBase):
         for key, value in parameters.items():
             self._prmbuffers[key].seek(0)
             parameters[key]: pd.DataFrame = pd.read_csv(
-                self._prmbuffers[key], header=None, names=self._prmcolumns[key],
-                skipinitialspace=True, delim_whitespace=True, comment="!",
+                self._prmbuffers[key],
+                header=None,
+                names=self._prmcolumns[key],
+                skipinitialspace=True,
+                delim_whitespace=True,
+                comment="!",
                 dtype=self._dtypes[key])
-            parameters[key].fillna(self._na_values[key], inplace=True)
+            parameters[key]: pd.DataFrame = parameters[key].fillna(
+                self._na_values[key])
         if not parameters["ATOMS"].empty:
-            parameters["ATOMS"].drop("hdr", axis=1, inplace=True)
+            parameters["ATOMS"]: pd.DataFrame = parameters["ATOMS"].drop(
+                "hdr", axis=1)
         return parameters
