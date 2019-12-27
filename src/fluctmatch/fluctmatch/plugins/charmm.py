@@ -34,10 +34,9 @@ import textwrap
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List
-from typing import Dict
 from typing import ClassVar
-
+from typing import Dict
+from typing import List
 from typing import NoReturn
 from typing import TextIO
 
