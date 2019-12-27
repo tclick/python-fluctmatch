@@ -63,11 +63,11 @@ def modeller(*args, **kwargs) -> mda.Universe:
     -------
     A coarse-grain model
     """
-    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar"])]
+    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar",])]
     try:
         if "ENM" in models:
             logger.warning("ENM model detected. All other core are " "being ignored.")
-            model: ModelBase = _MODELS["ENM"]()
+            model: ModelBase = _MODELS["ENM"](**kwargs)
             return model.transform(mda.Universe(*args, **kwargs))
     except Exception as exc:
         logger.exception(
@@ -76,7 +76,7 @@ def modeller(*args, **kwargs) -> mda.Universe:
 
     try:
         universe: List[mda.Universe] = [
-            _MODELS[_]().transform(mda.Universe(*args, **kwargs))
+            _MODELS[_]().transform(mda.Universe(*args))
             for _ in models
         ]
     except KeyError:
