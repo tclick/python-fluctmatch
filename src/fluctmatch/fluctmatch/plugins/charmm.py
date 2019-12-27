@@ -19,7 +19,7 @@ For CHARMM to work with the fluctuation matching code, it must be
 recompiled with some modifications to the source code. `ATBMX`, `MAXATC`,
 `MAXCB` (located in dimens.fcm [c35] or dimens_ltm.src [c39]) must
 be increased. `ATBMX` determines the number of bonds allowed per
-atom, `MAXATC` describes the maximum number of atom types, and `MAXCB`
+atom, `MAXATC` describes the maximum number of atom core, and `MAXCB`
 determines the maximum number of bond parameters in the CHARMM parameter
 file. Additionally, `CHSIZE` may need to be increased if using an earlier
 version (< c36).
@@ -33,6 +33,13 @@ import subprocess
 import textwrap
 import time
 from contextlib import ExitStack
+from pathlib import Path
+from typing import List
+from typing import Dict
+from typing import ClassVar
+
+from typing import NoReturn
+from typing import TextIO
 
 import MDAnalysis as mda
 import numpy as np
@@ -40,22 +47,22 @@ import pandas as pd
 from MDAnalysis.coordinates.core import reader
 from scipy import constants
 
-from fluctmatch.fluctmatch import base as fmbase
-from fluctmatch.fluctmatch.data import charmm_init
-from fluctmatch.fluctmatch.data import charmm_nma
-from fluctmatch.fluctmatch.data import charmm_thermo
-from fluctmatch.intcor import utils as icutils
-from fluctmatch.parameter import utils as prmutils
+from ..base import FluctMatchBase
+from ..data import charmm_init
+from ..data import charmm_nma
+from ..data import charmm_thermo
+from ...libs import intcor, parameters
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-class CharmmFluctMatch(fmbase.FluctMatch):
+class FluctMatch(FluctMatchBase):
     """Fluctuation matching using CHARMM."""
-    bond_def = ["I", "J"]
-    error_hdr = ["step", "Kb_rms", "fluct_rms", "b0_rms"]
+    bond_def: ClassVar[List[str,...]] = ["I", "J"]
+    error_hdr: ClassVar[List[str,...]] = ["step", "Kb_rms", "fluct_rms", "b0_rms"]
+    description: ClassVar[str] = "Fluctuation matching using CHARMM"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: List, **kwargs: Dict):
         """Initialization of fluctuation matching using the CHARMM program.
 
         Parameters
@@ -124,8 +131,8 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             Include the nonbonded section in the parameter file.
         """
         super().__init__(*args, **kwargs)
-        self.dynamic_params = dict()
-        self.filenames = dict(
+        self.dynamic_params: Dict[str, pd.DataFrame] = dict()
+        self.filenames: Dict[str, Path] = dict(
             init_input=self.outdir / "fluctinit.inp",
             init_log=self.outdir / "fluctinit.log",
             init_avg_ic=self.outdir / "init.average.ic",
@@ -147,36 +154,37 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             thermo_input=self.outdir / "thermo.inp",
             thermo_log=self.outdir / "thermo.log",
             thermo_data=self.outdir / "thermo.dat",
-            traj_file=(
-                self.args[1] if len(self.args) > 1 else self.outdir / "cg.dcd")
-        )
+            traj_file=(self.args[1] if len(self.args) > 1 else self.outdir /
+                       "cg.dcd"))
 
         # Location of CHARMM executable
-        self.charmmexec = os.environ.get("CHARMMEXEC", shutil.which("charmm"))
+        self.charmmexec: str = os.environ.get("CHARMMEXEC",
+                                              shutil.which("charmm"))
 
         # Boltzmann constant
-        self.BOLTZ = self.temperature * (constants.k * constants.N_A
-                                         / (constants.calorie * constants.kilo))
+        self.BOLTZ: float = self.temperature * (
+            constants.k * constants.N_A / (constants.calorie * constants.kilo))
 
         # Bond factor mol^2-Ang./kcal^2
-        self.KFACTOR = 0.02
+        self.KFACTOR: float = 0.02
 
         # Self consistent error information.
-        self.error = pd.DataFrame(
+        self.error: pd.DataFrame = pd.DataFrame(
             np.zeros((1, len(self.error_hdr)), dtype=np.int),
             columns=self.error_hdr,
         )
 
-    def _create_ic_table(self, universe, data):
-        data.set_index(self.bond_def, inplace=True)
-        table = icutils.create_empty_table(universe.atoms)
-        hdr = table.columns
-        table.set_index(self.bond_def, inplace=True)
-        table.drop(["r_IJ", ], axis=1, inplace=True)
-        table = pd.concat([table, data["r_IJ"]], axis=1)
+    def _create_ic_table(self, universe: mda.Universe,
+                         data: pd.DataFrame) -> pd.DataFrame:
+        data: pd.DataFrame = data.set_index(self.bond_def)
+        table = intcor.create_empty_table(universe.atoms)
+        hdr: pd.DataFrame = table.columns
+        table: pd.DataFrame = table.set_index(self.bond_def).drop(["r_IJ",], axis=1)
+        table: pd.DataFrame = pd.concat([table, data["r_IJ"]], axis=1)
         return table.reset_index()[hdr]
 
-    def initialize(self, nma_exec=None, restart=False):
+    def initialize(self, nma_exec: str = None,
+                   restart: bool = False) -> NoReturn:
         """Create an elastic network model from a basic coarse-grain model.
 
         Parameters
@@ -190,30 +198,30 @@ class CharmmFluctMatch(fmbase.FluctMatch):
         if not restart:
             # Write CHARMM input file.
             if not self.filenames["init_input"].exists():
-                version = self.kwargs.get("charmm_version", 41)
-                dimension = (
-                    "dimension chsize 1000000" if version >= 36 else "")
+                version: int = self.kwargs.get("charmm_version", 41)
+                dimension: str = ("dimension chsize 1000000"
+                                  if version >= 36 else "")
                 with open(self.filenames["init_input"], "w") as charmm_file:
                     logger.info("Writing CHARMM input file.")
-                    charmm_inp = charmm_init.init.format(
+                    charmm_inp: str = charmm_init.init.format(
                         flex="flex" if version else "",
                         version=version,
                         dimension=dimension,
                         **self.filenames)
-                    charmm_inp = textwrap.dedent(charmm_inp.strip("\n"))
+                    charmm_inp: str = textwrap.dedent(charmm_inp.strip("\n"))
                     charmm_file.write(charmm_inp)
 
-            charmm_exec = self.charmmexec if nma_exec is None else nma_exec
+            charmm_exec: str = self.charmmexec if nma_exec is None else nma_exec
             with ExitStack() as stack:
-                log_file = stack.enter_context(
+                log_file: TextIO = stack.enter_context(
                     open(self.filenames["init_log"], "w"))
-                std_ic = stack.enter_context(
+                std_ic: TextIO = stack.enter_context(
                     reader(self.filenames["init_fluct_ic"]))
-                avg_ic = stack.enter_context(
+                avg_ic: TextIO = stack.enter_context(
                     reader(self.filenames["init_avg_ic"]))
-                fixed = stack.enter_context(
+                fixed: TextIO = stack.enter_context(
                     mda.Writer(self.filenames["fixed_prm"], **self.kwargs))
-                dynamic = stack.enter_context(
+                dynamic: TextIO = stack.enter_context(
                     mda.Writer(self.filenames["dynamic_prm"], **self.kwargs))
 
                 subprocess.check_call(
@@ -223,24 +231,24 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                 )
 
                 # Write the parameter files.
-                std_bonds = std_ic.read().set_index(self.bond_def)
-                avg_bonds = avg_ic.read().set_index(self.bond_def)
-                target = pd.concat([std_bonds["r_IJ"], avg_bonds["r_IJ"]],
-                                   axis=1)
-                target.reset_index(inplace=True)
+                std_bonds: pd.DataFrame = std_ic.read().set_index(self.bond_def)
+                avg_bonds: pd.DataFrame = avg_ic.read().set_index(self.bond_def)
+                target: pd.DataFrame = pd.concat([std_bonds["r_IJ"],
+                                                  avg_bonds["r_IJ"]], axis=1).reset_index()
 
                 logger.info("Calculating the initial CHARMM parameters...")
-                universe = mda.Universe(
-                    self.filenames["xplor_psf_file"], self.filenames["crd_file"]
-                )
-                self.target = prmutils.create_empty_parameters(universe,
-                                                               **self.kwargs)
+                universe: mda.Universe = mda.Universe(
+                    self.filenames["xplor_psf_file"],
+                    self.filenames["crd_file"])
+                self.target: Dict = parameters.create_empty_parameters(
+                    universe, **self.kwargs)
                 target.columns = self.target["BONDS"].columns
-                self.target["BONDS"] = target.copy(deep=True)
-                self.parameters = copy.deepcopy(self.target)
-                self.parameters["BONDS"]["Kb"] = (
+                self.target["BONDS"]: pd.DataFrame = target.copy(deep=True)
+                self.parameters: pd.DataFrame = copy.deepcopy(self.target)
+                self.parameters["BONDS"]["Kb"]: pd.Series = (
                     self.BOLTZ / np.square(self.parameters["BONDS"]["Kb"]))
-                self.dynamic_params = copy.deepcopy(self.parameters)
+                self.dynamic_params: pd.DataFrame = copy.deepcopy(
+                    self.parameters)
                 logger.info(f"Writing {self.filenames['fixed_prm']}...")
                 fixed.write(self.parameters)
                 logger.info(f"Writing {self.filenames['dynamic_prm']}...")
@@ -252,35 +260,40 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                 # Read the parameter files.
                 logger.info("Loading parameter and internal coordinate files.")
                 with ExitStack() as stack:
-                    fixed = stack.enter_context(
+                    fixed: TextIO = stack.enter_context(
                         reader(self.filenames["fixed_prm"]))
-                    dynamic = stack.enter_context(
+                    dynamic: TextIO = stack.enter_context(
                         reader(self.filenames["dynamic_prm"]))
-                    init_avg = stack.enter_context(
+                    init_avg: TextIO = stack.enter_context(
                         reader(self.filenames["init_avg_ic"]))
-                    init_fluct = stack.enter_context(
+                    init_fluct: TextIO = stack.enter_context(
                         reader(self.filenames["init_fluct_ic"]))
 
                     self.parameters.update(fixed.read())
                     self.dynamic_params.update(dynamic.read())
 
                     # Read the initial internal coordinate files.
-                    avg_table = init_avg.read().set_index(
+                    avg_table: pd.DataFrame = init_avg.read().set_index(
                         self.bond_def)["r_IJ"]
-                    fluct_table = (init_fluct.read().set_index(
+                    fluct_table: pd.DataFrame = (init_fluct.read().set_index(
                         self.bond_def)["r_IJ"])
-                    table = pd.concat([fluct_table, avg_table], axis=1)
+                    table: pd.DataFrame = pd.concat([fluct_table, avg_table],
+                                                    axis=1)
 
                     # Set the target fluctuation values.
                     logger.info("Files loaded successfully...")
-                    self.target = copy.deepcopy(self.parameters)
-                    self.target["BONDS"].set_index(self.bond_def, inplace=True)
+                    self.target: pd.DataFrame = copy.deepcopy(self.parameters)
+                    self.target["BONDS"]: pd.DataFrame = self.target[
+                        "BONDS"].set_index(self.bond_def)
                     table.columns = self.target["BONDS"].columns
-                    self.target["BONDS"] = table.copy(deep=True).reset_index()
+                    self.target["BONDS"]: pd.Series = table.copy(
+                        deep=True).reset_index()
             except (FileNotFoundError, IOError):
                 raise IOError("Some files are missing. Unable to restart.")
 
-    def run(self, nma_exec=None, tol=1.e-4, n_cycles=250):
+    def run(self, nma_exec: str = None, tol: float = 1.e-4,
+            min_cycles: int = 200, max_cycles: int = 200,
+            force_tol: float = 0.02) -> NoReturn:
         """Perform a self-consistent fluctuation matching.
 
         Parameters
@@ -289,15 +302,20 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             executable file for normal mode analysis
         tol : float, optional
             error tolerance
-        n_cycles : int, optional
-            number of fluctuation matching cycles
+        min_cycles : int, optional
+            minimum number of fluctuation matching cycles
+        max_cycles : int, optional
+            maximum number of fluctuation matching cycles
+        force_tol : float, optional
+            force constants <= force tolerance become zero after min_cycles
         """
         # Find CHARMM executable
-        charmm_exec = self.charmmexec if nma_exec is None else nma_exec
+        charmm_exec: str = self.charmmexec if nma_exec is None else nma_exec
         if charmm_exec is None:
-            error_msg = ("Please set CHARMMEXEC with the location of your "
-                         "CHARMM executable file or add the charmm path to "
-                         "your PATH environment.")
+            error_msg: str = (
+                "Please set CHARMMEXEC with the location of your "
+                "CHARMM executable file or add the charmm path to "
+                "your PATH environment.")
             logger.exception(error_msg)
             OSError(error_msg)
 
@@ -310,28 +328,30 @@ class CharmmFluctMatch(fmbase.FluctMatch):
 
         # Write CHARMM input file.
         if not self.filenames["charmm_input"].exists():
-            version = self.kwargs.get("charmm_version", 41)
-            dimension = ("dimension chsize 1000000" if version >= 36 else "")
+            version: int = self.kwargs.get("charmm_version", 41)
+            dimension: str = ("dimension chsize 1000000"
+                              if version >= 36 else "")
             with open(self.filenames["charmm_input"], "w") as charmm_file:
                 logger.info("Writing CHARMM input file.")
-                charmm_inp = charmm_nma.nma.format(
+                charmm_inp: str = charmm_nma.nma.format(
                     temperature=self.temperature,
                     flex="flex" if version else "",
                     version=version,
                     dimension=dimension,
                     **self.filenames)
-                charmm_inp = textwrap.dedent(charmm_inp.strip("\n"))
+                charmm_inp: str = textwrap.dedent(charmm_inp.strip("\n"))
                 charmm_file.write(charmm_inp)
 
         # Set the indices for the parameter tables.
-        self.target["BONDS"].set_index(self.bond_def, inplace=True)
-        bond_values = self.target["BONDS"].columns
+        self.target["BONDS"]: pd.DataFrame = self.target["BONDS"].set_index(
+            self.bond_def)
+        bond_values: pd.DataFrame = self.target["BONDS"].columns
 
         # Check for restart.
         try:
             if self.filenames["error_data"].stat().st_size > 0:
                 with open(self.filenames["error_data"]) as data:
-                    error_info = pd.read_csv(
+                    error_info: pd.DataFrame = pd.read_csv(
                         data,
                         header=0,
                         skipinitialspace=True,
@@ -342,92 +362,91 @@ class CharmmFluctMatch(fmbase.FluctMatch):
                 raise FileNotFoundError
         except (FileNotFoundError, OSError):
             with open(self.filenames["error_data"], "w") as data:
-                np.savetxt(data, [self.error_hdr, ], fmt="%10s", delimiter="")
+                np.savetxt(data, [self.error_hdr,], fmt="%10s", delimiter="")
         self.error["step"] += 1
 
         # Run simulation
         logger.info("Starting fluctuation matching")
-        st = time.time()
+        st: float = time.time()
 
-        for i in range(n_cycles):
-            self.error["step"] = i + 1
+        for i in range(max_cycles):
+            self.error["step"]: int = i + 1
             with ExitStack() as stack:
-                log_file = stack.enter_context(
+                log_file: TextIO = stack.enter_context(
                     open(self.filenames["charmm_log"], "w"))
                 subprocess.check_call(
                     [charmm_exec, "-i", self.filenames["charmm_input"]],
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
                 )
-                self.dynamic_params["BONDS"].set_index(self.bond_def,
-                                                       inplace=True)
-                self.parameters["BONDS"].set_index(self.bond_def, inplace=True)
+                self.dynamic_params[
+                    "BONDS"]: pd.DataFrame = self.dynamic_params[
+                        "BONDS"].set_index(self.bond_def)
+                self.parameters["BONDS"]: pd.DataFrame = self.parameters[
+                    "BONDS"].set_index(self.bond_def)
 
                 # Read the average bond distance.
-                avg_intcor = stack.enter_context(
+                avg_intcor: TextIO = stack.enter_context(
                     reader(self.filenames["avg_ic"]))
-                fluct_intcor = stack.enter_context(
+                fluct_intcor: TextIO = stack.enter_context(
                     reader(self.filenames["avg_ic"]))
-                avg_ic = avg_intcor.read().set_index(self.bond_def)["r_IJ"]
-                fluct_ic = fluct_intcor.read().set_index(self.bond_def)["r_IJ"]
+                avg_ic: TextIO = avg_intcor.read().set_index(
+                    self.bond_def)["r_IJ"]
+                fluct_ic: TextIO = fluct_intcor.read().set_index(
+                    self.bond_def)["r_IJ"]
 
-            vib_ic = pd.concat([fluct_ic, avg_ic], axis=1)
+            vib_ic: pd.DataFrame = pd.concat([fluct_ic, avg_ic], axis=1)
             vib_ic.columns = bond_values
 
             # Calculate the r.m.s.d. between fluctuation and distances
             # compared with the target values.
-            vib_error = self.target["BONDS"] - vib_ic
-            vib_error = vib_error.apply(np.square).mean(axis=0)
-            vib_error = np.sqrt(vib_error)
+            vib_error: pd.Series = self.target["BONDS"] - vib_ic
+            vib_error: pd.Series = vib_error.pow(2).mean(axis=0).pow(0.5)
             self.error[self.error.columns[-2:]] = vib_error.T.values
 
             # Calculate the new force constant.
-            optimized = vib_ic.apply(np.reciprocal).apply(np.square)
-            target = self.target["BONDS"].apply(np.reciprocal).apply(np.square)
+            column = bond_values[0]
+            optimized: pd.DataFrame = vib_ic.apply(np.reciprocal).pow(2)
+            target: pd.DataFrame = self.target["BONDS"].pow(-1).pow(2)
             optimized -= target
             optimized *= self.BOLTZ * self.KFACTOR
-            vib_ic[bond_values[0]] = (self.parameters["BONDS"][bond_values[0]]
-                                      - optimized[bond_values[0]])
-            vib_ic[bond_values[0]] = vib_ic[bond_values[0]].apply(
-                lambda x: np.clip(x, a_min=0, a_max=None))
+            vib_ic[column]: pd.Series = (self.parameters["BONDS"][column]
+                                         - optimized[column])
+            vib_ic[column]: pd.Series = vib_ic[column].apply(lambda x: np.clip(x, a_min=0, a_max=None))
+            if i > min_cycles:
+                vib_ic[column][vib_ic[column] <= force_tol] = 0.
 
             # r.m.s.d. between previous and current force constant
-            diff = self.dynamic_params["BONDS"] - vib_ic
-            diff = diff.apply(np.square).mean(axis=0)
-            diff = np.sqrt(diff)
-            self.error[self.error.columns[1]] = diff.values[0]
+            diff: pd.Series = self.dynamic_params["BONDS"] - vib_ic
+            diff: pd.Series = diff.pow(2).mean(axis=0).pow(0.5)
+            self.error[self.error.columns[1]]: pd.Series = diff.values[0]
 
             # Update the parameters and write to file.
-            self.parameters["BONDS"][bond_values[0]] = (
-                vib_ic[bond_values[0]].copy(deep=True))
-            self.dynamic_params["BONDS"] = vib_ic.copy(deep=True)
-            self.parameters["BONDS"].reset_index(inplace=True)
-            self.dynamic_params["BONDS"].reset_index(inplace=True)
+            self.parameters["BONDS"][column]: pd.Series = (vib_ic[column].copy(deep=True))
+            self.dynamic_params["BONDS"]: pd.DataFrame = vib_ic.copy(deep=True).reset_index()
+            self.parameters["BONDS"]: pd.DataFrame = self.parameters["BONDS"].reset_index()
 
             with ExitStack() as stack:
-                fixed_prm = stack.enter_context(
+                fixed_prm: TextIO = stack.enter_context(
                     mda.Writer(self.filenames["fixed_prm"], **self.kwargs))
-                dynamic_prm = stack.enter_context(
+                dynamic_prm: TextIO = stack.enter_context(
                     mda.Writer(self.filenames["dynamic_prm"], **self.kwargs))
-                error_file = stack.enter_context(
+                error_file: TextIO = stack.enter_context(
                     open(self.filenames["error_data"], "a"))
 
                 fixed_prm.write(self.parameters)
                 dynamic_prm.write(self.dynamic_params)
-                np.savetxt(
-                    error_file,
-                    self.error,
-                    fmt="%10d%10.6f%10.6f%10.6f",
-                    delimiter="",
-                )
+                np.savetxt(error_file, self.error, fmt="%10d%10.6f%10.6f%10.6f",
+                           delimiter="")
 
             if (self.error[self.error.columns[1]] < tol).bool():
                 break
 
-        logger.info(f"Fluctuation matching completed in {time.time() - st:.6f}")
+        logger.info(
+            f"Fluctuation matching completed in {time.time() - st:.6f}")
         self.target["BONDS"] = self.target["BONDS"].reset_index()
 
-    def calculate_thermo(self, nma_exec=None):
+    def calculate_thermo(self, nma_exec: str = None) -> NoReturn:
         """Calculate the thermodynamic properties of the trajectory.
 
         Parameters
@@ -436,9 +455,9 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             executable file for normal mode analysis
         """
         # Find CHARMM executable
-        charmm_exec = self.charmmexec if nma_exec is None else nma_exec
+        charmm_exec: str = self.charmmexec if nma_exec is None else nma_exec
         if charmm_exec is None:
-            error_msg = (
+            error_msg: str = (
                 "Please set CHARMMEXEC with the location of your CHARMM "
                 "executable file or add the charmm path to your PATH "
                 "environment.")
@@ -446,19 +465,19 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             OSError(error_msg)
 
         if not self.filenames["thermo_input"].exists():
-            version = self.kwargs.get("charmm_version", 41)
-            dimension = ("dimension chsize 500000 maxres 3000000"
-                         if version >= 36 else "")
+            version: int = self.kwargs.get("charmm_version", 41)
+            dimension: str = ("dimension chsize 500000 maxres 3000000"
+                              if version >= 36 else "")
             with open(self.filenames["thermo_input"], "w") as charmm_file:
                 logger.info("Writing CHARMM input file.")
-                charmm_inp = charmm_thermo.thermodynamics.format(
+                charmm_inp: str = charmm_thermo.thermodynamics.format(
                     trajectory=self.outdir / self.args[-1],
                     temperature=self.temperature,
                     flex="flex" if version else "",
                     version=version,
                     dimension=dimension,
                     **self.filenames)
-                charmm_inp = textwrap.dedent(charmm_inp.strip("\n"))
+                charmm_inp: str = textwrap.dedent(charmm_inp.strip("\n"))
                 charmm_file.write(charmm_inp)
 
         # Calculate thermodynamic properties of the trajectory.
@@ -473,16 +492,17 @@ class CharmmFluctMatch(fmbase.FluctMatch):
 
         # Read log file
         with ExitStack as stack:
-            log_file = stack.enter_context(open(self.filenames["thermo_log"]))
-            data_file = stack.enter_context(
+            log_file: TextIO = stack.enter_context(
+                open(self.filenames["thermo_log"]))
+            data_file: TextIO = stack.enter_context(
                 open(self.filenames["thermo_data"], "w"))
 
             logger.info("Reading CHARMM log file.")
-            header = ("SEGI  RESN  RESI     Entropy    Enthalpy     "
-                      "Heatcap     Atm/res   Ign.frq")
-            columns = np.array(header.split())
+            header: str = ("SEGI  RESN  RESI     Entropy    Enthalpy     "
+                           "Heatcap     Atm/res   Ign.frq")
+            columns: np.ndarray = np.array(header.split())
             columns[:3] = np.array(["segidI", "RESN", "resI"])
-            thermo = []
+            thermo: List = []
             for line in log_file:
                 if line.find(header) < 0:
                     continue
@@ -493,6 +513,6 @@ class CharmmFluctMatch(fmbase.FluctMatch):
             # Create human-readable table
             logger.info("Writing thermodynamics data file.")
             (pd.DataFrame(thermo, columns=columns)
-             .drop(["RESN", "Atm/res", "Ign.frq"], axis=1)
-             .to_csv(data_file, index=False, float_format="%.4f",
-                     encoding="utf-8"))
+                .drop(["RESN", "Atm/res", "Ign.frq"], axis=1)
+                .to_csv(data_file, index=False, float_format="%.4f",
+                        encoding="utf-8"))

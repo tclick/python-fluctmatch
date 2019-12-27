@@ -24,9 +24,9 @@ import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
 import numpy as np
 
-from fluctmatch.fluctmatch.data import charmm_split
+from ..fluctmatch.data import charmm_split
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class AverageStructure(analysis.AnalysisBase):

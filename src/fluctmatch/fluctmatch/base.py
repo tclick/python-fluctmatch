@@ -14,12 +14,14 @@
 import abc
 import os
 from pathlib import Path
+from typing import Dict
+from typing import List
+from typing import NoReturn
 
 
-class FluctMatch(metaclass=abc.ABCMeta):
+class FluctMatchBase(metaclass=abc.ABCMeta):
     """Base class for fluctuation matching."""
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: List, **kwargs: Dict):
         """Initialization of fluctuation matching.
 
         Parameters
@@ -91,26 +93,29 @@ class FluctMatch(metaclass=abc.ABCMeta):
         rmax
             Maximum distance to consider for bond lengths.
         """
-        self.parameters = dict()
-        self.target = dict()
+        self.parameters: Dict = dict()
+        self.target: Dict = dict()
 
-        self.outdir = Path(kwargs.get("outdir", os.getcwd()))
-        self.prefix = Path(kwargs.get("prefix", "fluctmatch"))
-        self.temperature = kwargs.get("temperature", 300.0)
+        self.outdir: Path = Path(kwargs.get("outdir", os.getcwd()))
+        self.prefix: Path = Path(kwargs.get("prefix", "fluctmatch"))
+        self.temperature: float = kwargs.get("temperature", 300.0)
         if self.temperature < 0:
             raise IOError("Temperature cannot be negative.")
-        self.args = args
-        self.kwargs = kwargs
+        self.args: List = args
+        self.kwargs: Dict = kwargs
 
         # Attempt to create the necessary subdirectory
         self.outdir.mkdir(exist_ok=True, parents=True)
 
     @abc.abstractmethod
-    def initialize(self, nma_exec=None, restart=False):
+    def initialize(self, nma_exec: str = None,
+                   restart: bool = False) -> NoReturn:
         """Create an elastic network model from a basic coarse-grain model.
 
         Parameters
         ----------
+        nma_exec : str
+            executable file for normal mode analysis
         restart : bool, optional
             Reinitialize the object by reading files instead of doing initial
             calculations.
@@ -118,16 +123,22 @@ class FluctMatch(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def run(self, nma_exec=None, tol=1.e-4, n_cycles=250):
+    def run(self, nma_exec: str = None, tol: float = 1.e-4,
+            min_cycles: int = 200, max_cycles: int = 200,
+            force_tol: float = 0.02) -> NoReturn:
         """Perform a self-consistent fluctuation matching.
 
         Parameters
         ----------
         nma_exec : str
             executable file for normal mode analysis
-        tol : float
+        tol : float, optional
             error tolerance
-        n_cycles : int
-            number of fluctuation matching cycles
+        min_cycles : int, optional
+            minimum number of fluctuation matching cycles
+        max_cycles : int, optional
+            maximum number of fluctuation matching cycles
+        force_tol : float, optional
+            force constants <= force tolerance become zero after min_cycles
         """
         pass

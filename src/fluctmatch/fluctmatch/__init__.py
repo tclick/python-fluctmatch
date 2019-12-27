@@ -13,12 +13,5 @@
 #
 import logging
 
-from fluctmatch.coordinates import COR
-from fluctmatch.intcor import IC
-from fluctmatch.parameter import PRM
-from fluctmatch.topology import RTF
-from fluctmatch.topology import STR
-from fluctmatch.topology import PSFParser
-
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
