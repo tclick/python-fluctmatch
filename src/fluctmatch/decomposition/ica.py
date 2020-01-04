@@ -18,16 +18,17 @@
 #   to endorse or promote products derived from this software without specific
 #   prior written permission.
 #
-#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
-#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-#   ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-#   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-#   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#    ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+#    DAMAGE.
 #
 #   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
 #   Simulation. Meth Enzymology. 578 (2016), 327-342,
@@ -44,6 +45,7 @@ from typing import Tuple
 from typing import Union
 
 import numpy as np
+from numpy.random import RandomState
 from scipy import linalg
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
@@ -64,7 +66,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
              anneal_step: float = 0.9, extended: bool = True,
              n_subgauss: int = 1, kurt_size: int = 6000,
              ext_blocks: int = 1, max_iter: int = 200, whiten=True,
-             random_state: np.random.RandomState = None, blowup: float = 1e4,
+             random_state: RandomState = None, blowup: float = 1e4,
              blowup_fac: float = 0.5, n_small_angle: int = 20,
              use_bias: bool = True,
              verbose: bool = None) -> np.ndarray:
@@ -114,9 +116,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         Defaults to 1.
     max_iter : int
         The maximum number of iterations. Defaults to 200.
-    random_state : int | np.random.RandomState
+    random_state : int | RandomState
         If random_state is an int, use random_state to seed the random number
-        generator. If random_state is already a np.random.RandomState instance,
+        generator. If random_state is already a RandomState instance,
         use random_state as random number generator.
     blowup : float
         The maximum difference allowed between two successive estimations of
@@ -156,7 +158,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
            and supergaussian sources. Neural Computation, 11(2), 417-441, 1999.
     """
     from scipy.stats import kurtosis
-    rng: np.random.RandomState = check_random_state(random_state)
+    rng: RandomState = check_random_state(random_state)
 
     # define some default parameters
     max_weight: float = 1e8
@@ -210,8 +212,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     lastt: int = (nblock - 1) * block + 1
 
     # initialize training
-    weights: np.ndarray = (np.identity(n_features,
-                                       dtype=np.float64) if weights is None else weights.T)
+    weights: np.ndarray = (np.identity(n_features, dtype=np.float64)
+                           if weights is None
+                           else weights.T)
 
     BI: np.ndarray = block * np.identity(n_features, dtype=np.float64)
     bias: np.ndarray = np.zeros((n_features, 1), dtype=np.float64)
@@ -382,8 +385,8 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     return weights.T
 
 
-def random_permutation(n_samples: int, random_state: Union[
-    int, np.random.RandomState, None] = None) -> np.ndarray:
+def random_permutation(n_samples: int,
+                       random_state: Union[int, RandomState, None] = None) -> np.ndarray:
     """Emulate the randperm matlab function.
 
     It returns a vector containing a random permutation of the
@@ -413,7 +416,7 @@ def random_permutation(n_samples: int, random_state: Union[
     randperm : ndarray, int
         Randomly permuted sequence between 0 and n-1.
     """
-    rng: np.random.RandomState = check_random_state(random_state)
+    rng: RandomState = check_random_state(random_state)
     idx: np.ndarray = rng.rand(n_samples)
     randperm: np.ndarray = np.argsort(idx)
     return randperm
@@ -452,7 +455,7 @@ class ICA(BaseEstimator, TransformerMixin):
     whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
-    random_state : None | int | instance of np.random.RandomState
+    random_state : None | int | instance of RandomState
         Random state to initialize ICA estimation for reproducible results.
     method : {'fastica', 'infomax', 'extended-infomax'}
         The ICA method to use. Defaults to 'extended-infomax'. For reference,
@@ -499,9 +502,9 @@ class ICA(BaseEstimator, TransformerMixin):
         Defaults to 1.
     max_iter : int
         The maximum number of iterations. Defaults to 200.
-    random_state : int | np.random.RandomState
+    random_state : int | RandomState
         If random_state is an int, use random_state to seed the random number
-        generator. If random_state is already a np.random.RandomState instance,
+        generator. If random_state is already a RandomState instance,
         use random_state as random number generator.
     blowup : float
         The maximum difference allowed between two successive estimations of
@@ -554,7 +557,7 @@ class ICA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, whiten: bool = True, n_components: int = None,
-                 random_state: np.random.RandomState = None,
+                 random_state: RandomState = None,
                  method: str = 'fastica', fit_params: Union[Dict, None] = None,
                  max_iter: int = 200,
                  verbose: Union[bool, None] = None):
@@ -570,7 +573,7 @@ class ICA(BaseEstimator, TransformerMixin):
 
         self.verbose: bool = verbose
         self.n_components: int = n_components
-        self.random_state: np.random.RandomState = random_state
+        self.random_state: RandomState = random_state
         self.whiten: bool = whiten
 
         if fit_params is None:
@@ -622,7 +625,7 @@ class ICA(BaseEstimator, TransformerMixin):
         """Aux function."""
         self._reset()
         self.n_samples, n_features = data.shape
-        random_state: np.random.RandomState = check_random_state(
+        random_state: RandomState = check_random_state(
             self.random_state)
 
         # take care of ICA
@@ -637,8 +640,7 @@ class ICA(BaseEstimator, TransformerMixin):
             self.components_: np.ndarray = _infomax(data,
                                                     random_state=random_state,
                                                     whiten=self.whiten,
-                                                    **self.fit_params)[
-                                           :self.n_components]
+                                                    **self.fit_params)[:self.n_components]
             self.mixing_: np.ndarray = linalg.pinv(self.components_)
 
         return self

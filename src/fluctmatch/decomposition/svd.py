@@ -18,16 +18,17 @@
 #   to endorse or promote products derived from this software without specific
 #   prior written permission.
 #
-#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
-#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-#   ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-#   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-#   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#    ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+#    DAMAGE.
 #
 #   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
 #   Simulation. Meth Enzymology. 578 (2016), 327-342,
@@ -42,6 +43,7 @@ from typing import Tuple
 from typing import Union
 
 import numpy as np
+from numpy.random import RandomState
 from scipy import linalg
 from scipy.sparse import issparse
 from sklearn.base import BaseEstimator
@@ -190,14 +192,13 @@ class SVD(BaseEstimator, TransformerMixin):
                  svd_solver: str = 'auto',
                  tol: float = 0.0,
                  iterated_power: Union[int, str] = 'auto',
-                 random_state: Union[int, np.random.RandomState, None] = None):
+                 random_state: Union[int, RandomState, None] = None):
         self.n_components: Union[int, float, None, str] = n_components
         self.copy: bool = copy
         self.svd_solver: str = svd_solver
         self.tol: float = tol
         self.iterated_power: Union[int, str] = iterated_power
-        self.random_state: Union[int, np.random.
-            RandomState, None] = random_state
+        self.random_state: Union[int, RandomState, None] = random_state
 
     def fit(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> 'SVD':
         """Fit the model with X.
@@ -337,16 +338,14 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = explained_variance_[
-                                          n_components:].mean()
+            self.noise_variance_: float = explained_variance_[n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: int = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = explained_variance_[:
-                                                                   n_components]
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
         self.explained_variance_ratio_: np.ndarray = \
             explained_variance_ratio_[:n_components]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
@@ -367,8 +366,8 @@ class SVD(BaseEstimator, TransformerMixin):
         random_state: np.random.RandomState = check_random_state(
             self.random_state)
 
-        if svd_solver == 'arpack' and n_components == min(
-            n_samples, n_features):
+        if (svd_solver == "arpack" and n_components ==
+                min(n_samples, n_features)):
             raise ValueError(
                 "n_components=%r must be strictly less than "
                 "min(n_samples, n_features)=%r with "
@@ -404,18 +403,15 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = explained_variance_[
-                                          n_components:].mean()
+            self.noise_variance_: float = explained_variance_[n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: np.ndarray = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = explained_variance_[:
-                                                                   n_components]
-        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[:
-                                                                               n_components]
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[:n_components]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
 
         return U, S, V
