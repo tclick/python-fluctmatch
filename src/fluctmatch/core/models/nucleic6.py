@@ -44,8 +44,8 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Tuple
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
 from MDAnalysis.core.topologyattrs import Bonds
 from MDAnalysis.core.topologyattrs import Charges
 

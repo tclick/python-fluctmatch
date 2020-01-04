@@ -157,36 +157,36 @@ _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
 def cli(program, toppar, topology, trajectory, data, index, outfile, logfile,
         system, start, stop, window_size):
     logging.config.dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": False,  # this fixes the problem
-            "formatters": {
-                "standard": {
-                    "class": "logging.Formatter",
-                    "format": "%(name)-12s %(levelname)-8s %(message)s",
-                },
-                "detailed": {
-                    "class": "logging.Formatter",
-                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                    "datefmt": "%m-%d-%y %H:%M",
-                },
-            },
-            "handlers": {
-                "console": {
-                    "class": "logging.StreamHandler",
-                    "level": "INFO",
-                    "formatter": "standard",
-                },
-                "file": {
-                    "class": "logging.FileHandler",
-                    "filename": path.join(os.getcwd(), logfile),
-                    "level": "INFO",
-                    "mode": "w",
-                    "formatter": "detailed",
-                },
-            },
-            "root": {"level": "INFO", "handlers": ["console", "file"]},
-        }
+        dict(version=1,
+             disable_existing_loggers=False,  # this fixes the problem
+             formatters=dict(
+                 standard={
+                     "class": "logging.Formatter",
+                     "format": "%(name)-12s %(levelname)-8s %(message)s",
+                 },
+                 detailed={
+                     "class": "logging.Formatter",
+                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
+                                "%(message)s"),
+                     "datefmt": "%m-%d-%y %H:%M",
+                 },
+             ),
+             handlers=dict(
+                 console={
+                     "class": "logging.StreamHandler",
+                     "level": "INFO",
+                     "formatter": "standard",
+                 },
+                 file={
+                     "class": "logging.FileHandler",
+                     "filename": logfile,
+                     "level": "INFO",
+                     "mode": "w",
+                     "formatter": "detailed",
+                 },
+             ),
+             root=dict(level="INFO", handlers=["console", "file"]),
+             )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 

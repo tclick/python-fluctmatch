@@ -18,16 +18,17 @@
 #   to endorse or promote products derived from this software without specific
 #   prior written permission.
 #
-#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
-#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-#   ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-#   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-#   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#    ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+#    DAMAGE.
 #
 #   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
 #   Simulation. Meth Enzymology. 578 (2016), 327-342,
@@ -47,6 +48,7 @@ from MDAnalysisTests import make_Universe
 from numpy.testing import assert_equal
 
 import fluctmatch.parsers.writers.COR
+
 from ..datafiles import COR
 
 
@@ -59,7 +61,7 @@ class TestCORWriter:
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.cor"
         with patch("fluctmatch.parsers.writers.COR.Writer.write") as writer, \
-            mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+                mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
             writer.assert_called()
 
@@ -108,7 +110,7 @@ class TestCORWriterMissingAttrs:
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), \
-             mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
 
     @pytest.mark.parametrize('missing_attr', req_attrs)
@@ -119,7 +121,7 @@ class TestCORWriterMissingAttrs:
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), \
-             mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
 
         u2 = mda.Universe(outfile)

@@ -3,6 +3,7 @@ language: python
 python:
     - "3.6"
     - "3.7"
+    - "3.8"
 sudo: false
 cache: pip
 env:
@@ -17,6 +18,7 @@ branches:
     only:
         - master
         - develop
+        - start_4.0.0
 before_install:
     - python --version
     - uname -a

@@ -67,7 +67,8 @@ def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]
     Returns
     -------
     A :class:`~pandas.DataFrame` compliant with a CHARMM-formatted internal
-    coordinates (IC) table. The table matches the 'resid' version of an IC table.
+    coordinates (IC) table. The table matches the 'resid' version of an IC
+    table.
     """
     table: pd.DataFrame = pd.DataFrame()
     atomgroup: mda.AtomGroup = universe.atoms

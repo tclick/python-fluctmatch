@@ -43,9 +43,9 @@ from typing import List
 
 import MDAnalysis as mda
 
+from .. import _MODELS
 from .base import Merge
 from .base import ModelBase
-from .. import _MODELS
 
 logger: logging.Logger = logging.getLogger(__name__)
 

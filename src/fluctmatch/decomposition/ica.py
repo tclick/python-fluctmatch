@@ -194,8 +194,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        X1: np.ndarray = as_float_array(X,
-                                        copy=False)  # copy has been taken care of
+        X1: np.ndarray = as_float_array(X, copy=False)
 
     # check input parameters
     # heuristic default - may need adjustment for large or tiny data sets
@@ -226,7 +225,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     wts_blowup: bool = False
     blockno: int = 0
     signcount: int = 0
-    initial_ext_blocks: int = ext_blocks  # save the initial value in case of reset
+    initial_ext_blocks: int = ext_blocks
 
     # for extended Infomax
     if extended:
@@ -385,8 +384,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     return weights.T
 
 
-def random_permutation(n_samples: int,
-                       random_state: Union[int, RandomState, None] = None) -> np.ndarray:
+def random_permutation(
+        n_samples: int,
+        random_state: Union[int, RandomState, None] = None) -> np.ndarray:
     """Emulate the randperm matlab function.
 
     It returns a vector containing a random permutation of the
@@ -637,10 +637,9 @@ class ICA(BaseEstimator, TransformerMixin):
             self.components_: np.ndarray = ica.components_
             self.mixing_: np.ndarray = ica.mixing_
         elif self.method in ('infomax', 'extended-infomax'):
-            self.components_: np.ndarray = _infomax(data,
-                                                    random_state=random_state,
-                                                    whiten=self.whiten,
-                                                    **self.fit_params)[:self.n_components]
+            self.components_: np.ndarray = _infomax(
+                data, random_state=random_state, whiten=self.whiten,
+                **self.fit_params)[:self.n_components]
             self.mixing_: np.ndarray = linalg.pinv(self.components_)
 
         return self

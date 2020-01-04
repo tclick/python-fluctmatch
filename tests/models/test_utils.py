@@ -35,6 +35,7 @@ from numpy import testing
 
 from fluctmatch.core import utils
 from fluctmatch.core.models import polar
+
 from ..datafiles import TPR
 from ..datafiles import XTC
 

@@ -37,10 +37,11 @@
 #
 # ------------------------------------------------------------------------------
 
+from typing import List
+
 import numpy as np
 import pandas as pd
 from scipy import stats
-from typing import List
 
 from fluctmatch.analysis.paramtable import ParamTable
 
@@ -125,8 +126,8 @@ class Entropy(object):
         determined by the highest probability of nonzero force constants within
         the overall time series.
 
-        The required table must be a time series of an internal coordinates table
-        containing bond force constants.
+        The required table must be a time series of an internal coordinates
+        table containing bond force constants.
 
         Parameters
         ----------

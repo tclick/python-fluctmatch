@@ -18,16 +18,17 @@
 #   to endorse or promote products derived from this software without specific
 #   prior written permission.
 #
-#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
-#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-#   ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-#   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-#   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+#    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#    ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+#    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+#    DAMAGE.
 #
 #   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
 #   Simulation. Meth Enzymology. 578 (2016), 327-342,
@@ -42,13 +43,13 @@ from typing import List
 from unittest.mock import patch
 
 import MDAnalysis as mda
+import pytest
 from MDAnalysis.core.topologyobjects import TopologyObject
 from MDAnalysisTests.topology.base import ParserBase
+from numpy.testing import assert_equal
 
 import fluctmatch.parsers.parsers.PSF as PSFParser
 import fluctmatch.parsers.writers.PSF
-import pytest
-from numpy.testing import assert_equal
 
 from ..datafiles import COR
 from ..datafiles import PSF
@@ -62,14 +63,14 @@ class TestPSFWriter(object):
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.xplor.psf"
         with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, \
-            mda.Writer(filename) as w:
+                mda.Writer(filename) as w:
             w.write(u.atoms)
             writer.assert_called()
 
     def test_roundtrip(self, u: mda.Universe, tmp_path: Path):
-        # Write out a copy of the Universe, and compare this against the original
-        # This is more rigorous than simply checking the coordinates as it checks
-        # all formatting
+        # Write out a copy of the Universe, and compare this against the
+        # original. This is more rigorous than simply checking the coordinates
+        # as it checks all formatting
         filename: Path = tmp_path / "temp.xplor.psf"
         with mda.Writer(filename) as w:
             w.write(u.atoms)

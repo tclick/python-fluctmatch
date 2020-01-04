@@ -42,6 +42,7 @@ from numpy import testing
 from fluctmatch.core.models import nucleic3
 from fluctmatch.core.models import nucleic4
 from fluctmatch.core.models import nucleic6
+
 from ..datafiles import TPR
 from ..datafiles import XTC
 

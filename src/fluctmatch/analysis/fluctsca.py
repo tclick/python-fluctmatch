@@ -238,7 +238,7 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
        in the background.
 
     :Example:
-      >>> figUnits(v1, v2, units, marker='o', gradcol=0, dotsize=9, notinunits=1)
+     >>> figUnits(v1, v2, units, marker='o', gradcol=0, dotsize=9, notinunits=1)
 
      '''
     import colorsys

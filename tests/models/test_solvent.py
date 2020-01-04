@@ -38,6 +38,7 @@ from numpy import testing
 from fluctmatch.core.models import dma
 from fluctmatch.core.models import tip3p
 from fluctmatch.core.models import water
+
 from ..datafiles import DMA
 from ..datafiles import TIP3P
 

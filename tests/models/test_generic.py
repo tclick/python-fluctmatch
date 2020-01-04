@@ -40,6 +40,7 @@ import pytest
 from numpy import testing
 
 from fluctmatch.core.models import generic
+
 from ..datafiles import DMA
 
 

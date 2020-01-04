@@ -42,8 +42,8 @@ from typing import ClassVar
 
 import MDAnalysis as mda
 
-from . import generic
 from ..selection import *
+from . import generic
 
 
 class Model(generic.Model):

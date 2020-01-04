@@ -104,7 +104,7 @@ class Reader(PSFParser.PSFParser):
             header: str = next(psffile)
             if not header.startswith("PSF"):
                 err: str = (
-                    f"{self.filename} is not valid PSF file " f"(header = {header})"
+                    f"{self.filename} is not valid PSF file (header = {header})"
                 )
                 logger.error(err)
                 raise ValueError(err)
@@ -246,10 +246,7 @@ class Reader(PSFParser.PSFParser):
                         "PSF file... continuing with fingers "
                         "crossed!"
                     )
-                    logger.info(
-                        "First NAMD-type line: {0}: {1}" "".format(i,
-                                                                   line.rstrip())
-                    )
+                    logger.info(f"First NAMD-type line: {i}: {line.rstrip()}")
                 except ValueError:
                     atom_parser: FORTRANReader = FORTRANReader(
                         atom_parsers[self._format].replace("A6", "A4")

@@ -71,11 +71,12 @@ import pandas as pd
 from MDAnalysis.coordinates.core import reader
 from scipy import constants
 
+from ...libs import intcor
+from ...libs import parameters
 from ..base import FluctMatchBase
 from ..data import charmm_init
 from ..data import charmm_nma
 from ..data import charmm_thermo
-from ...libs import intcor, parameters
 
 logger: logging.Logger = logging.getLogger(__name__)
 

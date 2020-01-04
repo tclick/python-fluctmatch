@@ -43,8 +43,8 @@ from typing import List
 from typing import NoReturn
 from typing import Tuple
 
-import numpy as np
 import MDAnalysis as mda
+import numpy as np
 from MDAnalysis.coordinates.memory import MemoryReader
 from MDAnalysis.core.topologyattrs import Bonds
 from MDAnalysis.topology import guessers

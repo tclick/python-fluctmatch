@@ -43,8 +43,8 @@ import glob
 import multiprocessing as mp
 from os import path
 from pathlib import Path
-from typing import Union
 from typing import Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd

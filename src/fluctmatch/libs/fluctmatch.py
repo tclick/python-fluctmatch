@@ -247,9 +247,8 @@ def write_charmm_files(
 
     # Calculate the average coordinates from the trajectory.
     logger.info("Determining the average structure of the trajectory. ")
-    logger.warning(
-        "Note: This could take a while depending upon the " "size of your trajectory."
-    )
+    logger.warning("Note: This could take a while depending upon the size of "
+                   "your trajectory.")
     positions = AverageStructure(universe.atoms).run().result
     positions = positions.reshape((*positions.shape, 1))
 

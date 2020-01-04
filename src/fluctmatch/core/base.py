@@ -461,7 +461,8 @@ def Merge(*args: MDUniverse) -> mda.Universe:
         if trajectory.ts.has_positions:
             positions: np.ndarray = np.concatenate(positions, axis=1)
             if universe.atoms.n_atoms != positions.shape[1]:
-                msg = "The number of sites does not match the number of " "coordinates."
+                msg = ("The number of sites does not match the number "
+                       "of coordinates.")
                 logger.error(msg)
                 raise RuntimeError(msg)
             n_frames, n_beads, _ = positions.shape

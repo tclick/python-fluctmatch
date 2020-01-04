@@ -44,7 +44,6 @@ from typing import MutableMapping
 from typing import NoReturn
 
 import numpy as np
-
 from MDAnalysis.core.topologyattrs import Atomtypes
 from MDAnalysis.core.topologyattrs import Bonds
 

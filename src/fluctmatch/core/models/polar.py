@@ -36,13 +36,14 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
-"""Class definition for beads using N, carboxyl oxygens, and polar sidechains."""
+"""Class definition for beads using N, carboxyl oxygens, and polar sidechains.
+"""
 
 from typing import ClassVar
 from typing import Mapping
 
-from . import ncsc
 from ..selection import *
+from . import ncsc
 
 
 class Model(ncsc.Model):

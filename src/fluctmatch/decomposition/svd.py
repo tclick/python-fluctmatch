@@ -338,14 +338,16 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = explained_variance_[n_components:].mean()
+            self.noise_variance_: float = \
+                explained_variance_[n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: int = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_: np.ndarray = \
+            explained_variance_[:n_components]
         self.explained_variance_ratio_: np.ndarray = \
             explained_variance_ratio_[:n_components]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
@@ -403,15 +405,18 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = explained_variance_[n_components:].mean()
+            self.noise_variance_: float = \
+                explained_variance_[n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: np.ndarray = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
-        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[:n_components]
+        self.explained_variance_: np.ndarray = \
+            explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = \
+            explained_variance_ratio_[:n_components]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
 
         return U, S, V

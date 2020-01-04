@@ -55,8 +55,8 @@ from typing import Union
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-from MDAnalysis.core.topologyobjects import TopologyObject
 from MDAnalysis.core import groups
+from MDAnalysis.core.topologyobjects import TopologyObject
 
 from .. import base as topbase
 
