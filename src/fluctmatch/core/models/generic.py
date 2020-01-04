@@ -155,7 +155,8 @@ class Model(base.ModelBase):
             atoms: mda.AtomGroup = self.universe.atoms
             positions: np.ndarray = self.universe.atoms.positions
 
-            bonds: List[Tuple[int, int]] = guessers.guess_bonds(atoms, positions)
+            bonds: List[Tuple[int, int]] = guessers.guess_bonds(atoms,
+                                                                positions)
             self.universe.add_TopologyAttr(Bonds(bonds))
         except AttributeError:
             pass

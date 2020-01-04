@@ -21,6 +21,7 @@ from typing import NoReturn
 
 class FluctMatchBase(metaclass=abc.ABCMeta):
     """Base class for fluctuation matching."""
+
     def __init__(self, *args: List, **kwargs: Dict):
         """Initialization of fluctuation matching.
 

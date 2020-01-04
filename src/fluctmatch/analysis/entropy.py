@@ -23,7 +23,7 @@ class Entropy(object):
     """Calculate various entropic contributions from the coupling strengths.
     """
 
-    def __init__(self, filename, ressep: int=3):
+    def __init__(self, filename, ressep: int = 3):
         """
         Parameters
         ----------
@@ -61,7 +61,8 @@ class Entropy(object):
         header: List[str, str] = ["segidI", "resI"]
 
         entropy: pd.DataFrame = self._table._separate(self._table.table)
-        entropy: pd.DataFrame = entropy.groupby(level=header).apply(lambda x: x / x.sum())
+        entropy: pd.DataFrame = entropy.groupby(level=header).apply(
+            lambda x: x / x.sum())
         entropy: pd.DataFrame = entropy.groupby(level=header).agg(stats.entropy)
         entropy.replace(-np.inf, 0., inplace=True)
 
@@ -79,7 +80,7 @@ class Entropy(object):
         entropy: pd.DataFrame = stats.entropy(table.T)
         return pd.DataFrame(entropy, index=table.index)
 
-    def windiff_entropy(self, bins: int=100) -> pd.DataFrame:
+    def windiff_entropy(self, bins: int = 100) -> pd.DataFrame:
         """Calculate the relative entropy between windows.
 
         Calculate the relative entropy of a coarse-grain system by using the

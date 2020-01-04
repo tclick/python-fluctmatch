@@ -47,7 +47,6 @@ import fluctmatch.parsers.parsers
 import fluctmatch.parsers.readers
 import fluctmatch.parsers.writers
 
-
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 

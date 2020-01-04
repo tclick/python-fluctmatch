@@ -192,7 +192,8 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        X1: np.ndarray = as_float_array(X, copy=False)  # copy has been taken care of
+        X1: np.ndarray = as_float_array(X,
+                                        copy=False)  # copy has been taken care of
 
     # check input parameters
     # heuristic default - may need adjustment for large or tiny data sets
@@ -210,7 +211,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
 
     # initialize training
     weights: np.ndarray = (np.identity(n_features,
-                           dtype=np.float64) if weights is None else weights.T)
+                                       dtype=np.float64) if weights is None else weights.T)
 
     BI: np.ndarray = block * np.identity(n_features, dtype=np.float64)
     bias: np.ndarray = np.zeros((n_features, 1), dtype=np.float64)
@@ -248,7 +249,8 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
             if extended:
                 # extended ICA update
                 y: float = np.tanh(u)
-                j: np.ndarray = BI - signs[None, :] * np.dot(u.T, y) - np.dot(u.T, u)
+                j: np.ndarray = BI - signs[None, :] * np.dot(u.T, y) - np.dot(
+                    u.T, u)
                 weights += l_rate * np.dot(weights, j)
             if use_bias:
                 bias += l_rate * np.reshape(
@@ -278,7 +280,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
             if ext_blocks > 0 and blockno % ext_blocks == 0:
                 if kurt_size < n_samples:
                     rp: np.ndarray = np.floor(rng.uniform(0, 1, kurt_size) *
-                                  (n_samples - 1))
+                                              (n_samples - 1))
                     tpartact: float = np.dot(X[rp.astype(int), :], weights).T
                 else:
                     tpartact: float = np.dot(X, weights).T
@@ -288,7 +290,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
 
                 if extmomentum != 0:
                     kurt: np.ndarray = (extmomentum * old_kurt +
-                            (1.0 - extmomentum) * kurt)
+                                        (1.0 - extmomentum) * kurt)
                     old_kurt: np.ndarray = kurt
 
                 # estimate weighted signs
@@ -315,7 +317,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         change: np.ndarray = np.sum(delta * delta, dtype=np.float64)
         if step > 2:
             angledelta: np.ndarray = np.arccos(np.sum(delta * olddelta) /
-                                   np.sqrt(change * oldchange))
+                                               np.sqrt(change * oldchange))
             angledelta *= degconst
 
         if verbose:
@@ -355,7 +357,8 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         l_rate *= restart_fac  # with lower learning rate
         weights: np.ndarray = startweights.copy()
         oldweights: np.ndarray = startweights.copy()
-        olddelta: np.ndarray = np.zeros((1, n_features_square), dtype=np.float64)
+        olddelta: np.ndarray = np.zeros((1, n_features_square),
+                                        dtype=np.float64)
         bias: np.ndarray = np.zeros((n_features, 1), dtype=np.float64)
 
         ext_blocks: np.ndarray = initial_ext_blocks
@@ -379,7 +382,8 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     return weights.T
 
 
-def random_permutation(n_samples: int, random_state: Union[int, np.random.RandomState, None]=None) -> np.ndarray:
+def random_permutation(n_samples: int, random_state: Union[
+    int, np.random.RandomState, None] = None) -> np.ndarray:
     """Emulate the randperm matlab function.
 
     It returns a vector containing a random permutation of the
@@ -549,10 +553,13 @@ class ICA(BaseEstimator, TransformerMixin):
            pp.417-441.
     """
 
-    def __init__(self, whiten: bool=True, n_components: int=None, random_state: np.random.RandomState=None,
-                 method: str='fastica', fit_params: Union[Dict, None]=None, max_iter: int=200,
-                 verbose: Union[bool, None]=None):
-        methods: Tuple[str,...] = ('fastica', 'infomax', 'extended-infomax', 'picard')
+    def __init__(self, whiten: bool = True, n_components: int = None,
+                 random_state: np.random.RandomState = None,
+                 method: str = 'fastica', fit_params: Union[Dict, None] = None,
+                 max_iter: int = 200,
+                 verbose: Union[bool, None] = None):
+        methods: Tuple[str, ...] = (
+            'fastica', 'infomax', 'extended-infomax', 'picard')
         if method not in methods:
             raise ValueError('`method` must be "%s". You passed: "%s"' %
                              ('" or "'.join(methods), method))
@@ -593,7 +600,7 @@ class ICA(BaseEstimator, TransformerMixin):
     def __repr__(self) -> str:
         """ICA fit information."""
         s: str = (f"fit ({self.method}): "
-             f"{getattr(self, 'n_samples', '')} samples, ")
+                  f"{getattr(self, 'n_samples', '')} samples, ")
         s += (
             f"{str(self.n_components)} components"
             if self.n_components is not None
@@ -615,19 +622,23 @@ class ICA(BaseEstimator, TransformerMixin):
         """Aux function."""
         self._reset()
         self.n_samples, n_features = data.shape
-        random_state: np.random.RandomState = check_random_state(self.random_state)
+        random_state: np.random.RandomState = check_random_state(
+            self.random_state)
 
         # take care of ICA
         if self.method == 'fastica':
-            ica: FastICA = FastICA(whiten=self.whiten, random_state=random_state,
-                          **self.fit_params)
+            ica: FastICA = FastICA(whiten=self.whiten,
+                                   random_state=random_state,
+                                   **self.fit_params)
             ica.fit(data)
             self.components_: np.ndarray = ica.components_
             self.mixing_: np.ndarray = ica.mixing_
         elif self.method in ('infomax', 'extended-infomax'):
-            self.components_: np.ndarray  = _infomax(data, random_state=random_state,
-                                        whiten=self.whiten,
-                                        **self.fit_params)[:self.n_components]
+            self.components_: np.ndarray = _infomax(data,
+                                                    random_state=random_state,
+                                                    whiten=self.whiten,
+                                                    **self.fit_params)[
+                                           :self.n_components]
             self.mixing_: np.ndarray = linalg.pinv(self.components_)
 
         return self

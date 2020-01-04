@@ -50,7 +50,8 @@ from ..selection import *
 class Model(ModelBase):
     """A universe the phosphate, sugar, and base of the nucleic acid."""
 
-    description: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
+    description: ClassVar[
+        str] = "Phosohate, sugar, and nucleotide of nucleic acid"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

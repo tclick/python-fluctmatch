@@ -34,10 +34,10 @@ _index: Dict[str, List[str]] = dict(
 
 
 def _create_table(directory: Union[str, Path],
-                  intcor: str="average.ic",
-                  parmfile: str="fluctmatch.dist.prm",
-                  tbltype: str="Kb",
-                  verbose: bool=False) -> pd.DataFrame:
+                  intcor: str = "average.ic",
+                  parmfile: str = "fluctmatch.dist.prm",
+                  tbltype: str = "Kb",
+                  verbose: bool = False) -> pd.DataFrame:
     if path.isdir(directory):
         if verbose:
             print(f"Reading directory {directory}")
@@ -49,10 +49,12 @@ def _create_table(directory: Union[str, Path],
         with reader(Path(directory) / parmfile) as prm_file:
             if verbose:
                 print(f"    Processing {Path(directory) / parmfile}...")
-            prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(_header)
+            prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(
+                _header)
         table: pd.DataFrame = pd.concat([ic_table, prm_table], axis=1)
         table.reset_index(inplace=True)
-        table: pd.DataFrame = table.set_index(_index["general"])[tbltype].to_frame()
+        table: pd.DataFrame = table.set_index(_index["general"])[
+            tbltype].to_frame()
         table.columns = [Path(directory).name, ]
         return table
 
@@ -63,10 +65,10 @@ class ParamTable(object):
     """
 
     def __init__(self,
-                 prefix: str="fluctmatch",
-                 tbltype: str="Kb",
-                 ressep: int=3,
-                 datadir: Union[str, Path]=Path.cwd()):
+                 prefix: str = "fluctmatch",
+                 tbltype: str = "Kb",
+                 ressep: int = 3,
+                 datadir: Union[str, Path] = Path.cwd()):
         """
         Parameters
         ----------
@@ -121,7 +123,8 @@ class ParamTable(object):
         """
         revcol: List[str, ...] = ["segidJ", "resJ", "J", "segidI", "resI", "I"]
 
-        columns: np.ndarray = np.concatenate((revcol, self.table.columns[len(revcol):]))
+        columns: np.ndarray = np.concatenate(
+            (revcol, self.table.columns[len(revcol):]))
         temp: pd.DataFrame = self.table.copy(deep=True)
         same: pd.DataFrame = temp[(temp["segidI"] == temp["segidJ"])
                                   & (temp["resI"] != temp["resJ"])]
@@ -131,7 +134,7 @@ class ParamTable(object):
         temp.columns = columns
         self.table: pd.DataFrame = pd.concat([self.table, temp], axis=0)
 
-    def run(self, verbose: bool=False):
+    def run(self, verbose: bool = False):
         """Create the time series.
 
         Parameters
@@ -202,7 +205,8 @@ class ParamTable(object):
         """
         # Separate by residue
         table: pd.DataFrame = self._separate(self.table)
-        table: pd.DataFrame = 0.5 * table.groupby(level=["segidI", "resI"]).sum()
+        table: pd.DataFrame = 0.5 * table.groupby(
+            level=["segidI", "resI"]).sum()
         table.sort_index(axis=1, inplace=True)
         table: pd.DataFrame = table.reindex(index=table.index,
                                             columns=np.sort(table.columns))

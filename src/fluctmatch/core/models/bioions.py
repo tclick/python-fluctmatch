@@ -48,7 +48,8 @@ from ..selection import *
 class Model(ModelBase):
     """Select ions normally found within biological systems."""
 
-    description: ClassVar[str] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
+    description: ClassVar[
+        str] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

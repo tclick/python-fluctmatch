@@ -52,7 +52,8 @@ from ..selection import *
 class Model(ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
 
-    description: ClassVar[str] = "c.o.m./c.o.g. of N, O, and sidechain of protein"
+    description: ClassVar[
+        str] = "c.o.m./c.o.g. of N, O, and sidechain of protein"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

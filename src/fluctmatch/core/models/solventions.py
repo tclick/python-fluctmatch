@@ -49,7 +49,8 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Select ions within the solvent."""
 
-    description: ClassVar[str] = "Common ions within solvent (Li K Na F Cl Br I)"
+    description: ClassVar[
+        str] = "Common ions within solvent (Li K Na F Cl Br I)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

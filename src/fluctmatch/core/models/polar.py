@@ -46,7 +46,8 @@ from ..selection import *
 class Model(ncsc.Model):
     """Universe consisting of the amine, carboxyl, and polar regions."""
 
-    description: ClassVar[str] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
+    description: ClassVar[
+        str] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -45,7 +45,8 @@ class BioIonSelection(selection.Selection):
     """Contains atoms commonly found in proteins."""
 
     token: ClassVar[str] = "bioion"
-    ion_atoms: np.ndarray = np.array(["MG", "CAL", "MN", "FE", "CU", "ZN", "AG"])
+    ion_atoms: np.ndarray = np.array(
+        ["MG", "CAL", "MN", "FE", "CU", "ZN", "AG"])
 
     def __init__(self, parser, tokens):
         pass
@@ -215,7 +216,8 @@ class HNucleicSugarSelection(
             (
                 self.sug_atoms,
                 np.array(
-                    ["H1'", "O1'", "O2'", "H2'", "H2''", "O3'", "H3'", "H3T", "H4'"]
+                    ["H1'", "O1'", "O2'", "H2'", "H2''", "O3'", "H3'", "H3T",
+                     "H4'"]
                 ),
             )
         )
@@ -294,7 +296,8 @@ class NucleicC4Selection(AdditionalNucleicSelection):
     """Contains the definition for the C4' region."""
 
     token: ClassVar[str] = "sugarC4"
-    c3_atoms: np.ndarray = np.array(["C3'", "O3'", "H3'", "H3T", "C4'", "O4'", "H4'"])
+    c3_atoms: np.ndarray = np.array(
+        ["C3'", "O3'", "H3'", "H3T", "C4'", "O4'", "H4'"])
 
     def apply(self, group: AtomGroup):
         mask: np.ndarray = np.in1d(group.names, self.c3_atoms)

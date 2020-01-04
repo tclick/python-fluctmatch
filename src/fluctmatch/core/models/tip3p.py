@@ -63,11 +63,13 @@ class Model(ModelBase):
         self._selection.update(self._mapping)
         self._types: Mapping[str, int] = {
             key: value + 1
-            for key, value in zip(self._mapping.keys(), range(len(self._mapping)))
+            for key, value in
+            zip(self._mapping.keys(), range(len(self._mapping)))
         }
 
     def _add_atomtypes(self) -> NoReturn:
-        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
+        atomtypes: List[int] = [self._types[atom.name] for atom in
+                                self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self) -> NoReturn:

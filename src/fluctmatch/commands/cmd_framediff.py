@@ -117,6 +117,7 @@ def cli(logfile, outdir, ressep, table):
     filename = Path(outdir) / "dframe_interactions.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing residue-residue frame differences to {filename}")
-        d_interactions.to_csv(output, header=True, index=True, float_format="%.4f",
+        d_interactions.to_csv(output, header=True, index=True,
+                              float_format="%.4f",
                               encoding="utf-8")
         logger.info("Table written successfully.")

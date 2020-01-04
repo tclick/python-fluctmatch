@@ -26,8 +26,10 @@ import pandas as pd
 from ..fluctmatch.plugins import charmm
 
 
-def calculate_thermo(subdir: Union[str, Path], **kwargs) -> Tuple[Path, pd.DataFrame]:
-    topology: Path = Path(subdir) / kwargs.pop("topology", "fluctmatch.xplor.psf")
+def calculate_thermo(subdir: Union[str, Path], **kwargs) -> Tuple[
+    Path, pd.DataFrame]:
+    topology: Path = Path(subdir) / kwargs.pop("topology",
+                                               "fluctmatch.xplor.psf")
     trajectory: Path = Path(subdir) / kwargs.pop("trajectory", "cg.dcd")
     window: Path = Path(subdir).name
 
@@ -104,7 +106,7 @@ def create_thermo_tables(datadir: Union[str, Path], outdir: Union[str, Path],
 
         filename = Path(outdir) / "entropy.txt"
         with open(filename, mode="w") as thermo:
-            entropy.to_csv(thermo,  header=True, index=True,
+            entropy.to_csv(thermo, header=True, index=True,
                            float_format="%.4f", encoding="utf-8")
 
         filename = Path(outdir) / "enthalpy.txt"
@@ -114,10 +116,10 @@ def create_thermo_tables(datadir: Union[str, Path], outdir: Union[str, Path],
 
         filename = Path(outdir) / "heat_capacity.txt"
         with open(filename, mode="w") as thermo:
-            heat.to_csv(thermo,  header=True, index=True,
+            heat.to_csv(thermo, header=True, index=True,
                         float_format="%.4f", encoding="utf-8")
 
         filename = Path(outdir) / "gibbs.txt"
         with open(filename, mode="w") as thermo:
-            gibbs.to_csv(thermo,  header=True, index=True,
+            gibbs.to_csv(thermo, header=True, index=True,
                          float_format="%.4f", encoding="utf-8")

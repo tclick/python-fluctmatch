@@ -52,7 +52,8 @@ from ..selection import *
 class Model(ModelBase):
     """Universe consisting of the C-alpha and sidechains of a protein."""
 
-    description: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
+    description: ClassVar[
+        str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -68,7 +69,8 @@ class Model(ModelBase):
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds intraresidue C-alpha and C-beta atoms.
-        residues = self.universe.select_atoms("protein and not resname GLY").residues
+        residues = self.universe.select_atoms(
+            "protein and not resname GLY").residues
         atom1: mda.AtomGroup = residues.atoms.select_atoms("calpha")
         atom2: mda.AtomGroup = residues.atoms.select_atoms("cbeta")
         bonds.extend(list(zip(atom1.ix, atom2.ix)))

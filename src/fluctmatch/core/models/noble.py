@@ -64,7 +64,8 @@ class Model(ModelBase):
             k: v for k, v in zip(resnames, np.arange(resnames.size) + 40)
         }
 
-        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
+        atomtypes: List[int] = [restypes[atom.name] for atom in
+                                self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self) -> NoReturn:

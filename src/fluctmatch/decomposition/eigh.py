@@ -94,10 +94,10 @@ class Eigh(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
     """
 
-    def __init__(self, copy: bool=True):
+    def __init__(self, copy: bool = True):
         self.copy: bool = copy
 
-    def fit(self, X: np.ndarray, y: Union[np.ndarray, None]=None) -> "Eigh":
+    def fit(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> "Eigh":
         """Fit the model with X.
 
         Parameters
@@ -116,7 +116,8 @@ class Eigh(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def transform(self, X: np.ndarray, y: Union[np.ndarray, None]=None) -> np.ndarray:
+    def transform(self, X: np.ndarray,
+                  y: Union[np.ndarray, None] = None) -> np.ndarray:
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters

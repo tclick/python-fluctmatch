@@ -154,7 +154,7 @@ class FluctMatch(FluctMatchBase):
             thermo_log=self.outdir / "thermo.log",
             thermo_data=self.outdir / "thermo.dat",
             traj_file=(self.args[1] if len(self.args) > 1 else self.outdir /
-                       "cg.dcd"))
+                                                               "cg.dcd"))
 
         # Location of CHARMM executable
         self.charmmexec: str = os.environ.get("CHARMMEXEC",
@@ -178,7 +178,8 @@ class FluctMatch(FluctMatchBase):
         data: pd.DataFrame = data.set_index(self.bond_def)
         table = intcor.create_empty_table(universe.atoms)
         hdr: pd.DataFrame = table.columns
-        table: pd.DataFrame = table.set_index(self.bond_def).drop(["r_IJ",], axis=1)
+        table: pd.DataFrame = table.set_index(self.bond_def).drop(["r_IJ", ],
+                                                                  axis=1)
         table: pd.DataFrame = pd.concat([table, data["r_IJ"]], axis=1)
         return table.reset_index()[hdr]
 
@@ -233,7 +234,8 @@ class FluctMatch(FluctMatchBase):
                 std_bonds: pd.DataFrame = std_ic.read().set_index(self.bond_def)
                 avg_bonds: pd.DataFrame = avg_ic.read().set_index(self.bond_def)
                 target: pd.DataFrame = pd.concat([std_bonds["r_IJ"],
-                                                  avg_bonds["r_IJ"]], axis=1).reset_index()
+                                                  avg_bonds["r_IJ"]],
+                                                 axis=1).reset_index()
 
                 logger.info("Calculating the initial CHARMM parameters...")
                 universe: mda.Universe = mda.Universe(
@@ -361,7 +363,7 @@ class FluctMatch(FluctMatchBase):
                 raise FileNotFoundError
         except (FileNotFoundError, OSError):
             with open(self.filenames["error_data"], "w") as data:
-                np.savetxt(data, [self.error_hdr,], fmt="%10s", delimiter="")
+                np.savetxt(data, [self.error_hdr, ], fmt="%10s", delimiter="")
         self.error["step"] += 1
 
         # Run simulation
@@ -380,7 +382,7 @@ class FluctMatch(FluctMatchBase):
                 )
                 self.dynamic_params[
                     "BONDS"]: pd.DataFrame = self.dynamic_params[
-                        "BONDS"].set_index(self.bond_def)
+                    "BONDS"].set_index(self.bond_def)
                 self.parameters["BONDS"]: pd.DataFrame = self.parameters[
                     "BONDS"].set_index(self.bond_def)
 
@@ -411,7 +413,8 @@ class FluctMatch(FluctMatchBase):
             optimized *= self.BOLTZ * self.KFACTOR
             vib_ic[column]: pd.Series = (self.parameters["BONDS"][column]
                                          - optimized[column])
-            vib_ic[column]: pd.Series = vib_ic[column].apply(lambda x: np.clip(x, a_min=0, a_max=None))
+            vib_ic[column]: pd.Series = vib_ic[column].apply(
+                lambda x: np.clip(x, a_min=0, a_max=None))
             if i > min_cycles:
                 vib_ic[column][vib_ic[column] <= force_tol] = 0.
 
@@ -421,9 +424,12 @@ class FluctMatch(FluctMatchBase):
             self.error[self.error.columns[1]]: pd.Series = diff.values[0]
 
             # Update the parameters and write to file.
-            self.parameters["BONDS"][column]: pd.Series = (vib_ic[column].copy(deep=True))
-            self.dynamic_params["BONDS"]: pd.DataFrame = vib_ic.copy(deep=True).reset_index()
-            self.parameters["BONDS"]: pd.DataFrame = self.parameters["BONDS"].reset_index()
+            self.parameters["BONDS"][column]: pd.Series = (
+                vib_ic[column].copy(deep=True))
+            self.dynamic_params["BONDS"]: pd.DataFrame = vib_ic.copy(
+                deep=True).reset_index()
+            self.parameters["BONDS"]: pd.DataFrame = self.parameters[
+                "BONDS"].reset_index()
 
             with ExitStack() as stack:
                 fixed_prm: TextIO = stack.enter_context(
@@ -512,6 +518,6 @@ class FluctMatch(FluctMatchBase):
             # Create human-readable table
             logger.info("Writing thermodynamics data file.")
             (pd.DataFrame(thermo, columns=columns)
-                .drop(["RESN", "Atm/res", "Ign.frq"], axis=1)
-                .to_csv(data_file, index=False, float_format="%.4f",
-                        encoding="utf-8"))
+             .drop(["RESN", "Atm/res", "Ign.frq"], axis=1)
+             .to_csv(data_file, index=False, float_format="%.4f",
+                     encoding="utf-8"))

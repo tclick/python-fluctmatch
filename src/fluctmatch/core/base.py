@@ -111,6 +111,7 @@ class ModelBase(abc.ABC):
     universe : :class:`~MDAnalysis.Universe`
         The transformed universe
     """
+
     def __init__(self, **kwargs):
         """Initialise like a normal MDAnalysis Universe but give the mapping and
         com keywords.
@@ -191,7 +192,7 @@ class ModelBase(abc.ABC):
             [bead.segids[0].split("_")[-1] for bead in beads], dtype=object)
         residx, (new_resids, new_resnames,
                  perres_segids) = topbase.change_squash(
-                     (resids, resnames, segids), (resids, resnames, segids))
+            (resids, resnames, segids), (resids, resnames, segids))
 
         # transform from atom:Rid to atom:Rix
         residueids: Resids = Resids(new_resids)
@@ -210,7 +211,7 @@ class ModelBase(abc.ABC):
 
         # Add additonal attributes
         attrs: List[TopologyAttr] = [
-            atomids, atomnames, vdwradii,  residueids,
+            atomids, atomnames, vdwradii, residueids,
             residuenums, residuenames, segids,
         ]
         for attr in attrs:
@@ -439,7 +440,7 @@ def Merge(*args: MDUniverse) -> mda.Universe:
 
     dimensions: np.ndarray = (trajectory1.dimensions_array if hasattr(
         trajectory1, "dimensions_array") else np.asarray(
-            [ts.dimensions for ts in trajectory1]))
+        [ts.dimensions for ts in trajectory1]))
 
     trajectory1.rewind()
     if trajectory1.n_frames > 1:

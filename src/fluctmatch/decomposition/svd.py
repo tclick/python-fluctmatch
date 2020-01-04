@@ -183,6 +183,7 @@ class SVD(BaseEstimator, TransformerMixin):
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
     """
+
     def __init__(self,
                  n_components: Union[int, float, None, str] = None,
                  copy: bool = True,
@@ -196,7 +197,7 @@ class SVD(BaseEstimator, TransformerMixin):
         self.tol: float = tol
         self.iterated_power: Union[int, str] = iterated_power
         self.random_state: Union[int, np.random.
-                                 RandomState, None] = random_state
+            RandomState, None] = random_state
 
     def fit(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> 'SVD':
         """Fit the model with X.
@@ -238,7 +239,7 @@ class SVD(BaseEstimator, TransformerMixin):
 
         return U
 
-    def _fit(self, X: np.ndarray) -> Tuple[np.ndarray,...]:
+    def _fit(self, X: np.ndarray) -> Tuple[np.ndarray, ...]:
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -337,7 +338,7 @@ class SVD(BaseEstimator, TransformerMixin):
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
             self.noise_variance_: float = explained_variance_[
-                n_components:].mean()
+                                          n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
@@ -367,7 +368,7 @@ class SVD(BaseEstimator, TransformerMixin):
             self.random_state)
 
         if svd_solver == 'arpack' and n_components == min(
-                n_samples, n_features):
+            n_samples, n_features):
             raise ValueError(
                 "n_components=%r must be strictly less than "
                 "min(n_samples, n_features)=%r with "
@@ -404,7 +405,7 @@ class SVD(BaseEstimator, TransformerMixin):
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
             self.noise_variance_: float = explained_variance_[
-                n_components:].mean()
+                                          n_components:].mean()
         else:
             self.noise_variance_: float = 0.
 
