@@ -62,7 +62,7 @@ class TestPSFWriter(object):
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.xplor.psf"
         with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, \
-                mda.Writer(filename) as w:
+            mda.Writer(filename) as w:
             w.write(u.atoms)
             writer.assert_called()
 

@@ -50,7 +50,8 @@ def test_average_structure():
     universe: mda.Universe = mda.Universe(TPR, XTC)
     avg_positions: np.ndarray = np.mean(
         [universe.atoms.positions for _ in universe.trajectory], axis=0)
-    positions: np.ndarray = fmutils.AverageStructure(universe.atoms).run().result
+    positions: np.ndarray = fmutils.AverageStructure(
+        universe.atoms).run().result
     testing.assert_allclose(
         positions,
         avg_positions,

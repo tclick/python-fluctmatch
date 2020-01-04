@@ -35,7 +35,6 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
-
 from pathlib import Path
 from typing import Union
 from unittest.mock import patch
@@ -59,10 +58,9 @@ class TestRTFWriter(object):
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.rtf"
         with patch("fluctmatch.parsers.writers.RTF.Writer.write") as writer, \
-                mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+            mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
             writer.assert_called()
-
 
     def test_roundtrip(self, u: mda.Universe, tmp_path: Path):
         # Write out a copy of the Universe, and compare this against the

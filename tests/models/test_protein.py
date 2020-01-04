@@ -211,7 +211,8 @@ class TestPolar:
             cg_universe.trajectory.n_frames, u.trajectory.n_frames,
             err_msg="All-atom and coarse-grain trajectories unequal.")
 
-    def test_ncsc_polar_positions(self, u: mda.Universe, system: polar.Model, other: ncsc.Model):
+    def test_ncsc_polar_positions(self, u: mda.Universe, system: polar.Model,
+                                  other: ncsc.Model):
         polar_universe: mda.Universe = system.transform(u)
 
         ncsc_universe: mda.Universe = other.transform(u)

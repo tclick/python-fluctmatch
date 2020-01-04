@@ -60,7 +60,7 @@ class TestPRMWriter(object):
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.prm"
         with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, \
-                mda.Writer(filename, nonbonded=True) as ofile:
+            mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(u)
             writer.assert_called()
 

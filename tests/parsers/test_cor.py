@@ -59,7 +59,7 @@ class TestCORWriter:
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.cor"
         with patch("fluctmatch.parsers.writers.COR.Writer.write") as writer, \
-                mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+            mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
             writer.assert_called()
 
@@ -108,7 +108,7 @@ class TestCORWriterMissingAttrs:
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), \
-                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+             mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
 
     @pytest.mark.parametrize('missing_attr', req_attrs)
@@ -119,7 +119,7 @@ class TestCORWriterMissingAttrs:
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), \
-                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+             mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
 
         u2 = mda.Universe(outfile)

@@ -71,7 +71,7 @@ class TestICWriter:
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.ic"
         with patch("fluctmatch.parsers.writers.IC.Writer.write") as icw, \
-                mda.Writer(filename) as ofile:
+            mda.Writer(filename) as ofile:
             ofile.write(u)
             icw.assert_called()
 
