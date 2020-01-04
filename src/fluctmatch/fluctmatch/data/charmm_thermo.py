@@ -37,7 +37,7 @@
 #
 # ------------------------------------------------------------------------------
 
-thermodynamics = ("""
+thermodynamics = """
     * Calculate thermodynamic qunatities for an ENM structure.
     *
 
@@ -87,4 +87,4 @@ thermodynamics = ("""
     close unit @fileu
 
     stop
-    """)
+    """

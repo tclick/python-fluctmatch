@@ -56,8 +56,8 @@ from ..analysis.paramtable import ParamTable
 
 
 @click.command(
-    "sca",
-    short_help="Statistical coupling analysis (SCA) on coupling strength")
+    "sca", short_help="Statistical coupling analysis (SCA) on coupling strength"
+)
 @click.option(
     "-l",
     "--logfile",
@@ -74,28 +74,32 @@ from ..analysis.paramtable import ParamTable
     default=100,
     show_default=True,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of random iterations")
+    help="Number of random iterations",
+)
 @click.option(
     "--std",
     metavar="STDDEV",
     default=2,
     show_default=True,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of std. deviations for beyond second eigenmode")
+    help="Number of std. deviations for beyond second eigenmode",
+)
 @click.option(
     "-k",
     "--kpos",
     metavar="KPOS",
     default=0,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of eigenmodes [default: auto]")
+    help="Number of eigenmodes [default: auto]",
+)
 @click.option(
     "-p",
     "--pcut",
     default=0.95,
     show_default=True,
     type=np.float,
-    help="Cutoff value for sector selection")
+    help="Cutoff value for sector selection",
+)
 @click.option(
     "-r",
     "--ressep",
@@ -103,26 +107,28 @@ from ..analysis.paramtable import ParamTable
     default=3,
     show_default=True,
     type=click.IntRange(0, None, clamp=True),
-    help="Number of residues to exclude in I,I+r")
+    help="Number of residues to exclude in I,I+r",
+)
 @click.option(
     "-o",
     "--output",
     default=Path.cwd() / "scafluct.db",
     show_default=True,
-    type=click.Path(
-        exists=False,
-        file_okay=True,
-        resolve_path=True,
-    ),
-    help="Output filename")
+    type=click.Path(exists=False, file_okay=True, resolve_path=True),
+    help="Output filename",
+)
 @click.option(
     "-s",
     "--subset",
     metavar="SEGID RES RES",
-    type=(str, click.IntRange(1, None, clamp=True),
-          click.IntRange(1, None, clamp=True)),
+    type=(
+        str,
+        click.IntRange(1, None, clamp=True),
+        click.IntRange(1, None, clamp=True),
+    ),
     multiple=True,
-    help="Subset of a system (SEGID FIRST LAST)")
+    help="Subset of a system (SEGID FIRST LAST)",
+)
 @click.option(
     "--all",
     "transformation",
@@ -157,54 +163,60 @@ from ..analysis.paramtable import ParamTable
     help="ICA method",
 )
 @click.argument(
-    "filename",
-    type=click.Path(
-        exists=True,
-        file_okay=True,
-        resolve_path=True,
-    ))
-def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
-        transformation, ictype, filename):
+    "filename", type=click.Path(exists=True, file_okay=True, resolve_path=True)
+)
+def cli(
+    logfile,
+    ntrials,
+    std,
+    kpos,
+    pcut,
+    ressep,
+    output,
+    subset,
+    transformation,
+    ictype,
+    filename,
+):
     # Setup logger
-    logging.config.dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,  # this fixes the problem
-        "formatters": {
-            "standard": {
-                "class": "logging.Formatter",
-                "format": "%(name)-12s %(levelname)-8s %(message)s",
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,  # this fixes the problem
+            "formatters": {
+                "standard": {
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                "detailed": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
             },
-            "detailed": {
-                "class": "logging.Formatter",
-                "format":
-                    "%(asctime)s %(name)-15s %(levelname)-8s %(message)s",
-                "datefmt": "%m-%d-%y %H:%M",
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
             },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "standard",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "filename": logfile,
-                "level": "INFO",
-                "mode": "w",
-                "formatter": "detailed",
-            }
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["console", "file"]
-        },
-    })
+            "root": {"level": "INFO", "handlers": ["console", "file"]},
+        }
+    )
     logger: logging.Logger = logging.getLogger(__name__)
 
     # Load the table, separate by I,I+r, and if requested, create a subset.
-    logger.info("Loading parameter table {}".format(
-        click.format_filename(filename)))
+    logger.info(
+        "Loading parameter table {}".format(click.format_filename(filename))
+    )
     table = ParamTable(ressep=ressep)
     table.from_file(click.format_filename(filename))
     kb = table._separate(table.table)
@@ -230,16 +242,15 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         logger.info("Accounting for all interactions.")
     kb = table.per_residue
 
-    D_info = dict(
-        kb=kb,
-        npos=kb.index.size,
-        ressep=ressep,
-    )
+    D_info = dict(kb=kb, npos=kb.index.size, ressep=ressep)
 
     if subset:
         segid, start, stop = subset[0]
-        logger.info("Using a subset of {} between {:d} and {:d}".format(
-            segid, start, stop))
+        logger.info(
+            "Using a subset of {} between {:d} and {:d}".format(
+                segid, start, stop
+            )
+        )
         kb = kb.loc[segid].loc[start:stop]
         D_info["kb"] = kb.copy(deep=True)
         D_info["subset"] = subset[0]
@@ -253,22 +264,21 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
 
     Csca: np.ndarray = fluctsca.get_correlation(kb)
     D_sca = dict(
-        U=U,
-        Csca=Csca,
-        Lrand=Lrand if kpos < 1 else None,
-        ntrials=ntrials
+        U=U, Csca=Csca, Lrand=Lrand if kpos < 1 else None, ntrials=ntrials
     )
 
     # Determine the number of eigenmodes if kpos = 0
     Lsca, Vsca = fluctsca.eigenVect(Csca)
-    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand,
-                                     stddev=std) if kpos == 0 else kpos
+    _kpos: int = fluctsca.chooseKpos(
+        Lsca, Lrand, stddev=std
+    ) if kpos == 0 else kpos
     logger.info("Selecting {:d} eigenmodes".format(_kpos))
 
     # Calculate IC sectors
     logger.info("Calculating the ICA for the residues.")
-    time_info = ica.ICA(n_components=_kpos, method=ictype,
-                        max_iter=ntrials, whiten=False)
+    time_info = ica.ICA(
+        n_components=_kpos, method=ictype, max_iter=ntrials, whiten=False
+    )
     try:
         Vpica: np.ndarray = time_info.fit_transform(Vsca[:, :_kpos])
     except IndexError:
@@ -276,20 +286,25 @@ def cli(logfile, ntrials, std, kpos, pcut, ressep, output, subset,
         sys.exit(os.EX_DATAERR)
 
     ics, icsize, sortedpos, cutoff, scaled_pd, pdf = fluctsca.icList(
-        Vpica, _kpos, Csca, p_cut=pcut)
+        Vpica, _kpos, Csca, p_cut=pcut
+    )
     percentage: float = len(sortedpos) / D_info["npos"] * 100
-    logger.info(f"{len(sortedpos):d} residues are within {_kpos:d} "
-                f"sectors: {percentage:.2f}%")
+    logger.info(
+        f"{len(sortedpos):d} residues are within {_kpos:d} "
+        f"sectors: {percentage:.2f}%"
+    )
 
     logger.info("Calculating the ICA for the windows.")
     Usca: np.ndarray = U.dot(Vsca[:, :_kpos]).dot(
-        np.diag(1 / np.sqrt(Lsca[:_kpos])))
+        np.diag(1 / np.sqrt(Lsca[:_kpos]))
+    )
     Upica: np.ndarray = time_info.mixing_.dot(Usca.T).T
     for k in range(Upica.shape[1]):
         Upica[:, k] /= np.sqrt(Upica[:, k].T.dot(Upica[:, k]))
 
-    res_info = ica.ICA(n_components=_kpos, method=ictype,
-                       max_iter=ntrials, whiten=False)
+    res_info = ica.ICA(
+        n_components=_kpos, method=ictype, max_iter=ntrials, whiten=False
+    )
     Usica: np.ndarray = res_info.fit_transform(Usca)
 
     D_sector = dict(

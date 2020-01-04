@@ -89,9 +89,10 @@ class Entropy(object):
 
         entropy: pd.DataFrame = self._table._separate(self._table.table)
         entropy: pd.DataFrame = entropy.groupby(level=header).apply(
-            lambda x: x / x.sum())
+            lambda x: x / x.sum()
+        )
         entropy: pd.DataFrame = entropy.groupby(level=header).agg(stats.entropy)
-        entropy.replace(-np.inf, 0., inplace=True)
+        entropy.replace(-np.inf, 0.0, inplace=True)
 
         return entropy
 
@@ -145,8 +146,9 @@ class Entropy(object):
 
         header: List[str, str] = ["segidI", "resI"]
         table: pd.DataFrame = self._table._separate(self._table.table)
-        hist, edges = np.histogram(table, range=(1e-4, table.values.max()),
-                                   bins=bins)
+        hist, edges = np.histogram(
+            table, range=(1e-4, table.values.max()), bins=bins
+        )
         hist: np.ndarray = (hist / table.size).astype(dtype=np.float)
         xaxis: np.ndarray = (edges[:-1] + edges[1:]) / 2
         try:
@@ -155,7 +157,7 @@ class Entropy(object):
             penalty: np.ndarray = xaxis[-1]
 
         # Calculate average coupling strength per residue.
-        table[table == 0.]: pd.DataFrame = penalty
+        table[table == 0.0]: pd.DataFrame = penalty
         #     meanI = tmp.groupby(level=["resI"]).mean()
         table: pd.DataFrame = table.groupby(level=header).transform(normalize)
 
@@ -167,10 +169,11 @@ class Entropy(object):
         # Caclulate the relative entropy
         S_P: pd.DataFrame = P * np.log(P / Q)
         S_Q: pd.DataFrame = Q * np.log(P / Q)
-        S_P.fillna(0., inplace=True)
-        S_Q.fillna(0., inplace=True)
-        entropy: pd.DataFrame = -(S_P.groupby(level=header).sum() +
-                                  S_Q.groupby(level=header).sum())
+        S_P.fillna(0.0, inplace=True)
+        S_Q.fillna(0.0, inplace=True)
+        entropy: pd.DataFrame = -(
+            S_P.groupby(level=header).sum() + S_Q.groupby(level=header).sum()
+        )
         entropy[entropy == -0.0] = entropy[entropy == -0.0].abs()
 
         return entropy

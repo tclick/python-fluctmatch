@@ -48,8 +48,9 @@ from fluctmatch.core.utils import modeller
 from fluctmatch.libs.fluctmatch import write_charmm_files
 
 
-@click.command("convert",
-               short_help="Convert from all-atom to coarse-grain model.")
+@click.command(
+    "convert", short_help="Convert from all-atom to coarse-grain model."
+)
 @click.option(
     "-s",
     "topology",
@@ -155,8 +156,10 @@ from fluctmatch.libs.fluctmatch import write_charmm_files
     help="Include segment IDs in internal coordinate files",
 )
 @click.option(
-    "--no-cmap", "cmap", is_flag=True,
-    help="Include CMAP section in CHARMM PSF file"
+    "--no-cmap",
+    "cmap",
+    is_flag=True,
+    help="Include CMAP section in CHARMM PSF file",
 )
 @click.option(
     "--no-cheq",
@@ -167,48 +170,68 @@ from fluctmatch.libs.fluctmatch import write_charmm_files
 @click.option(
     "--uniform", "mass", is_flag=True, help="Set uniform mass of beads to 1.0"
 )
-@click.option("--write", "write_traj", is_flag=True,
-              help="Convert the trajectory file")
+@click.option(
+    "--write", "write_traj", is_flag=True, help="Convert the trajectory file"
+)
 @click.option(
     "--list",
     "model_list",
     is_flag=True,
     help="List available core with their descriptions",
 )
-def cli(topology, trajectory, logfile, outdir, prefix, rmin, rmax, model,
-        charmm_version, com, extended, resid, cmap, cheq, nonbonded, mass,
-        write_traj, model_list):
+def cli(
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    prefix,
+    rmin,
+    rmax,
+    model,
+    charmm_version,
+    com,
+    extended,
+    resid,
+    cmap,
+    cheq,
+    nonbonded,
+    mass,
+    write_traj,
+    model_list,
+):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 

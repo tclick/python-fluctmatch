@@ -66,22 +66,21 @@ def modeller(*args, **kwargs) -> mda.Universe:
     -------
     A coarse-grain model
     """
-    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar", ])]
+    models: List[str] = [_.upper() for _ in kwargs.pop("model", ["polar"])]
     try:
         if "ENM" in models:
             logger.warning(
-                "ENM model detected. All other core are " "being ignored.")
+                "ENM model detected. All other core are " "being ignored."
+            )
             model: ModelBase = _MODELS["ENM"](**kwargs)
             return model.transform(mda.Universe(*args, **kwargs))
     except Exception as exc:
-        logger.exception(
-            "An error occurred while trying to create the universe.")
+        logger.exception("An error occurred while trying to create the universe.")
         raise RuntimeError from exc
 
     try:
         universe: List[mda.Universe] = [
-            _MODELS[_]().transform(mda.Universe(*args))
-            for _ in models
+            _MODELS[_]().transform(mda.Universe(*args)) for _ in models
         ]
     except KeyError:
         tb: List[str] = traceback.format_exc()

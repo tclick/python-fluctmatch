@@ -37,7 +37,7 @@
 #
 # ------------------------------------------------------------------------------
 
-nma = ("""
+nma = """
     * Normal mode analysis of structure for parameter fitting. The original CHARMM
     * script was written by Prof. Jhih-Wei Chu
     *
@@ -105,4 +105,4 @@ nma = ("""
     end
 
     stop
-    """)
+    """

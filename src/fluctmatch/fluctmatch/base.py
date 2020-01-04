@@ -135,8 +135,7 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         self.outdir.mkdir(exist_ok=True, parents=True)
 
     @abc.abstractmethod
-    def initialize(self, nma_exec: str = None,
-                   restart: bool = False) -> NoReturn:
+    def initialize(self, nma_exec: str = None, restart: bool = False) -> NoReturn:
         """Create an elastic network model from a basic coarse-grain model.
 
         Parameters
@@ -150,9 +149,14 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def run(self, nma_exec: str = None, tol: float = 1.e-4,
-            min_cycles: int = 200, max_cycles: int = 200,
-            force_tol: float = 0.02) -> NoReturn:
+    def run(
+        self,
+        nma_exec: str = None,
+        tol: float = 1.0e-4,
+        min_cycles: int = 200,
+        max_cycles: int = 200,
+        force_tol: float = 0.02,
+    ) -> NoReturn:
         """Perform a self-consistent fluctuation matching.
 
         Parameters

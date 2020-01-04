@@ -48,7 +48,7 @@ import pandas as pd
 
 @click.command(
     "table_convert",
-    short_help="Transform an ENM IC table name to corresponding atoms."
+    short_help="Transform an ENM IC table name to corresponding atoms.",
 )
 @click.option(
     "-l",
@@ -98,36 +98,38 @@ import pandas as pd
 def cli(logfile, top1, top2, table, outfile):
     # Setup logger
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 

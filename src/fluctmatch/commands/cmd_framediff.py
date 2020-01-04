@@ -84,36 +84,38 @@ from fluctmatch.analysis import paramtable
 def cli(logfile, outdir, ressep, table):
     # Setup logger
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -129,21 +131,23 @@ def cli(logfile, outdir, ressep, table):
     filename = Path(outdir) / "dframe_coupling.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing frame differences to {filename}")
-        d_table.to_csv(output, header=True, index=True, float_format="%.4f",
-                       encoding="utf-8")
+        d_table.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "dframe_perres.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing per residue frame differences to {filename}")
-        d_perres.to_csv(output, header=True, index=True, float_format="%.4f",
-                        encoding="utf-8")
+        d_perres.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "dframe_interactions.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing residue-residue frame differences to {filename}")
-        d_interactions.to_csv(output, header=True, index=True,
-                              float_format="%.4f",
-                              encoding="utf-8")
+        d_interactions.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")

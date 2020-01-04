@@ -75,7 +75,7 @@ def fluct_stats(X: np.ndarray) -> dict:
     D: dict = dict(
         mean=np.tile(mean_, (1, n_windows)),
         std=np.tile(std_, (1, n_windows)),
-        positive=np.all(X >= 0.)
+        positive=np.all(X >= 0.0),
     )
     return D
 
@@ -95,12 +95,13 @@ def randomize(X: np.ndarray, n_trials: int = 100) -> np.ndarray:
         Array of eigenvalues
     """
     from sklearn.preprocessing import StandardScaler
+
     scaler = StandardScaler()
 
     X: np.ndarray = check_array(X, copy=True, dtype=FLOAT_DTYPES)
     n_samples, _ = X.shape
     scaler.fit(X)
-    positive = np.all(X >= 0.)
+    positive = np.all(X >= 0.0)
     mean: np.ndarray = np.tile(scaler.mean_, (n_samples, 1))
     std: np.ndarray = np.tile(scaler.var_, (n_samples, 1))
 
@@ -109,7 +110,7 @@ def randomize(X: np.ndarray, n_trials: int = 100) -> np.ndarray:
     for _ in range(n_trials):
         Y = np.random.normal(mean, std)
         if positive:
-            Y[Y < 0.] = 0.
+            Y[Y < 0.0] = 0.0
         corr = get_correlation(Y)
         L, _ = eigenVect(corr)
         Lrand.append(L)
@@ -169,8 +170,9 @@ def eigenVect(M: np.ndarray):
     return eigenValues, eigenVectors
 
 
-def correlate(Usca: np.ndarray, Lsca: np.ndarray,
-              kmax: int = 6) -> List[np.ndarray]:
+def correlate(
+    Usca: np.ndarray, Lsca: np.ndarray, kmax: int = 6
+) -> List[np.ndarray]:
     """Calculate the correlation matrix of *Usca* with *Lsca* eigenvalues.
 
     Parameters
@@ -188,8 +190,7 @@ def correlate(Usca: np.ndarray, Lsca: np.ndarray,
     """
     S: np.ndarray = np.power(Lsca, 2)
     Ucorr: List[np.ndarray] = [
-        np.outer(Usca[:, _].dot(S[_]), Usca.T[_])
-        for _ in range(kmax)
+        np.outer(Usca[:, _].dot(S[_]), Usca.T[_]) for _ in range(kmax)
     ]
     return Ucorr
 
@@ -214,9 +215,18 @@ def chooseKpos(Lsca: np.ndarray, Lrand: np.ndarray, stddev: float = 2.0) -> int:
     return Lsca[Lsca > value].size
 
 
-def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
-             dotsize=9, notinunits=1):
-    ''' 3d scatter plot specified by 'units', which must be a list of elements
+def figUnits(
+    v1,
+    v2,
+    v3,
+    units,
+    filename,
+    fig_path=Path.cwd(),
+    marker="o",
+    dotsize=9,
+    notinunits=1,
+):
+    """ 3d scatter plot specified by 'units', which must be a list of elements
     in the class Unit_. See figColors_ for the color code. Admissible color
     codes are in [0 1] (light/dark gray can also be obtained by using -1/+1).
     For instance: 0->red, 1/3->green, 2/3-> blue.
@@ -240,13 +250,13 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
     :Example:
      >>> figUnits(v1, v2, units, marker='o', gradcol=0, dotsize=9, notinunits=1)
 
-     '''
+     """
     import colorsys
 
     # Plot all items in white:
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.elev, ax.azim = 30., 60.
+    ax = fig.add_subplot(111, projection="3d")
+    ax.elev, ax.azim = 30.0, 60.0
     ax.axes
 
     if notinunits == 1:
@@ -256,8 +266,9 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
             v3,
             marker,
             markersize=dotsize,
-            markerfacecolor='w',
-            markeredgecolor='k')
+            markerfacecolor="w",
+            markeredgecolor="k",
+        )
     elif len(notinunits) == 3:
         ax.plot(
             notinunits[0],
@@ -265,8 +276,9 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
             notinunits[2],
             marker,
             markersize=dotsize,
-            markerfacecolor='w',
-            markeredgecolor='k')
+            markerfacecolor="w",
+            markeredgecolor="k",
+        )
 
     # Plot items in the units with colors:
     for u in units:
@@ -274,9 +286,9 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
         if u.col >= 0 and u.col < 1:
             bgr = colorsys.hsv_to_rgb(u.col, 1, 1)
         if u.col == 1:
-            bgr = [.3, .3, .3]
+            bgr = [0.3, 0.3, 0.3]
         if u.col < 0:
-            bgr = [.7, .7, .7]
+            bgr = [0.7, 0.7, 0.7]
         ax.plot(
             v1[np.ix_(items_list)],
             v2[np.ix_(items_list)],
@@ -284,13 +296,14 @@ def figUnits(v1, v2, v3, units, filename, fig_path=Path.cwd(), marker='o',
             marker,
             markersize=dotsize,
             markerfacecolor=bgr,
-            markeredgecolor='k')
+            markeredgecolor="k",
+        )
 
-    ax.set_xlabel('IC{:d}'.format(1))
-    ax.set_ylabel('IC{:d}'.format(2))
-    ax.set_zlabel('IC{:d}'.format(3))
+    ax.set_xlabel("IC{:d}".format(1))
+    ax.set_ylabel("IC{:d}".format(2))
+    ax.set_zlabel("IC{:d}".format(3))
     fig.tight_layout()
-    fig.savefig(Path(fig_path) / 'svd_ica' / filename, dpi=600)
+    fig.savefig(Path(fig_path) / "svd_ica" / filename, dpi=600)
 
 
 # From pySCA 6.0
@@ -346,14 +359,18 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
     for k in range(kpos):
         pd: np.ndarray = t.fit(Vpica[:, k])
         all_fits.append(pd)
-        iqr: float = (scoreatpercentile(Vpica[:, k], 75) -
-                      scoreatpercentile(Vpica[:, k], 25))
+        iqr: float = (
+            scoreatpercentile(Vpica[:, k], 75)
+            - scoreatpercentile(Vpica[:, k], 25)
+        )
         binwidth: float = 2 * iqr * np.power(Npos, -0.33)
         nbins: int = np.round(
-            (Vpica[:, k].max() - Vpica[:, k].min()) / binwidth).astype(np.int)
+            (Vpica[:, k].max() - Vpica[:, k].min()) / binwidth
+        ).astype(np.int)
         hist, bin_edges = np.histogram(Vpica[:, k], nbins)
-        x_dist: np.ndarray = np.linspace(bin_edges.min(), bin_edges.max(),
-                                         num=100)
+        x_dist: np.ndarray = np.linspace(
+            bin_edges.min(), bin_edges.max(), num=100
+        )
         area_hist: np.ndarray = Npos * (bin_edges[2] - bin_edges[1])
         scaled_pdf.append(area_hist * t.pdf(x_dist, *pd))
         cd: np.ndarray = t.cdf(x_dist, *pd)
@@ -375,14 +392,15 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
     icsize = []
     ics = []
     Csca_nodiag: np.ndarray = Csca.copy()
-    np.fill_diagonal(Csca_nodiag, 0.)
+    np.fill_diagonal(Csca_nodiag, 0.0)
     for k in range(kpos):
         icpos_tmp: list = list(ic_init[k])
         for kprime in (kp for kp in range(kpos) if (kp != k)):
             tmp = [v for v in icpos_tmp if v in ic_init[kprime]]
             for i in tmp:
-                remsec = (np.linalg.norm(Csca_nodiag[i, ic_init[k]])
-                          < np.linalg.norm(Csca_nodiag[i, ic_init[kprime]]))
+                remsec = np.linalg.norm(
+                    Csca_nodiag[i, ic_init[k]]
+                ) < np.linalg.norm(Csca_nodiag[i, ic_init[kprime]])
                 if remsec:
                     icpos_tmp.remove(i)
         sortedpos += sorted(icpos_tmp, key=lambda i: -Vpica[i, k])
@@ -433,14 +451,14 @@ def basicICA(x, r, Niter):
         w_old = np.copy(w)
         u = w.dot(x)
         w += r * (
-            M * np.eye(L) + (1 - 2 * (1. / (1 + np.exp(-u)))).dot(u.T)).dot(
-            w)
+            M * np.eye(L) + (1 - 2 * (1.0 / (1 + np.exp(-u)))).dot(u.T)
+        ).dot(w)
         delta = (w - w_old).ravel()
         change.append(delta.dot(delta.T))
     return [w, change]
 
 
-def rotICA(V, kmax=6, learnrate=.0001, iterations=10000):
+def rotICA(V, kmax=6, learnrate=0.0001, iterations=10000):
     """ ICA rotation
 
     Uses basicICA with default parameters and normalization of outputs.
@@ -454,6 +472,7 @@ def rotICA(V, kmax=6, learnrate=.0001, iterations=10000):
     Vica = (W.dot(V1)).T
     for n in range(kmax):
         imax = abs(Vica[:, n]).argmax()
-        Vica[:, n] = np.sign(Vica[imax, n]) * Vica[:, n] / np.linalg.norm(
-            Vica[:, n])
+        Vica[:, n] = (
+            np.sign(Vica[imax, n]) * Vica[:, n] / np.linalg.norm(Vica[:, n])
+        )
     return Vica, W

@@ -53,9 +53,14 @@ from ..libs.center import Center2D
 
 
 class FluctSCA(BaseEstimator, TransformerMixin):
-    def __init__(self, n_components: int = None, max_iter: int = 1000,
-                 whiten: bool = True, stddev: float = 2.0,
-                 method: str = "extended-infomax"):
+    def __init__(
+        self,
+        n_components: int = None,
+        max_iter: int = 1000,
+        whiten: bool = True,
+        stddev: float = 2.0,
+        method: str = "extended-infomax",
+    ):
         super().__init__()
         self.n_components_: int = n_components
         self.max_iter: int = max_iter
@@ -77,13 +82,13 @@ class FluctSCA(BaseEstimator, TransformerMixin):
         mean: np.ndarray = np.tile(mean, (1, n_windows))
         std: np.ndarray = np.std(X, axis=-1)[:, None]
         std: np.ndarray = np.tile(std, (1, n_windows))
-        positive = np.all(X >= 0.)
+        positive = np.all(X >= 0.0)
 
         Lrand = np.empty((self.max_iter, np.min(X.shape)), dtype=X.dtype)
         for _ in range(self.max_iter):
             Y = np.random.normal(mean, std)
             if positive:
-                Y[Y < 0.] = 0.
+                Y[Y < 0.0] = 0.0
             if self.whiten:
                 Y = Center2D().fit_transform(Y)
             Lrand[_, :] = linalg.svdvals(Y).copy()
@@ -92,17 +97,30 @@ class FluctSCA(BaseEstimator, TransformerMixin):
     def _calculate_maxdims(self, X: np.ndarray):
         """Calculate the significant number of eigenvalues.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=True,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
         value: float = X[:, 1].mean() + ((self.stddev + 1) * X[:, 1].std())
         self.n_components_: int = self.singular_values_[
-            self.singular_values_ > value].size
+            self.singular_values_ > value
+        ].size
 
     def fit(self, X: np.ndarray) -> "FluctSCA":
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=True,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=True,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if self.whiten:
             X = Center2D().fit_transform(X)
@@ -115,16 +133,26 @@ class FluctSCA(BaseEstimator, TransformerMixin):
 
     def transform(self, X: np.ndarray, copy: bool = True):
         check_is_fitted(self, "Lsca")
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=copy,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
-        ica = ICA(n_components=self.n_components_, method=self.method,
-                  whiten=self.whiten)
+        ica = ICA(
+            n_components=self.n_components_,
+            method=self.method,
+            whiten=self.whiten,
+        )
         self.sources_ = ica.fit_transform(X)
 
         # Perform truncated singular value decomposition
-        truncated = TruncatedSVD(n_components=self.n_components_,
-                                 n_iter=self.max_iter)
+        truncated = TruncatedSVD(
+            n_components=self.n_components_, n_iter=self.max_iter
+        )
         pipeline = make_pipeline(Center2D(), truncated)
         self.U_ = pipeline.fit_transform(X)

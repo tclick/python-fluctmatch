@@ -76,23 +76,29 @@ class Writer(CRD.CRDWriter):
     .. versionchanged:: 0.11.0
        Frames now 0-based instead of 1-based
     """
+
     format: ClassVar[str] = "COR"
     units: ClassVar[Dict[str, Optional[str]]] = {
-        "time": None, "length": "Angstrom"
+        "time": None,
+        "length": "Angstrom",
     }
 
     fmt: Dict[str, str] = dict(
         # crdtype = "extended"
         # fortran_format = "(2I10,2X,A8,2X,A8,3F20.10,2X,A8,2X,A8,F20.10)"
-        ATOM_EXT=("{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
-                  "{pos[0]:20.10f}{pos[1]:20.10f}{pos[2]:20.10f}  "
-                  "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}"),
+        ATOM_EXT=(
+            "{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
+            "{pos[0]:20.10f}{pos[1]:20.10f}{pos[2]:20.10f}  "
+            "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}"
+        ),
         NUMATOMS_EXT="{0:10d}  EXT",
         # crdtype = "standard"
         # fortran_format = "(2I5,1X,A4,1X,A4,3F10.5,1X,A4,1X,A4,F10.5)"
-        ATOM=("{serial:5d}{totRes:5d} {resname:<4.4s} {name:<4.4s}"
-              "{pos[0]:10.5f}{pos[1]:10.5f}{pos[2]:10.5f} "
-              "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}"),
+        ATOM=(
+            "{serial:5d}{totRes:5d} {resname:<4.4s} {name:<4.4s}"
+            "{pos[0]:10.5f}{pos[1]:10.5f}{pos[2]:10.5f} "
+            "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}"
+        ),
         TITLE="* FRAME {frame} FROM {where}",
         NUMATOMS="{0:5d}",
     )
@@ -109,8 +115,11 @@ class Writer(CRD.CRDWriter):
         self.filename: Path = Path(filename).with_suffix(".cor")
         self.crd: Optional[str] = None
 
-    def write(self, selection: Union[mda.Universe, mda.AtomGroup],
-              frame: Optional[int] = None):
+    def write(
+        self,
+        selection: Union[mda.Universe, mda.AtomGroup],
+        frame: Optional[int] = None,
+    ):
         """Write selection at current trajectory frame to file.
 
         write(selection,frame=FRAME)
@@ -166,19 +175,26 @@ class Writer(CRD.CRDWriter):
                 missing_topology.append(attr)
         if missing_topology:
             miss: str = ", ".join(missing_topology)
-            warnings.warn(f"Supplied AtomGroup was missing the following "
-                          f"attributes: {miss}. These will be written with "
-                          f"default values.")
-            logger.warning(f"Supplied AtomGroup was missing the following "
-                           f"attributes: {miss}. These will be written with "
-                           f"default values.")
+            warnings.warn(
+                f"Supplied AtomGroup was missing the following "
+                f"attributes: {miss}. These will be written with "
+                f"default values."
+            )
+            logger.warning(
+                f"Supplied AtomGroup was missing the following "
+                f"attributes: {miss}. These will be written with "
+                f"default values."
+            )
 
         with open(self.filename, "w") as crd:
             # Write Title
             logger.info(f"Writing {self.filename}")
-            print(self.fmt["TITLE"].format(frame=frame,
-                                           where=u.trajectory.filename),
-                  file=crd)
+            print(
+                self.fmt["TITLE"].format(
+                    frame=frame, where=u.trajectory.filename
+                ),
+                file=crd,
+            )
             print("*", file=crd)
 
             # Write NUMATOMS
@@ -187,11 +203,15 @@ class Writer(CRD.CRDWriter):
             # Write all atoms
             current_resid: int = 1
             resids: List[int] = attrs["resids"]
-            for (i, pos, resname, name, chainID,
-                 resid, tempfactor) in zip(range(n_atoms), coordinates,
-                                           attrs["resnames"], attrs["names"],
-                                           attrs["chainIDs"], attrs["resids"],
-                                           attrs["tempfactors"]):
+            for (i, pos, resname, name, chainID, resid, tempfactor) in zip(
+                range(n_atoms),
+                coordinates,
+                attrs["resnames"],
+                attrs["names"],
+                attrs["chainIDs"],
+                attrs["resids"],
+                attrs["tempfactors"],
+            ):
                 if not i == 0 and resids[i] != resids[i - 1]:
                     current_resid += 1
 
@@ -200,8 +220,17 @@ class Writer(CRD.CRDWriter):
                 resid: int = int(str(resid)[-resid_len:])
                 current_resid: int = int(str(current_resid)[-totres_len:])
 
-                print(at_fmt.format(serial=serial, totRes=current_resid,
-                                    resname=resname, name=name, pos=pos,
-                                    chainID=chainID, resSeq=resid,
-                                    tempfactor=tempfactor), file=crd)
+                print(
+                    at_fmt.format(
+                        serial=serial,
+                        totRes=current_resid,
+                        resname=resname,
+                        name=name,
+                        pos=pos,
+                        chainID=chainID,
+                        resSeq=resid,
+                        tempfactor=tempfactor,
+                    ),
+                    file=crd,
+                )
             logger.info("Coordinate file successfully written.")

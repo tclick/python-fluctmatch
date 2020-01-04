@@ -64,10 +64,10 @@ def iterable(obj: typing.Any) -> bool:
     stream
     """
     return (
-        not isinstance(obj, str) and
-        not isinstance(obj, io.IOBase) and
-        isinstance(obj, Container) and
-        isinstance(obj, Iterable)
+        not isinstance(obj, str)
+        and not isinstance(obj, io.IOBase)
+        and isinstance(obj, Container)
+        and isinstance(obj, Iterable)
     )
 
 
@@ -101,9 +101,7 @@ def center2D(X: np.ndarray) -> np.ndarray:
     mean : array-like
          A 2-D array of the mean
     """
-    X_new = check_array(
-        X, copy=True, ensure_min_samples=2, ensure_min_features=2
-    )
+    X_new = check_array(X, copy=True, ensure_min_samples=2, ensure_min_features=2)
     X_new = scale(X_new, with_std=False, axis=0)
     X_new = scale(X_new, with_std=False, axis=1)
     mean = X - X_new

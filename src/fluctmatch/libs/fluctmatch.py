@@ -112,9 +112,9 @@ class BondStats(analysis.AnalysisBase):
         self._nbonds: int = len(self._ag.universe.bonds)
 
     def _prepare(self):
-        self.result: np.recarray = np.recarray((self._nbonds,),
-                                               dtype=[("x", float),
-                                                      ("x2", float)])
+        self.result: np.recarray = np.recarray(
+            (self._nbonds,), dtype=[("x", float), ("x2", float)]
+        )
         self.result.x: np.ndarray = np.zeros(self._nbonds)
         self.result.x2: np.ndarray = np.zeros(self._nbonds)
 
@@ -123,17 +123,20 @@ class BondStats(analysis.AnalysisBase):
         self.result.x2 += np.square(self._ag.bonds.bonds())
 
     def _conclude(self):
-        results: np.recarray = np.recarray((self._nbonds,),
-                                           dtype=[("average", float),
-                                                  ("stddev", float)])
+        results: np.recarray = np.recarray(
+            (self._nbonds,), dtype=[("average", float), ("stddev", float)]
+        )
         results.average = self.result.x / self._nframes
 
         # Polynomial expansion of standard deviation.
         # sum(x - m)^2 = nx^2 - 2nxm + nm^2, where n is the number of frames.
         # The summation of x and x^2 occur in the _single_frame method, so the
         # equation can be reduced to sum(x - m)^2 = x^2 - 2xm + nm^2.
-        results.stddev = (self.result.x2 - 2 * results.average * self.result.x
-                          + self._nframes * np.square(results.average))
+        results.stddev = (
+            self.result.x2
+            - 2 * results.average * self.result.x
+            + self._nframes * np.square(results.average)
+        )
         results.stddev /= self._nframes
         results.stddev = np.sqrt(results.stddev)
         self.result = results.copy()
@@ -196,13 +199,17 @@ def write_charmm_files(
     # Write required CHARMM input files.
     with ExitStack() as stack:
         rtf = stack.enter_context(
-            mda.Writer(filenames["topology_file"].as_posix(), **kwargs))
+            mda.Writer(filenames["topology_file"].as_posix(), **kwargs)
+        )
         stream = stack.enter_context(
-            mda.Writer(filenames["stream_file"].as_posix(), **kwargs))
+            mda.Writer(filenames["stream_file"].as_posix(), **kwargs)
+        )
         psf = stack.enter_context(
-            mda.Writer(filenames["psf_file"].as_posix(), **kwargs))
+            mda.Writer(filenames["psf_file"].as_posix(), **kwargs)
+        )
         xplor = stack.enter_context(
-            mda.Writer(filenames["xplor_psf_file"].as_posix(), **kwargs))
+            mda.Writer(filenames["xplor_psf_file"].as_posix(), **kwargs)
+        )
 
         logger.info(f"Writing {rtf.filename}...")
         rtf.write(universe)
@@ -224,16 +231,22 @@ def write_charmm_files(
     if write_traj:
         universe.trajectory.rewind()
         with ExitStack() as stack:
-            trj = stack.enter_context(mda.Writer(
-                filenames["traj_file"],
-                universe.atoms.n_atoms,
-                istart=universe.trajectory.time,
-                remarks="Written by fluctmatch."))
+            trj = stack.enter_context(
+                mda.Writer(
+                    filenames["traj_file"],
+                    universe.atoms.n_atoms,
+                    istart=universe.trajectory.time,
+                    remarks="Written by fluctmatch.",
+                )
+            )
             bar = stack.enter_context(click.progressbar(universe.trajectory))
-            logger.info("Writing the trajectory {}...".format(
-                filenames["traj_file"]))
-            logger.warning("This may take a while depending upon the size and "
-                           "length of the trajectory.")
+            logger.info(
+                "Writing the trajectory {}...".format(filenames["traj_file"])
+            )
+            logger.warning(
+                "This may take a while depending upon the size and "
+                "length of the trajectory."
+            )
             for ts in bar:
                 trj.write(ts)
 
@@ -247,8 +260,10 @@ def write_charmm_files(
 
     # Calculate the average coordinates from the trajectory.
     logger.info("Determining the average structure of the trajectory. ")
-    logger.warning("Note: This could take a while depending upon the size of "
-                   "your trajectory.")
+    logger.warning(
+        "Note: This could take a while depending upon the size of "
+        "your trajectory."
+    )
     positions = AverageStructure(universe.atoms).run().result
     positions = positions.reshape((*positions.shape, 1))
 

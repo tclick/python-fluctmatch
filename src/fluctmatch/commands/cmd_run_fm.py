@@ -180,52 +180,64 @@ from .. import iter_namespace
     default=True,
     help="Include segment IDs in internal coordinate files",
 )
-@click.option(
-    "--restart",
-    is_flag=True,
-    help="Restart simulation"
-)
-def cli(topology, trajectory, logfile, outdir, nma_exec, temperature,
-        max_cycles, min_cycles, tol, force_tol, prefix, charmm_version,
-        extended, resid, nonbonded, restart):
+@click.option("--restart", is_flag=True, help="Restart simulation")
+def cli(
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    nma_exec,
+    temperature,
+    max_cycles,
+    min_cycles,
+    tol,
+    force_tol,
+    prefix,
+    charmm_version,
+    extended,
+    resid,
+    nonbonded,
+    restart,
+):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
     FLUCTMATCH: MutableMapping = {
         name.split(".")[-1].upper(): importlib.import_module(name).Model
-        for _, name, _
-        in iter_namespace(fluctmatch.fluctmatch.plugins)
+        for _, name, _ in iter_namespace(fluctmatch.fluctmatch.plugins)
     }
 
     kwargs = dict(
@@ -242,6 +254,11 @@ def cli(topology, trajectory, logfile, outdir, nma_exec, temperature,
     logger.info("Initializing the parameters.")
     cfm.initialize(nma_exec=nma_exec, restart=restart)
     logger.info("Running fluctuation matching.")
-    cfm.run(nma_exec=nma_exec, tol=tol, max_cycles=max_cycles,
-            min_cycles=min_cycles, force_tol=force_tol)
+    cfm.run(
+        nma_exec=nma_exec,
+        tol=tol,
+        max_cycles=max_cycles,
+        min_cycles=min_cycles,
+        force_tol=force_tol,
+    )
     logger.info("Fluctuation matching successfully completed.")

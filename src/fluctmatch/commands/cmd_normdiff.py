@@ -92,36 +92,38 @@ logger: logging.Logger = logging.getLogger(__name__)
 def cli(logfile, outdir, ressep, kb, b0):
     # Setup logger
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -142,7 +144,7 @@ def cli(logfile, outdir, ressep, kb, b0):
     idx = kb_table == 0.0
     maxkb = np.maximum(
         kb_table[kb_table.columns[1:].values],
-        kb_table[kb_table.columns[:-1]].values
+        kb_table[kb_table.columns[:-1]].values,
     )
 
     maxkb[maxkb == 0.0] = np.NaN
@@ -162,13 +164,15 @@ def cli(logfile, outdir, ressep, kb, b0):
     filename = Path(outdir) / "normed_kb.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing normed coupling strengths to {filename}")
-        kb_table.to_csv(output, header=True, index=True, float_format="%.4f",
-                        encoding="utf-8")
+        kb_table.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "normed_b0.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing normed distances to {filename}")
-        b0_table.to_csv(output, header=True, index=True, float_format="%.4f",
-                        encoding="utf-8")
+        b0_table.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")

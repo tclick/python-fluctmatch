@@ -60,6 +60,7 @@ class Reader(TopologyReaderBase):
     filename : str or :class:`~Path`
          name of the output file or a stream
     """
+
     format: ClassVar[str] = "IC"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
@@ -79,10 +80,27 @@ class Reader(TopologyReaderBase):
             "A1,1X,A8,1X,A8,1X,A8,A1,F12.6,3F12.4,F12.6"
         ),
     )
-    cols: np.ndarray = np.asarray([
-        "segidI", "resI", "I", "segidJ", "resJ", "J", "segidK", "resK", "K",
-        "segidL", "resL", "L", "r_IJ", "T_IJK", "P_IJKL", "T_JKL", "r_KL"
-    ])
+    cols: np.ndarray = np.asarray(
+        [
+            "segidI",
+            "resI",
+            "I",
+            "segidJ",
+            "resJ",
+            "J",
+            "segidK",
+            "resK",
+            "K",
+            "segidL",
+            "resL",
+            "L",
+            "r_IJ",
+            "T_IJK",
+            "P_IJKL",
+            "T_JKL",
+            "r_KL",
+        ]
+    )
 
     def __init__(self, filename: Union[str, Path]):
         self.filename: Path = Path(filename).with_suffix(".ic")
@@ -133,8 +151,10 @@ class Reader(TopologyReaderBase):
 
             if key == "STANDARD":
                 idx: np.ndarray = np.where(
-                    (self.cols != "segidI") & (self.cols != "segidJ") &
-                    (self.cols != "segidK") & (self.cols != "segidL")
+                    (self.cols != "segidI")
+                    & (self.cols != "segidJ")
+                    & (self.cols != "segidK")
+                    & (self.cols != "segidL")
                 )
                 columns: np.ndarray = self.cols[idx]
             else:

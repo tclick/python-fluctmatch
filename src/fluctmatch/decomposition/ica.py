@@ -60,16 +60,28 @@ logger: logging.Logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
 
 
-def _infomax(X, n_components: int = None, l_rate: float = None,
-             weights: np.ndarray = None, block: float = None,
-             w_change: float = 1e-12, anneal_deg: float = 60.,
-             anneal_step: float = 0.9, extended: bool = True,
-             n_subgauss: int = 1, kurt_size: int = 6000,
-             ext_blocks: int = 1, max_iter: int = 200, whiten=True,
-             random_state: RandomState = None, blowup: float = 1e4,
-             blowup_fac: float = 0.5, n_small_angle: int = 20,
-             use_bias: bool = True,
-             verbose: bool = None) -> np.ndarray:
+def _infomax(
+    X,
+    n_components: int = None,
+    l_rate: float = None,
+    weights: np.ndarray = None,
+    block: float = None,
+    w_change: float = 1e-12,
+    anneal_deg: float = 60.0,
+    anneal_step: float = 0.9,
+    extended: bool = True,
+    n_subgauss: int = 1,
+    kurt_size: int = 6000,
+    ext_blocks: int = 1,
+    max_iter: int = 200,
+    whiten=True,
+    random_state: RandomState = None,
+    blowup: float = 1e4,
+    blowup_fac: float = 0.5,
+    n_small_angle: int = 20,
+    use_bias: bool = True,
+    verbose: bool = None,
+) -> np.ndarray:
     """Run (extended) Infomax ICA decomposition on raw data.
 
     Parameters
@@ -158,6 +170,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
            and supergaussian sources. Neural Computation, 11(2), 417-441, 1999.
     """
     from scipy.stats import kurtosis
+
     rng: RandomState = check_random_state(random_state)
 
     # define some default parameters
@@ -204,16 +217,18 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
     if block is None:
         block: int = int(np.floor(np.sqrt(n_samples / 3.0)))
 
-    logger.info('Computing%sInfomax ICA' % ' Extended ' if extended else ' ')
+    logger.info("Computing%sInfomax ICA" % " Extended " if extended else " ")
 
     # collect parameters
     nblock: int = n_samples // block
     lastt: int = (nblock - 1) * block + 1
 
     # initialize training
-    weights: np.ndarray = (np.identity(n_features, dtype=np.float64)
-                           if weights is None
-                           else weights.T)
+    weights: np.ndarray = (
+        np.identity(n_features, dtype=np.float64)
+        if weights is None
+        else weights.T
+    )
 
     BI: np.ndarray = block * np.identity(n_features, dtype=np.float64)
     bias: np.ndarray = np.zeros((n_features, 1), dtype=np.float64)
@@ -237,7 +252,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         oldsigns: np.ndarray = np.zeros(n_features)
 
     # trainings loop
-    olddelta, oldchange = 1., 0.
+    olddelta, oldchange = 1.0, 0.0
     while step < max_iter:
         # shuffle data at each step
         permute: np.ndarray = random_permutation(n_samples, rng)
@@ -245,18 +260,20 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         # ICA training block
         # loop across block samples
         for t in range(0, lastt, block):
-            u: float = np.dot(X1[permute[t:t + block], :], weights)
+            u: float = np.dot(X1[permute[t : t + block], :], weights)
             u += np.dot(bias, onesrow).T
 
             if extended:
                 # extended ICA update
                 y: float = np.tanh(u)
                 j: np.ndarray = BI - signs[None, :] * np.dot(u.T, y) - np.dot(
-                    u.T, u)
+                    u.T, u
+                )
                 weights += l_rate * np.dot(weights, j)
             if use_bias:
                 bias += l_rate * np.reshape(
-                    np.sum(y, axis=0, dtype=float) * -2.0, (n_features, 1))
+                    np.sum(y, axis=0, dtype=float) * -2.0, (n_features, 1)
+                )
         else:
             # logistic ICA weights update
             y = 1.0 / (1.0 + np.exp(-u))
@@ -264,9 +281,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
             weights += l_rate * np.dot(weights, j)
 
             if use_bias:
-                bias += l_rate * np.reshape(np.sum((1.0 - 2.0 * y), axis=0,
-                                                   dtype=float),
-                                            (n_features, 1))
+                bias += l_rate * np.reshape(
+                    np.sum((1.0 - 2.0 * y), axis=0, dtype=float), (n_features, 1)
+                )
 
         # check change limit
         max_weight_val: float = np.max(np.abs(weights))
@@ -281,8 +298,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         if extended:
             if ext_blocks > 0 and blockno % ext_blocks == 0:
                 if kurt_size < n_samples:
-                    rp: np.ndarray = np.floor(rng.uniform(0, 1, kurt_size) *
-                                              (n_samples - 1))
+                    rp: np.ndarray = np.floor(
+                        rng.uniform(0, 1, kurt_size) * (n_samples - 1)
+                    )
                     tpartact: float = np.dot(X[rp.astype(int), :], weights).T
                 else:
                     tpartact: float = np.dot(X, weights).T
@@ -291,8 +309,9 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
                 kurt: np.ndarray = kurtosis(tpartact, axis=1, fisher=True)
 
                 if extmomentum != 0:
-                    kurt: np.ndarray = (extmomentum * old_kurt +
-                                        (1.0 - extmomentum) * kurt)
+                    kurt: np.ndarray = (
+                        extmomentum * old_kurt + (1.0 - extmomentum) * kurt
+                    )
                     old_kurt: np.ndarray = kurt
 
                 # estimate weighted signs
@@ -318,14 +337,16 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         delta: np.ndarray = oldwtchange.reshape(1, n_features_square)
         change: np.ndarray = np.sum(delta * delta, dtype=np.float64)
         if step > 2:
-            angledelta: np.ndarray = np.arccos(np.sum(delta * olddelta) /
-                                               np.sqrt(change * oldchange))
+            angledelta: np.ndarray = np.arccos(
+                np.sum(delta * olddelta) / np.sqrt(change * oldchange)
+            )
             angledelta *= degconst
 
         if verbose:
             logger.info(
-                'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg'
-                % (step, l_rate, change, angledelta))
+                "step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg"
+                % (step, l_rate, change, angledelta)
+            )
 
         # anneal learning rate
         oldweights = weights.copy()
@@ -359,8 +380,7 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
         l_rate *= restart_fac  # with lower learning rate
         weights: np.ndarray = startweights.copy()
         oldweights: np.ndarray = startweights.copy()
-        olddelta: np.ndarray = np.zeros((1, n_features_square),
-                                        dtype=np.float64)
+        olddelta: np.ndarray = np.zeros((1, n_features_square), dtype=np.float64)
         bias: np.ndarray = np.zeros((n_features, 1), dtype=np.float64)
 
         ext_blocks: np.ndarray = initial_ext_blocks
@@ -374,19 +394,23 @@ def _infomax(X, n_components: int = None, l_rate: float = None,
 
         if l_rate > min_l_rate:
             if verbose:
-                logger.info('... lowering learning rate to %g'
-                            '\n... re-starting...' % l_rate)
+                logger.info(
+                    "... lowering learning rate to %g"
+                    "\n... re-starting..." % l_rate
+                )
         else:
-            raise ValueError('Error in Infomax ICA: unmixing_matrix matrix'
-                             'might not be invertible!')
+            raise ValueError(
+                "Error in Infomax ICA: unmixing_matrix matrix"
+                "might not be invertible!"
+            )
 
     # prepare return values
     return weights.T
 
 
 def random_permutation(
-        n_samples: int,
-        random_state: Union[int, RandomState, None] = None) -> np.ndarray:
+    n_samples: int, random_state: Union[int, RandomState, None] = None
+) -> np.ndarray:
     """Emulate the randperm matlab function.
 
     It returns a vector containing a random permutation of the
@@ -556,20 +580,33 @@ class ICA(BaseEstimator, TransformerMixin):
            pp.417-441.
     """
 
-    def __init__(self, whiten: bool = True, n_components: int = None,
-                 random_state: RandomState = None,
-                 method: str = 'fastica', fit_params: Union[Dict, None] = None,
-                 max_iter: int = 200,
-                 verbose: Union[bool, None] = None):
+    def __init__(
+        self,
+        whiten: bool = True,
+        n_components: int = None,
+        random_state: RandomState = None,
+        method: str = "fastica",
+        fit_params: Union[Dict, None] = None,
+        max_iter: int = 200,
+        verbose: Union[bool, None] = None,
+    ):
         methods: Tuple[str, ...] = (
-            'fastica', 'infomax', 'extended-infomax', 'picard')
+            "fastica",
+            "infomax",
+            "extended-infomax",
+            "picard",
+        )
         if method not in methods:
-            raise ValueError('`method` must be "%s". You passed: "%s"' %
-                             ('" or "'.join(methods), method))
+            raise ValueError(
+                '`method` must be "%s". You passed: "%s"'
+                % ('" or "'.join(methods), method)
+            )
 
         if isinstance(n_components, float) and not 0 < n_components <= 1:
-            raise ValueError('Selecting ICA components by explained variance '
-                             'needs values between 0.0 and 1.0 ')
+            raise ValueError(
+                "Selecting ICA components by explained variance "
+                "needs values between 0.0 and 1.0 "
+            )
 
         self.verbose: bool = verbose
         self.n_components: int = n_components
@@ -580,21 +617,23 @@ class ICA(BaseEstimator, TransformerMixin):
             fit_params: Dict = {}
         fit_params: Dict = deepcopy(fit_params)  # avoid side effects
         if "extended" in fit_params:
-            raise ValueError("'extended' parameter provided. You should "
-                             "rather use method='extended-infomax'.")
-        if method == 'fastica':
-            update: Dict = dict(
-                algorithm='parallel', fun='logcosh',
-                fun_args=None
+            raise ValueError(
+                "'extended' parameter provided. You should "
+                "rather use method='extended-infomax'."
             )
-            fit_params.update(dict((k, v) for k, v in update.items() if k
-                                   not in fit_params))
-        elif method == 'infomax':
-            fit_params.update({'extended': False})
-        elif method == 'extended-infomax':
-            fit_params.update({'extended': True})
-        if 'max_iter' not in fit_params:
-            fit_params['max_iter'] = max_iter
+        if method == "fastica":
+            update: Dict = dict(
+                algorithm="parallel", fun="logcosh", fun_args=None
+            )
+            fit_params.update(
+                dict((k, v) for k, v in update.items() if k not in fit_params)
+            )
+        elif method == "infomax":
+            fit_params.update({"extended": False})
+        elif method == "extended-infomax":
+            fit_params.update({"extended": True})
+        if "max_iter" not in fit_params:
+            fit_params["max_iter"] = max_iter
         self.max_iter: int = max_iter
         self.fit_params: Dict = fit_params
 
@@ -602,8 +641,9 @@ class ICA(BaseEstimator, TransformerMixin):
 
     def __repr__(self) -> str:
         """ICA fit information."""
-        s: str = (f"fit ({self.method}): "
-                  f"{getattr(self, 'n_samples', '')} samples, ")
+        s: str = (
+            f"fit ({self.method}): " f"{getattr(self, 'n_samples', '')} samples, "
+        )
         s += (
             f"{str(self.n_components)} components"
             if self.n_components is not None
@@ -625,28 +665,30 @@ class ICA(BaseEstimator, TransformerMixin):
         """Aux function."""
         self._reset()
         self.n_samples, n_features = data.shape
-        random_state: RandomState = check_random_state(
-            self.random_state)
+        random_state: RandomState = check_random_state(self.random_state)
 
         # take care of ICA
-        if self.method == 'fastica':
-            ica: FastICA = FastICA(whiten=self.whiten,
-                                   random_state=random_state,
-                                   **self.fit_params)
+        if self.method == "fastica":
+            ica: FastICA = FastICA(
+                whiten=self.whiten, random_state=random_state, **self.fit_params
+            )
             ica.fit(data)
             self.components_: np.ndarray = ica.components_
             self.mixing_: np.ndarray = ica.mixing_
-        elif self.method in ('infomax', 'extended-infomax'):
+        elif self.method in ("infomax", "extended-infomax"):
             self.components_: np.ndarray = _infomax(
-                data, random_state=random_state, whiten=self.whiten,
-                **self.fit_params)[:self.n_components]
+                data,
+                random_state=random_state,
+                whiten=self.whiten,
+                **self.fit_params,
+            )[: self.n_components]
             self.mixing_: np.ndarray = linalg.pinv(self.components_)
 
         return self
 
     def transform(self, data: np.ndarray, copy: bool = True) -> np.ndarray:
         """Compute sources from data (operates inplace)."""
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self, "mixing_")
 
         data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
 
@@ -654,9 +696,10 @@ class ICA(BaseEstimator, TransformerMixin):
         sources: np.ndarray = np.dot(data, self.components_.T)
         return sources
 
-    def inverse_transform(self, data: np.ndarray,
-                          copy: bool = True) -> np.ndarray:
-        check_is_fitted(self, 'mixing_')
+    def inverse_transform(
+        self, data: np.ndarray, copy: bool = True
+    ) -> np.ndarray:
+        check_is_fitted(self, "mixing_")
 
         data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)
         data: np.ndarray = np.dot(data, self.mixing_.T)

@@ -76,7 +76,7 @@ class Center2D(BaseEstimator, TransformerMixin):
 
         # Checking one attribute is enough, becase they are all set together
         # in partial_fit
-        if hasattr(self, 'mean_'):
+        if hasattr(self, "mean_"):
             del self.features_mean_
             del self.samples_mean_
             del self.grand_mean_
@@ -110,9 +110,15 @@ class Center2D(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         n_samples, n_features = X.shape
         if self.with_mean:
@@ -122,7 +128,7 @@ class Center2D(BaseEstimator, TransformerMixin):
         else:
             self.features_mean_ = np.zeros((1, n_features), dtype=np.float)
             self.samples_mean_ = np.zeros((n_samples, 1), dtype=np.float)
-            self.grand_mean_ = 0.
+            self.grand_mean_ = 0.0
         self.mean_ = self.features_mean_ + self.samples_mean_ - self.grand_mean_
         return self
 
@@ -141,9 +147,15 @@ class Center2D(BaseEstimator, TransformerMixin):
             A centered array
         """
         check_is_fitted(self, "mean_")
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
         return X - self.features_mean_ - self.samples_mean_ + self.grand_mean_
 
     def inverse_transform(self, X: np.ndarray, copy: bool = None):
@@ -164,7 +176,13 @@ class Center2D(BaseEstimator, TransformerMixin):
             Transformed array
         """
         check_is_fitted(self, "mean_")
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=copy,
+            warn_on_dtype=True,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
         return X + self.mean_

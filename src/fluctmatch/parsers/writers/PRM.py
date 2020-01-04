@@ -77,11 +77,17 @@ class Writer(TopologyWriterBase):
     nonbonded
         Add the nonbonded section. (default: False)
     """
+
     format: ClassVar[str] = "PRM"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
-    _headers: Tuple[str, ...] = ("ATOMS", "BONDS", "ANGLES", "DIHEDRALS",
-                                 "IMPROPER")
+    _headers: Tuple[str, ...] = (
+        "ATOMS",
+        "BONDS",
+        "ANGLES",
+        "DIHEDRALS",
+        "IMPROPER",
+    )
     _fmt: Dict[str, str] = dict(
         ATOMS="MASS %5d %-6s %9.5f",
         BONDS="%-6s %-6s %10.4f%10.4f",
@@ -101,13 +107,16 @@ class Writer(TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: Tuple[str, ...] = kwargs.get(
-            "title", (f"* Created by fluctmatch on {date}",
-                      f"* User: {user}",))
+            "title", (f"* Created by fluctmatch on {date}", f"* User: {user}")
+        )
         if not iterable(self._title):
             self._title = asiterable(self._title)
 
-    def write(self, parameters: MutableMapping[str, pd.DataFrame],
-              atomgroup: Optional[mda.AtomGroup] = None):
+    def write(
+        self,
+        parameters: MutableMapping[str, pd.DataFrame],
+        atomgroup: Optional[mda.AtomGroup] = None,
+    ):
         """Write a CHARMM-formatted parameter file.
 
         Parameters
@@ -133,14 +142,16 @@ class Writer(TopologyWriterBase):
                         else np.arange(atomgroup.n_atoms) + 1
                     )
                     atoms: np.ndarray = np.vstack(
-                        (atom_types,
-                         atomgroup.types,
-                         atomgroup.masses))
+                        (atom_types, atomgroup.types, atomgroup.masses)
+                    )
                     parameters["ATOMS"]: pd.DataFrame = pd.DataFrame(
-                        atoms.T, columns=parameters["ATOMS"].columns)
+                        atoms.T, columns=parameters["ATOMS"].columns
+                    )
                 else:
-                    raise RuntimeError("Either define ATOMS parameter or "
-                                       "provide a MDAnalsys.AtomGroup")
+                    raise RuntimeError(
+                        "Either define ATOMS parameter or "
+                        "provide a MDAnalsys.AtomGroup"
+                    )
 
             if self._version >= 39 and not parameters["ATOMS"].empty:
                 parameters["ATOMS"]["type"]: int = -1
@@ -156,19 +167,25 @@ class Writer(TopologyWriterBase):
                     np.savetxt(prmfile, value, fmt=self._fmt[key])
                     print(file=prmfile)
 
-            nb_header: str = ("""
+            nb_header: str = (
+                """
                 NONBONDED nbxmod  5 atom cdiel shift vatom vdistance vswitch -
                 cutnb 14.0 ctofnb 12.0 ctonnb 10.0 eps 1.0 e14fac 1.0 wmin 1.5
-                """)
+                """
+            )
             print(textwrap.dedent(nb_header[1:])[:-1], file=prmfile)
 
             if self._nonbonded:
                 atom_list: np.ndarray = np.concatenate(
-                    (parameters["BONDS"]["I"].values,
-                     parameters["BONDS"]["J"].values))
+                    (
+                        parameters["BONDS"]["I"].values,
+                        parameters["BONDS"]["J"].values,
+                    )
+                )
                 atom_list: np.ndarray = np.unique(atom_list)[:, np.newaxis]
                 nb_list: np.ndarray = np.zeros((atom_list.size, 3))
                 nb_list: np.ndarray = np.hstack((atom_list, nb_list))
-                np.savetxt(prmfile, nb_list, fmt=self._fmt["NONBONDED"],
-                           delimiter="")
+                np.savetxt(
+                    prmfile, nb_list, fmt=self._fmt["NONBONDED"], delimiter=""
+                )
             print("\nEND", file=prmfile)

@@ -58,13 +58,15 @@ class Reader(CRD.CRDReader):
        Now returns a ValueError instead of FormatError.
        Frames now 0-based instead of 1-based.
     """
-    format: ClassVar[str] = "COR"
-    units: ClassVar[Dict[str, Optional[str]]] = dict(
-        time=None, length="Angstrom")
 
-    def __init__(self,
-                 filename: Union[str, Path],
-                 convert_units: bool = None,
-                 n_atoms: int = None,
-                 **kwargs: Mapping):
+    format: ClassVar[str] = "COR"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
+
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        convert_units: bool = None,
+        n_atoms: int = None,
+        **kwargs: Mapping
+    ):
         super().__init__(filename, convert_units, n_atoms, **kwargs)

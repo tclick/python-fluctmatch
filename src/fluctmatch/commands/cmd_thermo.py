@@ -123,39 +123,49 @@ from fluctmatch.analysis import thermodynamics
     type=click.IntRange(27, None, clamp=True),
     help="CHARMM version",
 )
-def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
-        charmm_version):
+def cli(
+    datadir,
+    logfile,
+    outdir,
+    topology,
+    trajectory,
+    nma_exec,
+    temperature,
+    charmm_version,
+):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -166,10 +176,15 @@ def cli(datadir, logfile, outdir, topology, trajectory, nma_exec, temperature,
         pass
 
     logger.info("Calculating thermodynamic properties.")
-    logger.warning("Depending upon the size of the system, this may take "
-                   "a while.")
+    logger.warning(
+        "Depending upon the size of the system, this may take " "a while."
+    )
 
-    kwargs = dict(topology=topology, trajectory=trajectory,
-                  temperature=temperature, nma_exec=nma_exec,
-                  charmm_version=charmm_version)
+    kwargs = dict(
+        topology=topology,
+        trajectory=trajectory,
+        temperature=temperature,
+        nma_exec=nma_exec,
+        charmm_version=charmm_version,
+    )
     thermodynamics.create_thermo_tables(datadir, outdir, **kwargs)

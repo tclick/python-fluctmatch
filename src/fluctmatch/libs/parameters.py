@@ -48,8 +48,9 @@ import numpy as np
 import pandas as pd
 
 
-def create_empty_parameters(universe: Union[mda.Universe, mda.AtomGroup],
-                            **kwargs: Mapping) -> Dict[str, pd.DataFrame]:
+def create_empty_parameters(
+    universe: Union[mda.Universe, mda.AtomGroup], **kwargs: Mapping
+) -> Dict[str, pd.DataFrame]:
     """
 
     Parameters
@@ -82,71 +83,90 @@ def create_empty_parameters(universe: Union[mda.Universe, mda.AtomGroup],
     )
 
     # Atoms
-    types: np.ndarray = (universe.atoms.types[:, None]
-                         if np.issubdtype(universe.atoms.types.dtype, np.int)
-                         else np.arange(universe.atoms.n_atoms) + 1)[:, None]
-    atoms: np.ndarray = np.hstack((types, universe.atoms.names[:, None],
-                                   universe.atoms.masses[:, None]))
+    types: np.ndarray = (
+        universe.atoms.types[:, None]
+        if np.issubdtype(universe.atoms.types.dtype, np.int)
+        else np.arange(universe.atoms.n_atoms) + 1
+    )[:, None]
+    atoms: np.ndarray = np.hstack(
+        (types, universe.atoms.names[:, None], universe.atoms.masses[:, None])
+    )
     parameters["ATOMS"] = pd.DataFrame(atoms, columns=param_columns["ATOMS"])
     if version > 39:
         parameters["ATOMS"]["type"]: int = -1
 
     # Bonds
     try:
-        bonds = np.hstack((
-            universe.bonds.atom1.names[:, None],
-            universe.bonds.atom2.names[:, None],
-            np.zeros((universe.bonds.atom1.names.size, 2), dtype=np.float),
-        ))
-        parameters["BONDS"] = pd.DataFrame(bonds,
-                                           columns=param_columns["BONDS"])
+        bonds = np.hstack(
+            (
+                universe.bonds.atom1.names[:, None],
+                universe.bonds.atom2.names[:, None],
+                np.zeros((universe.bonds.atom1.names.size, 2), dtype=np.float),
+            )
+        )
+        parameters["BONDS"] = pd.DataFrame(bonds, columns=param_columns["BONDS"])
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 
     # Angles
     try:
-        angles = np.hstack((
-            universe.angles.atom1.names[:, None],
-            universe.angles.atom2.names[:, None],
-            universe.angles.atom3.names[:, None],
-            np.zeros((universe.angles.atom1.names.size, 2), dtype=np.float),
-        ))
-        parameters["ANGLES"] = pd.DataFrame(angles,
-                                            columns=param_columns["ANGLES"])
+        angles = np.hstack(
+            (
+                universe.angles.atom1.names[:, None],
+                universe.angles.atom2.names[:, None],
+                universe.angles.atom3.names[:, None],
+                np.zeros((universe.angles.atom1.names.size, 2), dtype=np.float),
+            )
+        )
+        parameters["ANGLES"] = pd.DataFrame(
+            angles, columns=param_columns["ANGLES"]
+        )
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 
     # Dihedrals
     try:
-        dihedrals = np.hstack((
-            universe.dihedrals.atom1.names[:, None],
-            universe.dihedrals.atom2.names[:, None],
-            universe.dihedrals.atom3.names[:, None],
-            universe.dihedrals.atom4.names[:, None],
-            np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.float),
-            np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.int),
-            np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.float),
-        ))
-        parameters["DIHEDRALS"] = pd.DataFrame(dihedrals,
-                                               columns=param_columns[
-                                                   "DIHEDRALS"])
+        dihedrals = np.hstack(
+            (
+                universe.dihedrals.atom1.names[:, None],
+                universe.dihedrals.atom2.names[:, None],
+                universe.dihedrals.atom3.names[:, None],
+                universe.dihedrals.atom4.names[:, None],
+                np.zeros(
+                    (universe.dihedrals.atom1.names.size, 1), dtype=np.float
+                ),
+                np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.int),
+                np.zeros(
+                    (universe.dihedrals.atom1.names.size, 1), dtype=np.float
+                ),
+            )
+        )
+        parameters["DIHEDRALS"] = pd.DataFrame(
+            dihedrals, columns=param_columns["DIHEDRALS"]
+        )
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 
     # Impropers
     try:
-        impropers = np.hstack((
-            universe.impropers.atom1.names[:, None],
-            universe.impropers.atom2.names[:, None],
-            universe.impropers.atom3.names[:, None],
-            universe.impropers.atom4.names[:, None],
-            np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.float),
-            np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.int),
-            np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.float),
-        ))
-        parameters["IMPROPER"] = pd.DataFrame(impropers,
-                                              columns=param_columns[
-                                                  "DIHEDRALS"])
+        impropers = np.hstack(
+            (
+                universe.impropers.atom1.names[:, None],
+                universe.impropers.atom2.names[:, None],
+                universe.impropers.atom3.names[:, None],
+                universe.impropers.atom4.names[:, None],
+                np.zeros(
+                    (universe.impropers.atom1.names.size, 1), dtype=np.float
+                ),
+                np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.int),
+                np.zeros(
+                    (universe.impropers.atom1.names.size, 1), dtype=np.float
+                ),
+            )
+        )
+        parameters["IMPROPER"] = pd.DataFrame(
+            impropers, columns=param_columns["DIHEDRALS"]
+        )
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 

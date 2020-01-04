@@ -102,6 +102,7 @@ class Model(ModelBase):
         The transformed universe
 
     """
+
     description: ClassVar[str] = "Elastic network model"
 
     def __init__(self, **kwargs):

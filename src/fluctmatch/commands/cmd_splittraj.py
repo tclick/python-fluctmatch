@@ -52,8 +52,9 @@ from ..libs import fluctmatch
 _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
 
 
-@click.command("splittraj",
-               short_help="Split a trajectory using Gromacs or CHARMM.")
+@click.command(
+    "splittraj", short_help="Split a trajectory using Gromacs or CHARMM."
+)
 @click.option(
     "--type",
     "program",
@@ -89,8 +90,11 @@ _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
     metavar="DIR",
     default=path.join(os.getcwd(), "data"),
     type=click.Path(
-        exists=False, file_okay=False, writable=True, readable=True,
-        resolve_path=True
+        exists=False,
+        file_okay=False,
+        writable=True,
+        readable=True,
+        resolve_path=True,
     ),
     help="Directory to write data.",
 )
@@ -154,64 +158,90 @@ _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
     type=click.IntRange(2, None, clamp=True),
     help="Size of each subtrajectory",
 )
-def cli(program, toppar, topology, trajectory, data, index, outfile, logfile,
-        system, start, stop, window_size):
+def cli(
+    program,
+    toppar,
+    topology,
+    trajectory,
+    data,
+    index,
+    outfile,
+    logfile,
+    system,
+    start,
+    stop,
+    window_size,
+):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
     if program == "GMX" and mdutil.which("gmx") is None:
-        msg = ("Gromacs 5.0+ is required. If installed, please ensure that it "
-               "is in your path.")
+        msg = (
+            "Gromacs 5.0+ is required. If installed, please ensure that it "
+            "is in your path."
+        )
         logger.error(msg=msg)
         raise OSError(msg)
     if program == "CHARMM" and mdutil.which("charmm") is None:
-        msg = ("CHARMM is required. If installed, please ensure that it is in "
-               "your path.")
+        msg = (
+            "CHARMM is required. If installed, please ensure that it is in "
+            "your path."
+        )
         logger.error(msg=msg)
         raise OSError(msg)
 
     half_size = window_size // 2
     beg = start - half_size if start >= window_size else start
-    values = zip(range(beg, stop + 1, half_size),
-                 range(beg + window_size - 1, stop + 1, half_size))
+    values = zip(
+        range(beg, stop + 1, half_size),
+        range(beg + window_size - 1, stop + 1, half_size),
+    )
     values = [((y // half_size) - 1, x, y) for x, y in values]
 
-    func = functools.partial(_CONVERT[program], data_dir=data,
-                             topology=topology, toppar=toppar,
-                             trajectory=trajectory, index=index,
-                             outfile=outfile, logfile=logfile,
-                             system=system)
+    func = functools.partial(
+        _CONVERT[program],
+        data_dir=data,
+        topology=topology,
+        toppar=toppar,
+        trajectory=trajectory,
+        index=index,
+        outfile=outfile,
+        logfile=logfile,
+        system=system,
+    )
 
     # Run multiple instances simultaneously
     pool = mp.Pool()

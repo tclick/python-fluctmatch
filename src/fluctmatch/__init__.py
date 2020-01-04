@@ -55,7 +55,7 @@ __version__: str = "4.0.0"
 
 
 def iter_namespace(ns_pkg):
-    """Iterate over a namespace package.
+    """Iterate over a namespace package. [1]_
 
     Parameters
     ----------
@@ -73,29 +73,31 @@ def iter_namespace(ns_pkg):
 
 
 # Update the parsers in MDAnalysis
-mda._PARSERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.parsers)
-})
+mda._PARSERS.update(
+    {
+        name.split(".")[-1].upper(): importlib.import_module(name).Reader
+        for _, name, _ in iter_namespace(fluctmatch.parsers.parsers)
+    }
+)
 mda._PARSERS["COR"] = mda._PARSERS["CRD"]
 
 # Update the readers in MDAnalysis
-mda._READERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Reader
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.readers)
-})
+mda._READERS.update(
+    {
+        name.split(".")[-1].upper(): importlib.import_module(name).Reader
+        for _, name, _ in iter_namespace(fluctmatch.parsers.readers)
+    }
+)
 
 # Update the writers in MDAnalysis
-mda._SINGLEFRAME_WRITERS.update({
-    name.split(".")[-1].upper(): importlib.import_module(name).Writer
-    for _, name, _
-    in iter_namespace(fluctmatch.parsers.writers)
-})
+mda._SINGLEFRAME_WRITERS.update(
+    {
+        name.split(".")[-1].upper(): importlib.import_module(name).Writer
+        for _, name, _ in iter_namespace(fluctmatch.parsers.writers)
+    }
+)
 
 _MODELS: MutableMapping = {
     name.split(".")[-1].upper(): importlib.import_module(name).Model
-    for _, name, _
-    in iter_namespace(fluctmatch.core.models)
+    for _, name, _ in iter_namespace(fluctmatch.core.models)
 }

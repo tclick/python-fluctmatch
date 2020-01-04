@@ -47,8 +47,9 @@ from MDAnalysis.lib.util import filename
 from fluctmatch.analysis import paramtable
 
 
-@click.command("table",
-               short_help="Create a table from individual parameter files.")
+@click.command(
+    "table", short_help="Create a table from individual parameter files."
+)
 @click.option(
     "-d",
     "--datadir",
@@ -107,42 +108,45 @@ from fluctmatch.analysis import paramtable
 )
 @click.option("-v", "--verbose", is_flag=True)
 def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
-    pt = paramtable.ParamTable(prefix=prefix, tbltype=tbltype, ressep=ressep,
-                               datadir=data_dir)
+    pt = paramtable.ParamTable(
+        prefix=prefix, tbltype=tbltype, ressep=ressep, datadir=data_dir
+    )
     outdir = Path(outdir)
 
     # Setup logger
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -156,13 +160,23 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
         fn = outdir / filename("perres", ext="csv")
         with open(fn, mode="w") as output:
             logger.info("Writing per-residue data to {}.".format(fn))
-            pt.per_residue.to_csv(output, header=True, index=True,
-                                  float_format="%.4f", encoding="utf-8")
+            pt.per_residue.to_csv(
+                output,
+                header=True,
+                index=True,
+                float_format="%.4f",
+                encoding="utf-8",
+            )
             logger.info("Table successfully written.")
 
         fn = outdir / filename("interactions", ext="csv")
         with open(fn, mode="w") as output:
             logger.info("Writing interactions to {}.".format(fn))
-            pt.interactions.to_csv(output, header=True, index=True,
-                                   float_format="%.4f", encoding="utf-8")
+            pt.interactions.to_csv(
+                output,
+                header=True,
+                index=True,
+                float_format="%.4f",
+                encoding="utf-8",
+            )
             logger.info("Table successfully written.")

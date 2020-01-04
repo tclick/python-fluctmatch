@@ -131,8 +131,9 @@ class Reader(PSFParser.PSFParser):
             logger.info(f"PSF file {psffile.name}: format {self._format}")
 
             # Atoms first and mandatory
-            top: Topology = self._parse_sec(psffile,
-                                            ("NATOM", 1, 1, self._parseatoms))
+            top: Topology = self._parse_sec(
+                psffile, ("NATOM", 1, 1, self._parseatoms)
+            )
             # Then possibly other sections
             sections: Tuple[Tuple] = (
                 # ("atoms", ("NATOM", 1, 1, self._parseatoms)),
@@ -239,7 +240,8 @@ class Reader(PSFParser.PSFParser):
                 # space-separated "PSF" file from VMD version < 1.9.1
                 try:
                     atom_parser: FORTRANReader = FORTRANReader(
-                        atom_parsers["NAMD"])
+                        atom_parsers["NAMD"]
+                    )
                     vals: List[str] = atom_parser.read(line)
                     logger.warning(
                         "Guessing that this is actually a NAMD-type "
@@ -287,8 +289,9 @@ class Reader(PSFParser.PSFParser):
         residuenames: Resnames = Resnames(new_resnames)
 
         # Segment
-        segidx, (perseg_segids,) = change_squash((perres_segids,),
-                                                 (perres_segids,))
+        segidx, (perseg_segids,) = change_squash(
+            (perres_segids,), (perres_segids,)
+        )
         segids: Segids = Segids(perseg_segids)
 
         top: Topology = Topology(

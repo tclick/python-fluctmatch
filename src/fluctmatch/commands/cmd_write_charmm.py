@@ -110,8 +110,10 @@ from fluctmatch.libs import fluctmatch as fmutils
     help="Include nonbonded section in CHARMM parameter file",
 )
 @click.option(
-    "--no-cmap", "cmap", is_flag=True,
-    help="Include CMAP section in CHARMM PSF file"
+    "--no-cmap",
+    "cmap",
+    is_flag=True,
+    help="Include CMAP section in CHARMM PSF file",
 )
 @click.option(
     "--no-cheq",
@@ -119,41 +121,55 @@ from fluctmatch.libs import fluctmatch as fmutils
     is_flag=True,
     help="Include charge equilibrium section in CHARMM PSF file",
 )
-@click.option("--write", "write_traj", is_flag=True,
-              help="Convert the trajectory file")
-def cli(topology, trajectory, logfile, outdir, prefix, charmm_version, extended,
-        cmap, cheq, nonbonded, write_traj):
+@click.option(
+    "--write", "write_traj", is_flag=True, help="Convert the trajectory file"
+)
+def cli(
+    topology,
+    trajectory,
+    logfile,
+    outdir,
+    prefix,
+    charmm_version,
+    extended,
+    cmap,
+    cheq,
+    nonbonded,
+    write_traj,
+):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 

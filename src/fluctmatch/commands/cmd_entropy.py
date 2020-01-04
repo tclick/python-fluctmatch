@@ -46,8 +46,7 @@ import click
 from fluctmatch.analysis import entropy
 
 
-@click.command("entropy",
-               short_help="Calculate the Shannon entropy of residues.")
+@click.command("entropy", short_help="Calculate the Shannon entropy of residues.")
 @click.option(
     "-l",
     "--logfile",
@@ -83,36 +82,38 @@ from fluctmatch.analysis import entropy
 def cli(logfile, outdir, ressep, table):
     # Setup logger
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -122,23 +123,23 @@ def cli(logfile, outdir, ressep, table):
     filename = Path(outdir) / "coupling.entropy.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing coupling entropy to {filename}")
-        ent_table.coupling_entropy().to_csv(output, index=True, header=True,
-                                            float_format="%.4f",
-                                            encoding="utf-8")
+        ent_table.coupling_entropy().to_csv(
+            output, index=True, header=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "relative.entropy.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing relative entropy to {filename}")
-        ent_table.relative_entropy().to_csv(output, index=True, header=True,
-                                            float_format="%.4f",
-                                            encoding="utf-8")
+        ent_table.relative_entropy().to_csv(
+            output, index=True, header=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "windiff.entropy.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing entropy for window difference to {filename}")
-        ent_table.windiff_entropy().to_csv(output, index=True, header=True,
-                                           float_format="%.4f",
-                                           encoding="utf-8")
+        ent_table.windiff_entropy().to_csv(
+            output, index=True, header=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")

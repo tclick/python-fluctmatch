@@ -186,13 +186,15 @@ class SVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
     """
 
-    def __init__(self,
-                 n_components: Union[int, float, None, str] = None,
-                 copy: bool = True,
-                 svd_solver: str = 'auto',
-                 tol: float = 0.0,
-                 iterated_power: Union[int, str] = 'auto',
-                 random_state: Union[int, RandomState, None] = None):
+    def __init__(
+        self,
+        n_components: Union[int, float, None, str] = None,
+        copy: bool = True,
+        svd_solver: str = "auto",
+        tol: float = 0.0,
+        iterated_power: Union[int, str] = "auto",
+        random_state: Union[int, RandomState, None] = None,
+    ):
         self.n_components: Union[int, float, None, str] = n_components
         self.copy: bool = copy
         self.svd_solver: str = svd_solver
@@ -200,7 +202,7 @@ class SVD(BaseEstimator, TransformerMixin):
         self.iterated_power: Union[int, str] = iterated_power
         self.random_state: Union[int, RandomState, None] = random_state
 
-    def fit(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> 'SVD':
+    def fit(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> "SVD":
         """Fit the model with X.
 
         Parameters
@@ -219,8 +221,9 @@ class SVD(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def transform(self, X: np.ndarray,
-                  y: Union[np.ndarray, None] = None) -> np.ndarray:
+    def transform(
+        self, X: np.ndarray, y: Union[np.ndarray, None] = None
+    ) -> np.ndarray:
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -245,17 +248,20 @@ class SVD(BaseEstimator, TransformerMixin):
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
-        X: np.ndarray = check_array(X,
-                                    dtype=[np.float64, np.float32],
-                                    ensure_2d=True,
-                                    copy=self.copy,
-                                    accept_sparse=['csr', 'csc'])
+        X: np.ndarray = check_array(
+            X,
+            dtype=[np.float64, np.float32],
+            ensure_2d=True,
+            copy=self.copy,
+            accept_sparse=["csr", "csc"],
+        )
 
         if issparse(X) and self.n_components == min(X.shape):
             raise ValueError(
                 "n_components=%r must be strictly less than "
-                "min(n_samples, n_features)=%r for a sparse matrix. " %
-                (self.n_components, min(X.shape)))
+                "min(n_samples, n_features)=%r for a sparse matrix. "
+                % (self.n_components, min(X.shape))
+            )
 
         # Handle n_components==None
         if self.n_components is None:
@@ -272,7 +278,7 @@ class SVD(BaseEstimator, TransformerMixin):
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500:
                 self._fit_svd_solver: str = "full"
-            elif 1 <= n_components < .8 * min(X.shape):
+            elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver: str = "randomized"
             elif issparse(X):
                 self._fit_svd_solver: str = "randomized"
@@ -285,33 +291,39 @@ class SVD(BaseEstimator, TransformerMixin):
             if issparse(X):
                 raise ValueError(
                     "Cannot use %r for a sparse matrix. Select either"
-                    "'arpack' or 'randomized'.".format(self._fit_svd_solver))
+                    "'arpack' or 'randomized'.".format(self._fit_svd_solver)
+                )
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError(f"Unrecognized svd_solver={self._fit_svd_solver}")
 
-    def _fit_full(self, X: np.ndarray,
-                  n_components: Union[int, str]) -> Tuple[np.ndarray, ...]:
+    def _fit_full(
+        self, X: np.ndarray, n_components: Union[int, str]
+    ) -> Tuple[np.ndarray, ...]:
         """Fit the model by computing full SVD on X"""
         n_samples, n_features = X.shape
 
-        if n_components == 'mle':
+        if n_components == "mle":
             if n_samples < n_features:
-                raise ValueError("n_components='mle' is only supported "
-                                 "if n_samples >= n_features")
+                raise ValueError(
+                    "n_components='mle' is only supported "
+                    "if n_samples >= n_features"
+                )
         elif not 0 <= n_components <= min(n_samples, n_features):
-            raise ValueError("n_components=%r must be between 0 and "
-                             "min(n_samples, n_features)=%r with "
-                             "svd_solver='full'" %
-                             (n_components, min(n_samples, n_features)))
+            raise ValueError(
+                "n_components=%r must be between 0 and "
+                "min(n_samples, n_features)=%r with "
+                "svd_solver='full'" % (n_components, min(n_samples, n_features))
+            )
         elif n_components >= 1:
             if not isinstance(n_components, (numbers.Integral, np.integer)):
-                raise ValueError("n_components=%r must be of type int "
-                                 "when greater than or equal to 1, "
-                                 "was of type=%r" %
-                                 (n_components, type(n_components)))
+                raise ValueError(
+                    "n_components=%r must be of type int "
+                    "when greater than or equal to 1, "
+                    "was of type=%r" % (n_components, type(n_components))
+                )
 
         U, S, V = linalg.svd(X, full_matrices=False)
 
@@ -326,9 +338,10 @@ class SVD(BaseEstimator, TransformerMixin):
         explained_variance_ratio_: np.ndarray = explained_variance_ / total_var
         singular_values_: np.ndarray = S.copy()  # Store the singular values.
 
-        if n_components == 'mle':
-            n_components: int = \
-                _infer_dimension_(explained_variance_, n_samples, n_features)
+        if n_components == "mle":
+            n_components: int = _infer_dimension_(
+                explained_variance_, n_samples, n_features
+            )
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
@@ -338,57 +351,64 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = \
-                explained_variance_[n_components:].mean()
+            self.noise_variance_: float = explained_variance_[
+                n_components:
+            ].mean()
         else:
-            self.noise_variance_: float = 0.
+            self.noise_variance_: float = 0.0
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: int = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = \
-            explained_variance_[:n_components]
-        self.explained_variance_ratio_: np.ndarray = \
-            explained_variance_ratio_[:n_components]
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[
+            :n_components
+        ]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
 
-        U: np.ndarray = U[:, :self.n_components_]
+        U: np.ndarray = U[:, : self.n_components_]
 
         # X_new = X * V = U * S * V^T * V = U * S
-        U *= S[:self.n_components_]
+        U *= S[: self.n_components_]
 
         return U, S, V
 
-    def _fit_truncated(self, X: np.ndarray, n_components: Union[int, str],
-                       svd_solver: str) -> Tuple[np.ndarray, ...]:
+    def _fit_truncated(
+        self, X: np.ndarray, n_components: Union[int, str], svd_solver: str
+    ) -> Tuple[np.ndarray, ...]:
         """Fit the model by computing truncated SVD (randomized) on X
         """
         n_samples, n_features = X.shape
 
         random_state: np.random.RandomState = check_random_state(
-            self.random_state)
+            self.random_state
+        )
 
-        if (svd_solver == "arpack" and n_components ==
-                min(n_samples, n_features)):
+        if svd_solver == "arpack" and n_components == min(n_samples, n_features):
             raise ValueError(
                 "n_components=%r must be strictly less than "
                 "min(n_samples, n_features)=%r with "
-                "svd_solver='%s'" %
-                (n_components, min(n_samples, n_features), svd_solver))
+                "svd_solver='%s'"
+                % (n_components, min(n_samples, n_features), svd_solver)
+            )
 
         if n_components < min(n_samples, n_features):
-            tsvd: TruncatedSVD = TruncatedSVD(n_components=n_components,
-                                              algorithm=svd_solver,
-                                              random_state=random_state)
+            tsvd: TruncatedSVD = TruncatedSVD(
+                n_components=n_components,
+                algorithm=svd_solver,
+                random_state=random_state,
+            )
             U: np.ndarray = tsvd.fit_transform(X)
             S, V = tsvd.singular_values_, tsvd.components_
         else:
             # sign flipping is done inside
-            U, S, V = randomized_svd(X,
-                                     n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=True,
-                                     random_state=random_state)
+            U, S, V = randomized_svd(
+                X,
+                n_components=n_components,
+                n_iter=self.iterated_power,
+                flip_sign=True,
+                random_state=random_state,
+            )
             U: np.ndarray = U[:, :n_components]
 
             # X_new = X * V = U * S * V^T * V = U * S
@@ -405,18 +425,19 @@ class SVD(BaseEstimator, TransformerMixin):
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_: float = \
-                explained_variance_[n_components:].mean()
+            self.noise_variance_: float = explained_variance_[
+                n_components:
+            ].mean()
         else:
-            self.noise_variance_: float = 0.
+            self.noise_variance_: float = 0.0
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_: np.ndarray = components_[:n_components]
         self.n_components_: int = n_components
-        self.explained_variance_: np.ndarray = \
-            explained_variance_[:n_components]
-        self.explained_variance_ratio_: np.ndarray = \
-            explained_variance_ratio_[:n_components]
+        self.explained_variance_: np.ndarray = explained_variance_[:n_components]
+        self.explained_variance_ratio_: np.ndarray = explained_variance_ratio_[
+            :n_components
+        ]
         self.singular_values_: np.ndarray = singular_values_[:n_components]
 
         return U, S, V

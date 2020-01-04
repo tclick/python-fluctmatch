@@ -119,18 +119,17 @@ class Writer(base.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: str = kwargs.get(
-            "title", f"""
+            "title",
+            f"""
             * Created by fluctmatch on {date}
-            * User: {user}"""
+            * User: {user}""",
         )
         self._title = textwrap.dedent(self._title.strip("\n"))
 
         self.col_width: int = 10 if self._extended else 8
         self.sect_hdr: str = "{:>10d} !{}" if self._extended else "{:>8d} !{}"
         self.sect_hdr2: str = (
-            "{:>10d}{:>10d} !{}"
-            if self._extended
-            else "{:>8d}{:>8d} !{}"
+            "{:>10d}{:>10d} !{}" if self._extended else "{:>8d}{:>8d} !{}"
         )
         self.sections: Tuple[Tuple[str, str, int], ...] = (
             ("bonds", "NBOND: bonds", 8),
@@ -212,8 +211,10 @@ class Writer(base.TopologyWriterBase):
             (I10,1X,A8,1X,A8,1X,A8,1X,A8,1X,A4,1X,2G14.6,I8,2G14.6) XPLOR,c35,CHEQ
         """
         fmt: str = self._fmt[self._fmtkey]
-        print(self.sect_hdr.format(self._universe.atoms.n_atoms, "NATOM"),
-              file=psffile)
+        print(
+            self.sect_hdr.format(self._universe.atoms.n_atoms, "NATOM"),
+            file=psffile,
+        )
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.0] = 0.0
         lines: np.ndarray = np.hstack(
@@ -256,7 +257,8 @@ class Writer(base.TopologyWriterBase):
             return
 
         values: np.ndarray = np.asarray(
-            getattr(self._universe, attr).to_indices()) + 1
+            getattr(self._universe, attr).to_indices()
+        ) + 1
         values: np.ndarray = values.astype(object)
         n_rows, n_cols = values.shape
         n_values: int = n_perline // n_cols
@@ -266,7 +268,8 @@ class Writer(base.TopologyWriterBase):
                 (values, np.full((n_extra, n_cols), "", dtype=np.object))
             )
         values: np.ndarray = values.reshape(
-            (values.shape[0] // n_values, n_perline))
+            (values.shape[0] // n_values, n_perline)
+        )
         print(self.sect_hdr.format(n_rows, header), file=psffile)
         np.savetxt(psffile, values, fmt=f"%{self.col_width:d}s", delimiter="")
         print(file=psffile)
@@ -281,7 +284,8 @@ class Writer(base.TopologyWriterBase):
         nnb: np.ndarray = np.full(n_atoms, "0", dtype=np.object)
         if missing > 0:
             nnb: np.ndarray = np.concatenate(
-                [nnb, np.full(missing, "", dtype=object)])
+                [nnb, np.full(missing, "", dtype=object)]
+            )
         nnb: np.ndarray = nnb.reshape((nnb.size // n_cols, n_cols))
 
         print(self.sect_hdr.format(0, "NNB\n"), file=psffile)

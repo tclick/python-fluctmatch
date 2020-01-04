@@ -59,11 +59,13 @@ _index: Dict[str, List[str]] = dict(
 )
 
 
-def _create_table(directory: Union[str, Path],
-                  intcor: str = "average.ic",
-                  parmfile: str = "fluctmatch.dist.prm",
-                  tbltype: str = "Kb",
-                  verbose: bool = False) -> pd.DataFrame:
+def _create_table(
+    directory: Union[str, Path],
+    intcor: str = "average.ic",
+    parmfile: str = "fluctmatch.dist.prm",
+    tbltype: str = "Kb",
+    verbose: bool = False,
+) -> pd.DataFrame:
     if path.isdir(directory):
         if verbose:
             print(f"Reading directory {directory}")
@@ -75,13 +77,13 @@ def _create_table(directory: Union[str, Path],
         with reader(Path(directory) / parmfile) as prm_file:
             if verbose:
                 print(f"    Processing {Path(directory) / parmfile}...")
-            prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(
-                _header)
+            prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(_header)
         table: pd.DataFrame = pd.concat([ic_table, prm_table], axis=1)
         table.reset_index(inplace=True)
         table: pd.DataFrame = table.set_index(_index["general"])[
-            tbltype].to_frame()
-        table.columns = [Path(directory).name, ]
+            tbltype
+        ].to_frame()
+        table.columns = [Path(directory).name]
         return table
 
 
@@ -90,11 +92,13 @@ class ParamTable(object):
 
     """
 
-    def __init__(self,
-                 prefix: str = "fluctmatch",
-                 tbltype: str = "Kb",
-                 ressep: int = 3,
-                 datadir: Union[str, Path] = Path.cwd()):
+    def __init__(
+        self,
+        prefix: str = "fluctmatch",
+        tbltype: str = "Kb",
+        ressep: int = 3,
+        datadir: Union[str, Path] = Path.cwd(),
+    ):
         """
         Parameters
         ----------
@@ -113,8 +117,7 @@ class ParamTable(object):
         self._datadir: Union[str, Path] = datadir
         self.table: pd.DataFrame = pd.DataFrame()
         self._filenames: Dict[str, str] = dict(
-            intcor="fluct.ic",
-            param=".".join((self._prefix, "dist", "prm")),
+            intcor="fluct.ic", param=".".join((self._prefix, "dist", "prm"))
         )
 
     def __add__(self, other: "ParamTable") -> "ParamTable":
@@ -133,8 +136,10 @@ class ParamTable(object):
         index = prm_table.index.names
         table: pd.DataFrame = prm_table.reset_index()
         tmp: pd.DataFrame = table[table["segidI"] == table["segidJ"]]
-        tmp: pd.DataFrame = tmp[(tmp["resI"] >= tmp["resJ"] + self._ressep)
-                                | (tmp["resJ"] >= tmp["resI"] + self._ressep)]
+        tmp: pd.DataFrame = tmp[
+            (tmp["resI"] >= tmp["resJ"] + self._ressep)
+            | (tmp["resJ"] >= tmp["resI"] + self._ressep)
+        ]
         diff: pd.DataFrame = table[table["segidI"] != table["segidJ"]]
         table: pd.DataFrame = pd.concat([tmp, diff], axis=0)
         table.set_index(index, inplace=True)
@@ -150,10 +155,12 @@ class ParamTable(object):
         revcol: List[str, ...] = ["segidJ", "resJ", "J", "segidI", "resI", "I"]
 
         columns: np.ndarray = np.concatenate(
-            (revcol, self.table.columns[len(revcol):]))
+            (revcol, self.table.columns[len(revcol) :])
+        )
         temp: pd.DataFrame = self.table.copy(deep=True)
-        same: pd.DataFrame = temp[(temp["segidI"] == temp["segidJ"])
-                                  & (temp["resI"] != temp["resJ"])]
+        same: pd.DataFrame = temp[
+            (temp["segidI"] == temp["segidJ"]) & (temp["resI"] != temp["resJ"])
+        ]
 
         diff: pd.DataFrame = temp[temp["segidI"] != temp["segidJ"]]
         temp: pd.DataFrame = pd.concat([same, diff], axis=0)
@@ -189,7 +196,7 @@ class ParamTable(object):
 
         self._complete_table()
         self.table.set_index(_index["general"], inplace=True)
-        self.table.fillna(0., inplace=True)
+        self.table.fillna(0.0, inplace=True)
         self.table.sort_index(kind="mergesort", inplace=True)
 
     def from_file(self, filename: Union[str, Path]):
@@ -201,8 +208,9 @@ class ParamTable(object):
             Filename of the parameter table.
         """
         with open(filename, mode="r") as table:
-            self.table = pd.read_csv(table.name, skipinitialspace=True,
-                                     delim_whitespace=True, header=0)
+            self.table = pd.read_csv(
+                table.name, skipinitialspace=True, delim_whitespace=True, header=0
+            )
             if "resnI" in self.table.columns:
                 self.table.set_index(_index["complete"], inplace=True)
             else:
@@ -218,8 +226,13 @@ class ParamTable(object):
             Location to write the parameter table.
         """
         with openany(filename, mode="w") as table:
-            self.table.to_csv(table, header=True, index=True,
-                              float_format="%.6f", encoding="utf-8")
+            self.table.to_csv(
+                table,
+                header=True,
+                index=True,
+                float_format="%.6f",
+                encoding="utf-8",
+            )
 
     @property
     def per_residue(self) -> pd.DataFrame:
@@ -231,11 +244,11 @@ class ParamTable(object):
         """
         # Separate by residue
         table: pd.DataFrame = self._separate(self.table)
-        table: pd.DataFrame = 0.5 * table.groupby(
-            level=["segidI", "resI"]).sum()
+        table: pd.DataFrame = 0.5 * table.groupby(level=["segidI", "resI"]).sum()
         table.sort_index(axis=1, inplace=True)
-        table: pd.DataFrame = table.reindex(index=table.index,
-                                            columns=np.sort(table.columns))
+        table: pd.DataFrame = table.reindex(
+            index=table.index, columns=np.sort(table.columns)
+        )
         return table
 
     @property
@@ -247,9 +260,11 @@ class ParamTable(object):
         A table with residue-residue values.
         """
         table: pd.DataFrame = self._separate(self.table)
-        table: pd.DataFrame = table.groupby(level=["segidI", "resI",
-                                                   "segidJ", "resJ"]).sum()
+        table: pd.DataFrame = table.groupby(
+            level=["segidI", "resI", "segidJ", "resJ"]
+        ).sum()
         table.sort_index(axis=1, inplace=True)
-        table: pd.DataFrame = table.reindex(index=table.index,
-                                            columns=np.sort(table.columns))
+        table: pd.DataFrame = table.reindex(
+            index=table.index, columns=np.sort(table.columns)
+        )
         return table

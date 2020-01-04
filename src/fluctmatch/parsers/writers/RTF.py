@@ -104,7 +104,8 @@ class Writer(topbase.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = environ["USER"]
         self._title: str = kwargs.get(
-            "title", f"""
+            "title",
+            f"""
             * Created by fluctmatch on {date},
             * User: {user}""",
         )
@@ -139,15 +140,17 @@ class Writer(topbase.TopologyWriterBase):
 
         print(
             self.fmt["RES"].format(residue.resname, residue.charge),
-            file=self.rtffile
+            file=self.rtffile,
         )
 
         # Write the atom lines with site name, type, and charge.
         key = "ATOM"
         atoms = residue.atoms
-        lines = ((atoms.names, atoms.types, atoms.charges)
-                 if np.issubdtype(atoms.types.dtype, np.signedinteger) else
-                 (atoms.names, atoms.names, atoms.charges))
+        lines = (
+            (atoms.names, atoms.types, atoms.charges)
+            if np.issubdtype(atoms.types.dtype, np.signedinteger)
+            else (atoms.names, atoms.names, atoms.charges)
+        )
         lines = pd.concat([pd.Series(_) for _ in lines], axis=1)
         np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
 

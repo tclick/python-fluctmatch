@@ -68,6 +68,7 @@ class Writer(topbase.TopologyWriterBase):
         A header section written at the beginning of the stream file.
         If no title is given, a default title will be written.
     """
+
     format: ClassVar[str] = "STREAM"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
@@ -94,9 +95,11 @@ class Writer(topbase.TopologyWriterBase):
         date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
         user: str = os.environ["USER"]
         self._title: str = kwargs.get(
-            "title", f"""
+            "title",
+            f"""
             * Created by fluctmatch on {date}"
-            * User: {user}""")
+            * User: {user}""",
+        )
         self._title = textwrap.dedent(self._title.strip("\n"))
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
@@ -115,20 +118,29 @@ class Writer(topbase.TopologyWriterBase):
             dist: np.ndarray = np.zeros_like(n_bonds, dtype=float)
             if self._version >= 36:
                 a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: pd.DataFrame = pd.DataFrame.from_dict(dict(
-                    segidI=a1.segids, resI=a1.resids, I=a1.names,
-                    segidJ=a2.segids, resJ=a2.resids, J=a2.names, b0=dist))
+                data: pd.DataFrame = pd.DataFrame.from_dict(
+                    dict(
+                        segidI=a1.segids,
+                        resI=a1.resids,
+                        I=a1.names,
+                        segidJ=a2.segids,
+                        resJ=a2.resids,
+                        J=a2.names,
+                        b0=dist,
+                    )
+                )
             else:
-                data: pd.DataFrame = pd.DataFrame(
-                    universe._topology.bonds.values)
-                data: pd.DataFrame = pd.concat((data, pd.Series(dist)),
-                                               axis="columns")
+                data: pd.DataFrame = pd.DataFrame(universe._topology.bonds.values)
+                data: pd.DataFrame = pd.concat(
+                    (data, pd.Series(dist)), axis="columns"
+                )
         except AttributeError:
             AttributeError("No bonds were found.")
 
         # Write the data to the file.
         with open(self.filename, "w") as stream_file:
             print(self._title, file=stream_file)
-            np.savetxt(stream_file, data,
-                       fmt=textwrap.dedent(self.fmt.strip("\n")))
+            np.savetxt(
+                stream_file, data, fmt=textwrap.dedent(self.fmt.strip("\n"))
+            )
             print("RETURN", file=stream_file)

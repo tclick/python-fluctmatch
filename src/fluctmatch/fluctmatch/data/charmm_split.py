@@ -37,7 +37,7 @@
 #
 # ------------------------------------------------------------------------------
 
-split_inp = ("""
+split_inp = """
     * Create a subtrajectory from a larger CHARMM trajectory.
     * This is for <= c35.
     *
@@ -106,4 +106,4 @@ split_inp = ("""
     close @iu
     close @ou
     stop
-    """)
+    """

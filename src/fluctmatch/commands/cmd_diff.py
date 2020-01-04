@@ -82,36 +82,38 @@ from fluctmatch.analysis import paramtable
 )
 def cli(logfile, outdir, ressep, table1, table2):
     logging.config.dictConfig(
-        dict(version=1,
-             disable_existing_loggers=False,  # this fixes the problem
-             formatters=dict(
-                 standard={
-                     "class": "logging.Formatter",
-                     "format": "%(name)-12s %(levelname)-8s %(message)s",
-                 },
-                 detailed={
-                     "class": "logging.Formatter",
-                     "format": ("%(asctime)s %(name)-15s %(levelname)-8s "
-                                "%(message)s"),
-                     "datefmt": "%m-%d-%y %H:%M",
-                 },
-             ),
-             handlers=dict(
-                 console={
-                     "class": "logging.StreamHandler",
-                     "level": "INFO",
-                     "formatter": "standard",
-                 },
-                 file={
-                     "class": "logging.FileHandler",
-                     "filename": logfile,
-                     "level": "INFO",
-                     "mode": "w",
-                     "formatter": "detailed",
-                 },
-             ),
-             root=dict(level="INFO", handlers=["console", "file"]),
-             )
+        dict(
+            version=1,
+            disable_existing_loggers=False,  # this fixes the problem
+            formatters=dict(
+                standard={
+                    "class": "logging.Formatter",
+                    "format": "%(name)-12s %(levelname)-8s %(message)s",
+                },
+                detailed={
+                    "class": "logging.Formatter",
+                    "format": (
+                        "%(asctime)s %(name)-15s %(levelname)-8s " "%(message)s"
+                    ),
+                    "datefmt": "%m-%d-%y %H:%M",
+                },
+            ),
+            handlers=dict(
+                console={
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                    "formatter": "standard",
+                },
+                file={
+                    "class": "logging.FileHandler",
+                    "filename": logfile,
+                    "level": "INFO",
+                    "mode": "w",
+                    "formatter": "detailed",
+                },
+            ),
+            root=dict(level="INFO", handlers=["console", "file"]),
+        )
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -127,26 +129,30 @@ def cli(logfile, outdir, ressep, table1, table2):
 
     d_table = table_1 - table_2
     d_perres = table_1.per_residue.subtract(table_2.per_residue, fill_value=0.0)
-    d_interactions = table_1.interactions.subtract(table_2.interactions,
-                                                   fill_value=0.0)
+    d_interactions = table_1.interactions.subtract(
+        table_2.interactions, fill_value=0.0
+    )
 
     filename = Path(outdir) / "dcoupling.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing table differences to {filename}")
-        d_table.to_csv(output, header=True, index=True, float_format="%.4f",
-                       encoding="utf-8")
+        d_table.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "dperres.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing per residue differences to {filename}")
-        d_perres.to_csv(output, header=True, index=True, float_format="%.4f",
-                        encoding="utf-8")
+        d_perres.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")
 
     filename = Path(outdir) / "dinteractions.txt"
     with open(filename, mode="w") as output:
         logger.info(f"Writing residue-residue differences to {filename}")
-        d_interactions.to_csv(output, header=True, index=True,
-                              float_format="%.4f", encoding="utf-8")
+        d_interactions.to_csv(
+            output, header=True, index=True, float_format="%.4f", encoding="utf-8"
+        )
         logger.info("Table written successfully.")

@@ -51,6 +51,7 @@ logger.addHandler(logging.NullHandler())
 
 class Reader(PRM.Reader):
     """Read CHARMM parameter files with extension .par"""
+
     format: ClassVar[str] = "PAR"
 
     def __init__(self, filename: Union[str, Path]):

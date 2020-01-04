@@ -117,8 +117,9 @@ class Eigh(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def transform(self, X: np.ndarray,
-                  y: Union[np.ndarray, None] = None) -> np.ndarray:
+    def transform(
+        self, X: np.ndarray, y: Union[np.ndarray, None] = None
+    ) -> np.ndarray:
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -142,8 +143,9 @@ class Eigh(BaseEstimator, TransformerMixin):
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
-        X: np.ndarray = check_array(X, dtype=[np.float64, np.float32],
-                                    ensure_2d=True, copy=self.copy)
+        X: np.ndarray = check_array(
+            X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
+        )
         L, V = linalg.eigsh(X, k=X.shape[0])
         idx: np.ndarray = np.argsort(L)[::-1]
         self.eigenvalues_: np.ndarray = L[idx].copy()
