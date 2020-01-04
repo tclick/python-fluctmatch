@@ -57,8 +57,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class FluctMatch(FluctMatchBase):
     """Fluctuation matching using CHARMM."""
-    bond_def: ClassVar[List[str,...]] = ["I", "J"]
-    error_hdr: ClassVar[List[str,...]] = ["step", "Kb_rms", "fluct_rms", "b0_rms"]
+    bond_def: ClassVar[List[str]] = ["I", "J"]
+    error_hdr: ClassVar[List[str]] = ["step", "Kb_rms", "fluct_rms", "b0_rms"]
     description: ClassVar[str] = "Fluctuation matching using CHARMM"
 
     def __init__(self, *args: List, **kwargs: Dict):

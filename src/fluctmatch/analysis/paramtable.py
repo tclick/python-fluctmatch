@@ -26,8 +26,8 @@ import pandas as pd
 from MDAnalysis.coordinates.core import reader
 from MDAnalysis.lib.util import openany
 
-_header: List[str, str] = ["I", "J"]
-_index: Dict[str, List[str, ...]] = dict(
+_header: List[str] = ["I", "J"]
+_index: Dict[str, List[str]] = dict(
     general=["segidI", "resI", "I", "segidJ", "resJ", "J"],
     complete=["segidI", "resI", "resnI", "I", "segidJ", "resJ", "resnJ", "J"],
 )

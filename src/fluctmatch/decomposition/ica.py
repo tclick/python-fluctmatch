@@ -622,7 +622,7 @@ class ICA(BaseEstimator, TransformerMixin):
             ica: FastICA = FastICA(whiten=self.whiten, random_state=random_state,
                           **self.fit_params)
             ica.fit(data)
-            self.components_: : np.ndarray = ica.components_
+            self.components_: np.ndarray = ica.components_
             self.mixing_: np.ndarray = ica.mixing_
         elif self.method in ('infomax', 'extended-infomax'):
             self.components_: np.ndarray  = _infomax(data, random_state=random_state,
