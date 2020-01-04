@@ -60,8 +60,9 @@ class TestCORWriter:
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.cor"
-        with patch("fluctmatch.parsers.writers.COR.Writer.write") as writer, \
-                mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+        with patch(
+            "fluctmatch.parsers.writers.COR.Writer.write"
+        ) as writer, mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
             writer.assert_called()
 
@@ -74,9 +75,9 @@ class TestCORWriter:
             w.write(u.atoms)
 
         def CRD_iter(fn):
-            with open(fn, 'r') as inf:
+            with open(fn, "r") as inf:
                 for line in inf:
-                    if not line.startswith('*'):
+                    if not line.startswith("*"):
                         yield line
 
         for ref, other in zip(CRD_iter(COR), CRD_iter(filename)):
@@ -95,41 +96,40 @@ class TestCORWriter:
 
 class TestCORWriterMissingAttrs:
     # All required attributes with the default value
-    req_attrs: OrderedDict = OrderedDict([
-        ("resnames", "UNK"),
-        ("resids", 1),
-        ("names", "X"),
-        ("tempfactors", 0.0),
-    ])
+    req_attrs: OrderedDict = OrderedDict(
+        [("resnames", "UNK"), ("resids", 1), ("names", "X"), ("tempfactors", 0.0)]
+    )
 
-    @pytest.mark.parametrize('missing_attr', req_attrs)
+    @pytest.mark.parametrize("missing_attr", req_attrs)
     def test_warns(self, missing_attr: OrderedDict, tmp_path: Path):
         attrs: List[str, ...] = list(self.req_attrs.keys())
         attrs.remove(missing_attr)
         u: mda.Universe = make_Universe(attrs, trajectory=True)
 
         outfile: Path = tmp_path / "out.cor"
-        with pytest.warns(UserWarning), \
-                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+        with pytest.warns(UserWarning), mda.Writer(
+            outfile, n_atoms=u.atoms.n_atoms
+        ) as w:
             w.write(u.atoms)
 
-    @pytest.mark.parametrize('missing_attr', req_attrs)
+    @pytest.mark.parametrize("missing_attr", req_attrs)
     def test_write(self, missing_attr: OrderedDict, tmp_path: Path):
         attrs: List[str, ...] = list(self.req_attrs.keys())
         attrs.remove(missing_attr)
         u: mda.Universe = make_Universe(attrs, trajectory=True)
 
         outfile: Path = tmp_path / "out.cor"
-        with pytest.warns(UserWarning), \
-                mda.Writer(outfile, n_atoms=u.atoms.n_atoms) as w:
+        with pytest.warns(UserWarning), mda.Writer(
+            outfile, n_atoms=u.atoms.n_atoms
+        ) as w:
             w.write(u.atoms)
 
         u2 = mda.Universe(outfile)
 
         # Check all other attrs aren't disturbed
         for attr in attrs:
-            assert_equal(getattr(u.atoms, attr),
-                         getattr(u2.atoms, attr))
+            assert_equal(getattr(u.atoms, attr), getattr(u2.atoms, attr))
         # Check missing attr is as expected
-        assert_equal(getattr(u2.atoms, missing_attr),
-                     self.req_attrs[missing_attr])
+        assert_equal(
+            getattr(u2.atoms, missing_attr), self.req_attrs[missing_attr]
+        )

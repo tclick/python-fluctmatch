@@ -53,11 +53,17 @@ class TestModeller:
     def system(self) -> polar.Model:
         return polar.Model()
 
-    def test_creation(self, u: mda.Universe, u2: mda.Universe,
-                      system: polar.Model):
+    def test_creation(
+        self, u: mda.Universe, u2: mda.Universe, system: polar.Model
+    ):
         u3 = system.transform(u)
 
-        testing.assert_raises(AssertionError, testing.assert_equal,
-                              (u.atoms.n_atoms,), (u2.atoms.n_atoms,))
-        testing.assert_equal(u2.atoms.names, u3.atoms.names,
-                             err_msg="Universes don't match.")
+        testing.assert_raises(
+            AssertionError,
+            testing.assert_equal,
+            (u.atoms.n_atoms,),
+            (u2.atoms.n_atoms,),
+        )
+        testing.assert_equal(
+            u2.atoms.names, u3.atoms.names, err_msg="Universes don't match."
+        )

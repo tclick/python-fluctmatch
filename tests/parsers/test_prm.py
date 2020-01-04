@@ -47,10 +47,10 @@ import MDAnalysis as mda
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
-from tests.datafiles import PRM
 
 import fluctmatch.parsers.readers.PRM as ParamReader
 import fluctmatch.parsers.writers.PRM
+from tests.datafiles import PRM
 
 
 class TestPRMWriter(object):
@@ -60,8 +60,9 @@ class TestPRMWriter(object):
 
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.prm"
-        with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, \
-                mda.Writer(filename, nonbonded=True) as ofile:
+        with patch(
+            "fluctmatch.parsers.writers.PRM.Writer.write"
+        ) as writer, mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(u)
             writer.assert_called()
 
@@ -71,10 +72,16 @@ class TestPRMWriter(object):
             ofile.write(u)
 
         u2 = ParamReader.Reader(filename).read()
-        assert_allclose(u["ATOMS"]["mass"], u2["ATOMS"]["mass"],
-                        err_msg="The atomic masses don't match.")
-        assert_allclose(u["BONDS"]["Kb"], u2["BONDS"]["Kb"],
-                        err_msg="The force constants don't match.")
+        assert_allclose(
+            u["ATOMS"]["mass"],
+            u2["ATOMS"]["mass"],
+            err_msg="The atomic masses don't match.",
+        )
+        assert_allclose(
+            u["BONDS"]["Kb"],
+            u2["BONDS"]["Kb"],
+            err_msg="The force constants don't match.",
+        )
 
     def test_roundtrip(self, u: Mapping[str, pd.DataFrame], tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
@@ -86,7 +93,7 @@ class TestPRMWriter(object):
         def PRM_iter(fn: Union[str, Path]):
             with open(fn) as inf:
                 for line in inf:
-                    if not line.startswith('*'):
+                    if not line.startswith("*"):
                         yield line
 
         for ref, other in zip(PRM_iter(PRM), PRM_iter(filename)):

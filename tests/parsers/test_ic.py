@@ -44,10 +44,10 @@ import MDAnalysis as mda
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
-from tests.datafiles import IC
 
 import fluctmatch.parsers.readers.IC as IntCor
 import fluctmatch.parsers.writers.IC
+from tests.datafiles import IC
 
 
 class TestICReader:
@@ -71,8 +71,9 @@ class TestICWriter:
 
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.ic"
-        with patch("fluctmatch.parsers.writers.IC.Writer.write") as icw, \
-                mda.Writer(filename) as ofile:
+        with patch(
+            "fluctmatch.parsers.writers.IC.Writer.write"
+        ) as icw, mda.Writer(filename) as ofile:
             ofile.write(u)
             icw.assert_called()
 
@@ -82,8 +83,9 @@ class TestICWriter:
             ofile.write(u)
 
         u2 = IntCor.Reader(tmp_path / "temp.ic").read()
-        assert_allclose(u["r_IJ"], u2["r_IJ"],
-                        err_msg="The distances don't match.")
+        assert_allclose(
+            u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match."
+        )
 
     def test_roundtrip(self, u: pd.DataFrame, tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
@@ -95,7 +97,7 @@ class TestICWriter:
         def IC_iter(fn: str):
             with open(fn) as inf:
                 for line in inf:
-                    if not line.startswith('*'):
+                    if not line.startswith("*"):
                         yield line
 
         for ref, other in zip(IC_iter(IC), IC_iter(filename)):

@@ -58,8 +58,9 @@ class TestRTFWriter(object):
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.rtf"
-        with patch("fluctmatch.parsers.writers.RTF.Writer.write") as writer, \
-                mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+        with patch(
+            "fluctmatch.parsers.writers.RTF.Writer.write"
+        ) as writer, mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
             w.write(u.atoms)
             writer.assert_called()
 
@@ -74,7 +75,7 @@ class TestRTFWriter(object):
         def RTF_iter(fn: Union[str, Path]):
             with open(fn) as inf:
                 for line in inf:
-                    if not line.startswith('*'):
+                    if not line.startswith("*"):
                         yield line
 
         for ref, other in zip(RTF_iter(RTF), RTF_iter(filename)):

@@ -57,23 +57,31 @@ class TestGeneric:
         system.create_topology(u)
 
         n_atoms = u.select_atoms(system._mapping).n_atoms
-        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
-                             err_msg="Number of sites don't match.")
+        testing.assert_equal(
+            system.universe.atoms.n_atoms,
+            n_atoms,
+            err_msg="Number of sites don't match.",
+        )
 
     def test_positions(self, u: mda.Universe, system: generic.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         positions: np.ndarray = u.select_atoms(system._mapping).positions
 
-        testing.assert_allclose(cg_universe.atoms.positions, positions,
-                                err_msg="The coordinates do not match.")
+        testing.assert_allclose(
+            cg_universe.atoms.positions,
+            positions,
+            err_msg="The coordinates do not match.",
+        )
 
     def test_trajectory(self, u: mda.Universe, system: generic.Model):
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
-            cg_universe.trajectory.n_frames, u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.")
+            cg_universe.trajectory.n_frames,
+            u.trajectory.n_frames,
+            err_msg="All-atom and coarse-grain trajectories unequal.",
+        )
 
     def test_bonds(self, u: mda.Universe, system: generic.Model):
         cg_universe: mda.Universe = system.transform(u)

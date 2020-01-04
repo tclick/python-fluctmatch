@@ -62,8 +62,9 @@ class TestPSFWriter(object):
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.xplor.psf"
-        with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, \
-                mda.Writer(filename) as w:
+        with patch(
+            "fluctmatch.parsers.writers.PSF.Writer.write"
+        ) as writer, mda.Writer(filename) as w:
             w.write(u.atoms)
             writer.assert_called()
 
@@ -78,7 +79,7 @@ class TestPSFWriter(object):
         def PSF_iter(fn: str):
             with open(fn) as inf:
                 for line in inf:
-                    if not line.startswith('*'):
+                    if not line.startswith("*"):
                         yield line
 
         for ref, other in zip(PSF_iter(PSF), PSF_iter(filename.as_posix())):
@@ -99,12 +100,22 @@ class TestPSFParser(ParserBase):
     """
     Based on small PDB with AdK (:data:`PDB_small`).
     """
+
     parser: ClassVar[PSFParser.Reader] = PSFParser.Reader
     ref_filename: ClassVar[str] = PSF
-    expected_attrs: ClassVar[List[str]] = ["ids", "names", "masses",
-                                           "charges", "resids", "resnames",
-                                           "segids", "bonds", "angles",
-                                           "dihedrals", "impropers"]
+    expected_attrs: ClassVar[List[str]] = [
+        "ids",
+        "names",
+        "masses",
+        "charges",
+        "resids",
+        "resnames",
+        "segids",
+        "bonds",
+        "angles",
+        "dihedrals",
+        "impropers",
+    ]
     expected_n_atoms: ClassVar[int] = 330
     expected_n_residues: ClassVar[int] = 115
     expected_n_segments: ClassVar[int] = 1

@@ -18,12 +18,12 @@ import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
-from tests.datafiles import TPR
-from tests.datafiles import XTC
 
 from fluctmatch.core.base import Merge
 from fluctmatch.core.base import ModelBase
 from fluctmatch.core.base import rename_universe
+from tests.datafiles import TPR
+from tests.datafiles import XTC
 
 
 def test_universe():
@@ -40,8 +40,9 @@ class TestMerge:
         u2: mda.Universe = Merge(*univ_tuple)
 
         n_atoms: int = u.atoms.n_atoms * 2
-        testing.assert_equal(u2.atoms.n_atoms, n_atoms,
-                             err_msg="Number of sites don't match.")
+        testing.assert_equal(
+            u2.atoms.n_atoms, n_atoms, err_msg="Number of sites don't match."
+        )
 
     def test_positions(self, u: mda.Universe):
         n_atoms: int = u.atoms.n_atoms
@@ -49,15 +50,17 @@ class TestMerge:
         u2: mda.Universe = Merge(*univ_tuple)
 
         positions: np.ndarray = np.concatenate(
-            [u.atoms.positions
-             for u in univ_tuple])
+            [u.atoms.positions for u in univ_tuple]
+        )
 
-        testing.assert_allclose(u2.atoms.positions, positions,
-                                err_msg="Coordinates don't match.")
-        testing.assert_allclose(u2.atoms.positions[0],
-                                u2.atoms.positions[n_atoms],
-                                err_msg=(f"Coordinates 0 and {n_atoms:d} "
-                                         f"don't match."))
+        testing.assert_allclose(
+            u2.atoms.positions, positions, err_msg="Coordinates don't match."
+        )
+        testing.assert_allclose(
+            u2.atoms.positions[0],
+            u2.atoms.positions[n_atoms],
+            err_msg=(f"Coordinates 0 and {n_atoms:d} " f"don't match."),
+        )
 
     def test_topology(self, u: mda.Universe):
         u2: mda.Universe = Merge(u)
@@ -65,8 +68,9 @@ class TestMerge:
         testing.assert_equal(u.atoms.n_atoms, u2.atoms.n_atoms)
         testing.assert_equal(u2.bonds, u.bonds, err_msg="Bonds differ.")
         testing.assert_equal(u2.angles, u.angles, err_msg="Angles differ.")
-        testing.assert_equal(u2.dihedrals, u.dihedrals,
-                             err_msg="Dihedrals differ.")
+        testing.assert_equal(
+            u2.dihedrals, u.dihedrals, err_msg="Dihedrals differ."
+        )
 
 
 def test_rename_universe():
@@ -80,4 +84,5 @@ def test_rename_universe():
 
 def test_registry():
     from fluctmatch import _MODELS
+
     assert len(_MODELS) > 0

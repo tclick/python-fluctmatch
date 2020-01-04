@@ -57,8 +57,11 @@ class TestEnm:
         cg_universe: mda.Universe = system.transform(u)
         n_atoms: int = u.atoms.n_atoms
 
-        testing.assert_equal(cg_universe.atoms.n_atoms, n_atoms,
-                             err_msg="The number of beads don't match.")
+        testing.assert_equal(
+            cg_universe.atoms.n_atoms,
+            n_atoms,
+            err_msg="The number of beads don't match.",
+        )
 
     def test_names(self, u: mda.Universe, system: enm.Model):
         cg_universe: mda.Universe = system.transform(u)
@@ -69,8 +72,11 @@ class TestEnm:
     def test_positions(self, u: mda.Universe, system: enm.Model):
         cg_universe = system.transform(u)
 
-        testing.assert_allclose(cg_universe.atoms.positions, u.atoms.positions,
-                                err_msg="Coordinates don't match.")
+        testing.assert_allclose(
+            cg_universe.atoms.positions,
+            u.atoms.positions,
+            err_msg="Coordinates don't match.",
+        )
 
     def test_bonds(self, u: mda.Universe, system: enm.Model):
         cg_universe = system.transform(u)

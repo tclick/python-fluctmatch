@@ -60,11 +60,16 @@ class TestIons:
     def test_creation(self, u: mda.Universe, system: solventions.Model):
         system.create_topology(u)
 
-        n_atoms: int = sum(u.select_atoms(sel).residues.n_residues
-                           for sel in system._mapping.values())
+        n_atoms: int = sum(
+            u.select_atoms(sel).residues.n_residues
+            for sel in system._mapping.values()
+        )
 
-        testing.assert_equal(system.universe.atoms.n_atoms, n_atoms,
-                             err_msg="Number of sites don't match.")
+        testing.assert_equal(
+            system.universe.atoms.n_atoms,
+            n_atoms,
+            err_msg="Number of sites don't match.",
+        )
 
     def test_positions(self, u: mda.Universe, system: solventions.Model):
         cg_universe: mda.Universe = system.transform(u)
@@ -77,12 +82,14 @@ class TestIons:
         ]
 
         testing.assert_allclose(
-            np.asarray(positions), cg_universe.atoms.positions,
+            np.asarray(positions),
+            cg_universe.atoms.positions,
             err_msg="The coordinates do not match.",
         )
 
     def test_bonds(self, u: mda.Universe, system: solventions.Model):
         cg_universe: mda.Universe = system.transform(u)
 
-        testing.assert_equal(len(cg_universe.bonds), 0,
-                             err_msg="No bonds should exist.")
+        testing.assert_equal(
+            len(cg_universe.bonds), 0, err_msg="No bonds should exist."
+        )

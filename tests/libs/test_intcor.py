@@ -42,10 +42,10 @@ import numpy as np
 import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
-from tests.datafiles import COR
-from tests.datafiles import PSF
 
 from fluctmatch.libs.intcor import create_empty_table
+from tests.datafiles import COR
+from tests.datafiles import PSF
 
 
 class TestIntcorUtils:
@@ -57,5 +57,8 @@ class TestIntcorUtils:
         empty: np.ndarray = np.zeros(len(u.dihedrals))
         table: pd.DataFrame = create_empty_table(u)
 
-        assert_allclose(table["r_IJ"], empty,
-                        err_msg="The table shouldn't contain any values.")
+        assert_allclose(
+            table["r_IJ"],
+            empty,
+            err_msg="The table shouldn't contain any values.",
+        )

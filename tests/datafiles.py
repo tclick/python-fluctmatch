@@ -58,40 +58,33 @@ __all__ = [
     "COR",
     "PRM",
     "RTF",
-    "STR"
+    "STR",
 ]
 
-PDB = resource_filename(__name__,
-                        Path().joinpath("data", "trex1.pdb").as_posix())
-GRO = resource_filename(__name__,
-                        Path().joinpath("data", "trex2.gro").as_posix())
-PDB_dna = resource_filename(__name__,
-                            Path().joinpath("data", "dna.pdb").as_posix())
-TPR = resource_filename(__name__,
-                        Path().joinpath("data", "trex1.tpr").as_posix())
-XTC = resource_filename(__name__,
-                        Path().joinpath("data", "trex1.xtc").as_posix())
-TIP3P = resource_filename(__name__,
-                          Path().joinpath("data", "spc216.gro").as_posix())
-TIP4P = resource_filename(__name__,
-                          Path().joinpath("data", "tip4p.gro").as_posix())
-IONS = resource_filename(__name__,
-                         Path().joinpath("data", "ions.pdb").as_posix())
-DMA = resource_filename(__name__,
-                        Path().joinpath("data", "dma.gro").as_posix())
-NCSC = resource_filename(__name__,
-                         Path().joinpath("data", "ncsc.pdb").as_posix())
-PSF = resource_filename(__name__,
-                        Path().joinpath("data", "cg.xplor.psf").as_posix())
-DCD = resource_filename(__name__,
-                        Path().joinpath("data", "cg.dcd").as_posix())
-IC = resource_filename(__name__,
-                       Path().joinpath("data", "fluct.ic").as_posix())
-PRM = resource_filename(__name__,
-                        Path().joinpath("data", "fluctmatch.prm").as_posix())
-COR = resource_filename(__name__,
-                        Path().joinpath("data", "cg.cor").as_posix())
-RTF = resource_filename(__name__,
-                        Path().joinpath("data", "cg.rtf").as_posix())
-STR = resource_filename(__name__,
-                        Path().joinpath("data", "cg.stream").as_posix())
+PDB = resource_filename(__name__, Path().joinpath("data", "trex1.pdb").as_posix())
+GRO = resource_filename(__name__, Path().joinpath("data", "trex2.gro").as_posix())
+PDB_dna = resource_filename(
+    __name__, Path().joinpath("data", "dna.pdb").as_posix()
+)
+TPR = resource_filename(__name__, Path().joinpath("data", "trex1.tpr").as_posix())
+XTC = resource_filename(__name__, Path().joinpath("data", "trex1.xtc").as_posix())
+TIP3P = resource_filename(
+    __name__, Path().joinpath("data", "spc216.gro").as_posix()
+)
+TIP4P = resource_filename(
+    __name__, Path().joinpath("data", "tip4p.gro").as_posix()
+)
+IONS = resource_filename(__name__, Path().joinpath("data", "ions.pdb").as_posix())
+DMA = resource_filename(__name__, Path().joinpath("data", "dma.gro").as_posix())
+NCSC = resource_filename(__name__, Path().joinpath("data", "ncsc.pdb").as_posix())
+PSF = resource_filename(
+    __name__, Path().joinpath("data", "cg.xplor.psf").as_posix()
+)
+DCD = resource_filename(__name__, Path().joinpath("data", "cg.dcd").as_posix())
+IC = resource_filename(__name__, Path().joinpath("data", "fluct.ic").as_posix())
+PRM = resource_filename(
+    __name__, Path().joinpath("data", "fluctmatch.prm").as_posix()
+)
+COR = resource_filename(__name__, Path().joinpath("data", "cg.cor").as_posix())
+RTF = resource_filename(__name__, Path().joinpath("data", "cg.rtf").as_posix())
+STR = resource_filename(__name__, Path().joinpath("data", "cg.stream").as_posix())

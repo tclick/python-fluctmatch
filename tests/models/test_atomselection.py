@@ -78,7 +78,7 @@ class TestProteinSelections:
 
 
 class TestSolvent:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def universe(self) -> mda.Universe:
         return mda.Universe(GRO)
 
@@ -92,7 +92,7 @@ class TestSolvent:
 
 
 class TestNucleic:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def universe(self) -> mda.Universe:
         return mda.Universe(GRO)
 

@@ -43,17 +43,11 @@ from numpy import testing
 from fluctmatch.decomposition.eigh import Eigh
 
 # Constants
-X: np.ndarray = np.array([
-    [1, 2, 0],
-    [2, 4, 0],
-    [0, 0, 3]
-])
-L: np.ndarray = np.array([5., 3., 0.])
-V: np.ndarray = np.array([
-    [np.sqrt(0.2), 0, np.sqrt(0.8)],
-    [np.sqrt(0.8), 0, -np.sqrt(0.2)],
-    [0, 1, 0]
-])
+X: np.ndarray = np.array([[1, 2, 0], [2, 4, 0], [0, 0, 3]])
+L: np.ndarray = np.array([5.0, 3.0, 0.0])
+V: np.ndarray = np.array(
+    [[np.sqrt(0.2), 0, np.sqrt(0.8)], [np.sqrt(0.8), 0, -np.sqrt(0.2)], [0, 1, 0]]
+)
 
 
 def test_eigh():

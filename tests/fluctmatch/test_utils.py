@@ -50,30 +50,26 @@ from ..datafiles import XTC
 def test_average_structure():
     universe: mda.Universe = mda.Universe(TPR, XTC)
     avg_positions: np.ndarray = np.mean(
-        [universe.atoms.positions for _ in universe.trajectory], axis=0)
-    positions: np.ndarray = fmutils.AverageStructure(
-        universe.atoms).run().result
+        [universe.atoms.positions for _ in universe.trajectory], axis=0
+    )
+    positions: np.ndarray = fmutils.AverageStructure(universe.atoms).run().result
     testing.assert_allclose(
-        positions,
-        avg_positions,
-        err_msg="Average coordinates don't match.",
+        positions, avg_positions, err_msg="Average coordinates don't match."
     )
 
 
 def test_bond_stats():
     universe: mda.Universe = mda.Universe(TPR, XTC)
     avg_bonds: np.ndarray = np.mean(
-        [universe.bonds.bonds() for _ in universe.trajectory], axis=0)
+        [universe.bonds.bonds() for _ in universe.trajectory], axis=0
+    )
     bond_fluct: np.ndarray = np.std(
-        [universe.bonds.bonds() for _ in universe.trajectory], axis=0)
+        [universe.bonds.bonds() for _ in universe.trajectory], axis=0
+    )
     bonds = fmutils.BondStats(universe.atoms).run().result
     testing.assert_allclose(
-        bonds.average,
-        avg_bonds,
-        err_msg="Average bond distances don't match.",
+        bonds.average, avg_bonds, err_msg="Average bond distances don't match."
     )
     testing.assert_allclose(
-        bonds.stddev,
-        bond_fluct,
-        err_msg="Bond fluctuations don't match.",
+        bonds.stddev, bond_fluct, err_msg="Bond fluctuations don't match."
     )
