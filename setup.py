@@ -76,14 +76,12 @@ if __name__ == "__main__":
         license="BSD license",
         description="Elastic network model using fluctuation matching.",
         long_description="%s\n%s"
-                         % (
-                             re.compile("^.. start-badges.*^.. end-badges",
-                                        re.M | re.S).sub(
-                                 "", read("README.rst")
-                             ),
-                             re.sub(":[a-z]+:`~?(.*?)`", r"``\1``",
-                                    read("CHANGELOG.rst")),
-                         ),
+        % (
+            re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
+                "", read("README.rst")
+            ),
+            re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
+        ),
         author="Timothy Click",
         author_email="tclick@tabor.edu",
         url="https://www.github.com/tclick/python-fluctmatch",
@@ -104,7 +102,8 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
-            "Topic :: Scientific/Engineering :: Chemistry", ],
+            "Topic :: Scientific/Engineering :: Chemistry",
+        ],
         keywords=["elastic network model", "fluctuation matching"],
         install_requires=[
             "click",
@@ -113,8 +112,10 @@ if __name__ == "__main__":
             "numpy",
             "pandas",
             "scipy",
-            "scikit-learn", ],
+            "scikit-learn",
+        ],
         extras_require=dict(
-            dev=["MDAnalysisTests", "pytest", "tox", "coverage", "coveralls"]),
+            dev=["MDAnalysisTests", "pytest", "tox", "coverage", "coveralls"]
+        ),
         entry_points={"console_scripts": ["fluctmatch = fluctmatch.cli:main"]},
     )
