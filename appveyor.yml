@@ -49,7 +49,7 @@ install:
     - python -c "import sys; print(sys.prefix)"
     - conda create -q -n test-environment python=%SYS_PYTHON_VERSION% numpy scipy pandas pip pytest virtualenv sphinx
     - activate test-environment
-    - pip install coverage coveralls pytest-cov tox mdanalysis dnamd
+    - pip install coverage coveralls pytest-cov cython tox dnamd
 
 # Not a .NET project, we build package in the install step instead
 build: false
