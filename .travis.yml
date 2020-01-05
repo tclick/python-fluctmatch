@@ -4,7 +4,6 @@ python:
     - "3.6"
     - "3.7"
     - "3.8"
-    - "pypy3"
 sudo: false
 cache: pip
 env:
@@ -39,4 +38,6 @@ notifications:
     email:
         on_success: never
         on_failure: always
-after_success: coveralls
+after_success:
+    - coveralls
+    - codecov
