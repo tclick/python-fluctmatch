@@ -14,7 +14,7 @@ env:
     matrix:
         - TOXENV=check,package_description,clean
         - TOXENV=docs
-        - TOXENV=report,coveralls,codecov,coverage
+        - TOXENV=coverage,coveralls,codecov
 branches:
     only:
         - master
