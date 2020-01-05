@@ -166,7 +166,7 @@ class Writer(base.TopologyWriterBase):
         with open(self.filename, mode="w") as psffile:
             print(header, file=psffile)
             print(file=psffile)
-            n_title: int = len(self.title.strip().psf.split("\n"))
+            n_title: int = len(self.title.strip().split("\n"))
             print(self.sect_hdr.format(n_title, "NTITLE"), file=psffile)
             print(textwrap.dedent(self.title).strip(), file=psffile)
             print(file=psffile)
