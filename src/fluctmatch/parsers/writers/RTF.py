@@ -101,16 +101,6 @@ class Writer(topbase.TopologyWriterBase):
         self._atoms: mda.AtomGroup = None
         self.rtffile: TextIO = None
 
-        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user: str = environ["USER"]
-        self._title: str = kwargs.get(
-            "title",
-            f"""
-            * Created by fluctmatch on {date},
-            * User: {user}""",
-        )
-        self._title = textwrap.dedent(self._title.strip("\n"))
-
     def _write_mass(self):
         _, idx = np.unique(self._atoms.names, return_index=True)
         try:
@@ -226,7 +216,7 @@ class Writer(topbase.TopologyWriterBase):
         self._atoms: mda.AtomGroup = universe.atoms
         with self.filename.open(mode="w") as self.rtffile:
             # Write the title and header information.
-            print(self._title, file=self.rtffile)
+            print(textwrap.dedent(self.title).strip(), file=self.rtffile)
             print(self.fmt["HEADER"].format(36, 1), file=self.rtffile)
             print(file=self.rtffile)
 

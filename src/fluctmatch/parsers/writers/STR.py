@@ -92,16 +92,6 @@ class Writer(topbase.TopologyWriterBase):
                 END
                 """
 
-        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user: str = os.environ["USER"]
-        self._title: str = kwargs.get(
-            "title",
-            f"""
-            * Created by fluctmatch on {date}"
-            * User: {user}""",
-        )
-        self._title = textwrap.dedent(self._title.strip("\n"))
-
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.
 
@@ -139,7 +129,7 @@ class Writer(topbase.TopologyWriterBase):
 
         # Write the data to the file.
         with open(self.filename, "w") as stream_file:
-            print(self._title, file=stream_file)
+            print(textwrap.dedent(self.title).strip(), file=stream_file)
             np.savetxt(
                 stream_file, data, fmt=textwrap.dedent(self.fmt.strip("\n"))
             )

@@ -64,10 +64,7 @@ class TopologyWriterBase(IOBase, metaclass=_Writermeta):
     def __init__(self):
         self.title: str = f"""
             * Created by fluctmatch on {time.asctime(time.localtime())}
-            * User: {os.environ["USER"]}
-            """.strip(
-            "\n"
-        )
+            * User: {os.environ.get("USER", "User")}"""
 
     def write(self, selection: Union[mda.Universe, mda.AtomGroup]):
         """Write selection at current trajectory frame to file.

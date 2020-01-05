@@ -104,14 +104,6 @@ class Writer(TopologyWriterBase):
         self._version: int = kwargs.get("charmm_version", 41)
         self._nonbonded: bool = kwargs.get("nonbonded", False)
 
-        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user: str = environ["USER"]
-        self._title: Tuple[str, ...] = kwargs.get(
-            "title", (f"* Created by fluctmatch on {date}", f"* User: {user}")
-        )
-        if not iterable(self._title):
-            self._title = asiterable(self._title)
-
     def write(
         self,
         parameters: MutableMapping[str, pd.DataFrame],
@@ -130,8 +122,7 @@ class Writer(TopologyWriterBase):
             if desired.
         """
         with open(self.filename, "w") as prmfile:
-            for title in self._title:
-                print(title, file=prmfile)
+            print(textwrap.dedent(self.title).strip(), file=prmfile)
             print(file=prmfile)
 
             if self._version > 35 and parameters["ATOMS"].empty:

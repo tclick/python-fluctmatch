@@ -116,16 +116,6 @@ class Writer(base.TopologyWriterBase):
         self._universe: mda.Universe = None
         self._fmtkey: str = "EXT" if self._extended else "STD"
 
-        date: str = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
-        user: str = environ["USER"]
-        self._title: str = kwargs.get(
-            "title",
-            f"""
-            * Created by fluctmatch on {date}
-            * User: {user}""",
-        )
-        self._title = textwrap.dedent(self._title.strip("\n"))
-
         self.col_width: int = 10 if self._extended else 8
         self.sect_hdr: str = "{:>10d} !{}" if self._extended else "{:>8d} !{}"
         self.sect_hdr2: str = (
@@ -176,9 +166,9 @@ class Writer(base.TopologyWriterBase):
         with open(self.filename, mode="w") as psffile:
             print(header, file=psffile)
             print(file=psffile)
-            n_title: int = len(self._title.split("\n"))
+            n_title: int = len(self.title.strip().psf.split("\n"))
             print(self.sect_hdr.format(n_title, "NTITLE"), file=psffile)
-            print(self._title, file=psffile)
+            print(textwrap.dedent(self.title).strip(), file=psffile)
             print(file=psffile)
             self._write_atoms(psffile)
             for section in self.sections:
