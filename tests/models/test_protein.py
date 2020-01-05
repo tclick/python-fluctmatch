@@ -53,7 +53,8 @@ from ..datafiles import XTC
 class TestCalpha:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(TPR, XTC)
+        universe = mda.Universe(TPR, XTC)
+        return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
     def system(self) -> calpha.Model:
@@ -100,7 +101,8 @@ class TestCalpha:
 class TestCaside:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(TPR, XTC)
+        universe = mda.Universe(TPR, XTC)
+        return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
     def system(self) -> caside.Model:
@@ -147,7 +149,8 @@ class TestCaside:
 class TestNcsc:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(TPR, XTC)
+        universe = mda.Universe(TPR, XTC)
+        return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
     def system(self) -> ncsc.Model:
@@ -195,7 +198,8 @@ class TestNcsc:
 class TestPolar:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(TPR, XTC)
+        universe = mda.Universe(TPR, XTC)
+        return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
     def system(self) -> polar.Model:

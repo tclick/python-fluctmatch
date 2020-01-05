@@ -39,15 +39,14 @@ import pytest
 from numpy import testing
 
 from fluctmatch.core.models import enm
-
-from ..datafiles import DCD
-from ..datafiles import PSF
+from ..datafiles import DCD, PSF
 
 
 class TestEnm:
     @pytest.fixture(scope="class")
     def u(self) -> mda.Universe:
-        return mda.Universe(PSF, DCD)
+        universe = mda.Universe(PSF, DCD)
+        return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
     def system(self) -> enm.Model:
