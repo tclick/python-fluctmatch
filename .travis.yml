@@ -14,7 +14,7 @@ env:
     matrix:
         - TOXENV=check,package_description,clean
         - TOXENV=docs
-        - TOXENV=coverage,coveralls,codecov
+        - TOXENV=coverage
 branches:
     only:
         - master
@@ -39,3 +39,4 @@ notifications:
     email:
         on_success: never
         on_failure: always
+after_success: coveralls
