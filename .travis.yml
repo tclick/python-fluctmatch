@@ -11,9 +11,9 @@ env:
         - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
         - SEGFAULT_SIGNALS=all
     matrix:
-        - TOXENV=check
+        - TOXENV=check,package_description,clean
         - TOXENV=docs
-        - TOXENV=report,coveralls,codecov
+        - TOXENV=report,coveralls,codecov,coverage
 branches:
     only:
         - master
