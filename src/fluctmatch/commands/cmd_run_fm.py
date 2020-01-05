@@ -40,7 +40,7 @@
 import importlib
 import logging
 import logging.config
-from distutils.spawn import find_executable
+import shutil
 from pathlib import Path
 from typing import MutableMapping
 
@@ -94,7 +94,7 @@ from .. import iter_namespace
     "nma_exec",
     metavar="FILE",
     envvar="CHARMMEXEC",
-    default=Path(find_executable("charmm")),
+    default=shutil.which("charmm"),
     show_default=True,
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="CHARMM executable file",

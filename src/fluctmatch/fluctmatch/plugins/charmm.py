@@ -246,6 +246,14 @@ class FluctMatch(FluctMatchBase):
                     charmm_file.write(charmm_inp)
 
             charmm_exec: str = self.charmmexec if nma_exec is None else nma_exec
+            if charmm_exec is None:
+                error_msg: str = (
+                    "Please set CHARMMEXEC with the location of your "
+                    "CHARMM executable file or add the charmm path to "
+                    "your PATH environment."
+                )
+                logger.exception(error_msg)
+                OSError(error_msg)
             with ExitStack() as stack:
                 log_file: TextIO = stack.enter_context(
                     open(self.filenames["init_log"], "w")
