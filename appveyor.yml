@@ -1,24 +1,29 @@
+image: Visual Studio 2019
 environment:
   matrix:
-      - SYS_PYTHON: "C:\\Miniconda37-x64"
-        SYS_PYTHON_VERSION: "3.7"
-        SYS_PYTHON_ARCH: "64"
-        CONDA_CANARY: "False"
-
-      - SYS_PYTHON: "C:\\Miniconda37"
-        SYS_PYTHON_VERSION: "3.7"
-        SYS_PYTHON_ARCH: "32"
-        CONDA_CANARY: "False"
-
       - SYS_PYTHON: "C:\\Miniconda36-x64"
         SYS_PYTHON_VERSION: "3.6"
         SYS_PYTHON_ARCH: "64"
         CONDA_CANARY: "False"
+        TOXENV: py36, check, clean, docs, package_description, report
 
       - SYS_PYTHON: "C:\\Miniconda36"
         SYS_PYTHON_VERSION: "3.6"
         SYS_PYTHON_ARCH: "32"
         CONDA_CANARY: "False"
+        TOXENV: py36, check, clean, docs, package_description, report
+
+      - SYS_PYTHON: "C:\\Miniconda37-x64"
+        SYS_PYTHON_VERSION: "3.7"
+        SYS_PYTHON_ARCH: "64"
+        CONDA_CANARY: "False"
+        TOXENV: py37, check, clean, docs, package_description, report
+
+      - SYS_PYTHON: "C:\\Miniconda37"
+        SYS_PYTHON_VERSION: "3.7"
+        SYS_PYTHON_ARCH: "32"
+        CONDA_CANARY: "False"
+        TOXENV: py37, check, clean, docs, package_description, report
 
 init:
     - ECHO %SYS_PYTHON_VERSION% %MINICONDA%
@@ -47,9 +52,9 @@ install:
     - python -c "import sys; print(sys.version)"
     - python -c "import sys; print(sys.executable)"
     - python -c "import sys; print(sys.prefix)"
-    - conda create -q -n test-environment python=%SYS_PYTHON_VERSION% numpy scipy pandas pip pytest virtualenv sphinx
+    - conda create -q -n test-environment python=%SYS_PYTHON_VERSION% pip
     - activate test-environment
-    - pip install coverage coveralls pytest-cov cython tox dnamd
+    - pip install tox
 
 # Not a .NET project, we build package in the install step instead
 build: false
