@@ -293,7 +293,7 @@ class FluctMatch(FluctMatchBase):
                 )
                 target.columns = self.target["BONDS"].columns
                 self.target["BONDS"]: pd.DataFrame = target.copy(deep=True)
-                self.parameters: pd.DataFrame = copy.deepcopy(self.target)
+                self.parameters: Dict = copy.deepcopy(self.target)
                 self.parameters["BONDS"]["Kb"]: pd.Series = (
                     self.BOLTZ / np.square(self.parameters["BONDS"]["Kb"])
                 )
