@@ -70,6 +70,7 @@ import numpy as np
 import pandas as pd
 from MDAnalysis.coordinates.core import reader
 from scipy import constants
+from sklearn.metrics import mean_squared_error
 
 from ...libs import intcor
 from ...libs import parameters
@@ -85,7 +86,7 @@ class FluctMatch(FluctMatchBase):
     """Fluctuation matching using CHARMM."""
 
     bond_def: ClassVar[List[str]] = ["I", "J"]
-    error_hdr: ClassVar[List[str]] = ["step", "Kb_rms", "fluct_rms", "b0_rms"]
+    error_hdr: ClassVar[List[str]] = ["Kb_rms", "fluct_rms", "b0_rms"]
     description: ClassVar[str] = "Fluctuation matching using CHARMM"
 
     def __init__(self, *args: List, **kwargs: Dict):
@@ -200,9 +201,8 @@ class FluctMatch(FluctMatchBase):
 
         # Self consistent error information.
         self.error: pd.DataFrame = pd.DataFrame(
-            np.zeros((1, len(self.error_hdr)), dtype=np.int),
-            columns=self.error_hdr,
-        )
+            np.zeros_like(self.error_hdr, dtype=float), index=self.error_hdr).T
+        self.error.index.name : str = "step"
 
     def _create_ic_table(
         self, universe: mda.Universe, data: pd.DataFrame
@@ -435,8 +435,7 @@ class FluctMatch(FluctMatchBase):
         logger.info("Starting fluctuation matching")
         st: float = time.time()
 
-        for i in range(max_cycles):
-            self.error["step"]: int = i + 1
+        for i in range(1, max_cycles+1):
             with ExitStack() as stack:
                 log_file: TextIO = stack.enter_context(
                     open(self.filenames["charmm_log"], "w")
@@ -472,19 +471,18 @@ class FluctMatch(FluctMatchBase):
 
             # Calculate the r.m.s.d. between fluctuation and distances
             # compared with the target values.
-            vib_error: pd.Series = self.target["BONDS"] - vib_ic
-            vib_error: pd.Series = vib_error.pow(2).mean(axis=0).pow(0.5)
-            self.error[self.error.columns[-2:]] = vib_error.T.values
+            vib_error: np.ndarray = mean_squared_error(self.target["BONDS"],
+                                                       vib_ic,
+                                                       multioutput="raw_output")
+            self.error[self.error.columns[1:]] = np.sqrt(vib_error)
 
             # Calculate the new force constant.
             column = bond_values[0]
-            optimized: pd.DataFrame = vib_ic.apply(np.reciprocal).pow(2)
-            target: pd.DataFrame = self.target["BONDS"].pow(-1).pow(2)
+            optimized: pd.DataFrame = vib_ic.pow(-2)
+            target: pd.DataFrame = self.target["BONDS"].pow(-2)
             optimized -= target
             optimized *= self.BOLTZ * self.KFACTOR
-            vib_ic[column]: pd.Series = (
-                self.parameters["BONDS"][column] - optimized[column]
-            )
+            vib_ic[column]: pd.DataFrame = self.parameters["BONDS"].sub(optimized)
             vib_ic[column]: pd.Series = vib_ic[column].apply(
                 lambda x: np.clip(x, a_min=0, a_max=None)
             )
@@ -492,20 +490,21 @@ class FluctMatch(FluctMatchBase):
                 vib_ic[column][vib_ic[column] <= force_tol] = 0.0
 
             # r.m.s.d. between previous and current force constant
-            diff: pd.Series = self.dynamic_params["BONDS"] - vib_ic
-            diff: pd.Series = diff.pow(2).mean(axis=0).pow(0.5)
-            self.error[self.error.columns[1]]: pd.Series = diff.values[0]
+            diff: pd.Series = mean_squared_error(self.dynamic_params["BONDS"],
+                                                 vib_ic,
+                                                 multioutput="raw_values")
+            self.error[self.error.columns[0]]: pd.Series = np.sqrt(diff.values[0])
 
             # Update the parameters and write to file.
             self.parameters["BONDS"][column]: pd.Series = (
                 vib_ic[column].copy(deep=True)
             )
-            self.dynamic_params["BONDS"]: pd.DataFrame = vib_ic.copy(
-                deep=True
-            ).reset_index()
-            self.parameters["BONDS"]: pd.DataFrame = self.parameters[
-                "BONDS"
-            ].reset_index()
+            self.dynamic_params["BONDS"]: pd.DataFrame = (
+                vib_ic.copy(deep=True).reset_index()
+            )
+            self.parameters["BONDS"]: pd.DataFrame = (
+                self.parameters["BONDS"].reset_index()
+            )
 
             with ExitStack() as stack:
                 fixed_prm: TextIO = stack.enter_context(
@@ -522,7 +521,7 @@ class FluctMatch(FluctMatchBase):
                 dynamic_prm.write(self.dynamic_params)
                 np.savetxt(
                     error_file,
-                    self.error,
+                    self.error.reset_index(),
                     fmt="%10d%10.6f%10.6f%10.6f",
                     delimiter="",
                 )
