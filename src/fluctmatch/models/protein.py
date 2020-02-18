@@ -285,7 +285,7 @@ class Polar(ModelBase):
                 bead = res.select_atoms(selection)
             else:
                 bead = res.select_atoms(
-                    selection.get(res, "hsidechain and not name H*"))
+                    selection.get(res.resname[0], "hsidechain and not name H*"))
             if bead:
                 _beads.append(bead)
                 atomnames.append(name)
@@ -379,11 +379,11 @@ class Polar(ModelBase):
 
         ca_masses = 0.5 * np.array([_.total_mass() for _ in ca_atu])
         self.atoms.select_atoms("name N").masses = np.array(
-            [_.total_mass() for _ in n_atu]) + ca_masses
+            [_.total_mass() for _ in n_atu]) + (ca_masses * 0.5)
         self.atoms.select_atoms("cbeta").masses = np.array(
             [_.total_mass() for _ in cb_atu])
         self.atoms.select_atoms("name O").masses = np.array(
-            [_.total_mass() for _ in o_atu]) + ca_masses
+            [_.total_mass() for _ in o_atu]) + (ca_masses * 0.5)
 
     def _set_charges(self):
         n_atu = self.atu.select_atoms("amine").split("residue")
@@ -394,9 +394,9 @@ class Polar(ModelBase):
         try:
             ca_charges = 0.5 * np.array([_.total_charge() for _ in ca_atu])
             self.atoms.select_atoms("name N").charges = np.array(
-                [_.total_charge() for _ in n_atu]) + ca_charges
+                [_.total_charge() for _ in n_atu]) + (ca_charges * 0.5)
             self.atoms.select_atoms("name O").charges = np.array(
-                [_.total_charge() for _ in o_atu]) + ca_charges
+                [_.total_charge() for _ in o_atu]) + (ca_charges * 0.5)
             self.atoms.select_atoms("cbeta").charges = np.array(
                 [_.total_charge() for _ in cb_atu])
         except AttributeError:
