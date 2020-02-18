@@ -235,7 +235,7 @@ class Polar(ModelBase):
             HSD="name CG ND1 CD2 CE1 NE2",
             HSE="name CG ND1 CD2 CE1 NE2",
             HSP="name CG ND1 CD2 CE1 NE2",
-            ILE="name CG1 CG2 CD",
+            ILE="name CG1 CG2 CD CD1",
             LEU="name CD1 CD2",
             LYS="name NZ",
             MET="name SD",
