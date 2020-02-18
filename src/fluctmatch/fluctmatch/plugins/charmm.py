@@ -435,7 +435,7 @@ class FluctMatch(FluctMatchBase):
         logger.info("Starting fluctuation matching")
         st: float = time.time()
 
-        for i in range(1, max_cycles+1):
+        for i in range(1, max_cycles + 1):
             with ExitStack() as stack:
                 log_file: TextIO = stack.enter_context(
                     open(self.filenames["charmm_log"], "w")
