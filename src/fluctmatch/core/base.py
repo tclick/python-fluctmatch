@@ -171,7 +171,7 @@ class ModelBase(abc.ABC):
         for residue, (name, selection) in selections:
             if isinstance(selection, dict):
                 value: mda.AtomGroup = selection.get(
-                    residue.resname, "hsidechain and not name H*"
+                    residue.resname[0], "hsidechain and not name H*"
                 )
                 bead: mda.AtomGroup = residue.atoms.select_atoms(value)
             else:
