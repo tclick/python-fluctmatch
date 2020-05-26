@@ -84,7 +84,7 @@ def modeller(*args, **kwargs) -> mda.Universe:
         ]
     except KeyError:
         tb: List[str] = traceback.format_exc()
-        msg = f"One of the core is not implemented. Please try {_MODELS.keys()}"
+        msg: str = f"One of the core is not implemented. Please try {_MODELS.keys()}"
         logger.exception(msg)
         raise KeyError(msg).with_traceback(tb)
     else:
