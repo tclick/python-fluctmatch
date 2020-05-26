@@ -139,7 +139,7 @@ class ModelBase(abc.ABC):
         self._guess: bool = kwargs.pop("guess_angles", True)
         self._rmin: float = np.clip(kwargs.pop("rmin", 0.), 0., None)
         self._rmax: float = np.clip(kwargs.pop("rmax", 10.0),
-                                    self._rmax+0.1, None)
+                                    self._rmin + 0.1, None)
 
         # Dictionary for specific bead selection
         self._mapping: MutableMapping[str, StrMapping] = OrderedDict()

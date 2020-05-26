@@ -94,8 +94,7 @@ class HBackboneSelection(BackboneSelection):
     token: ClassVar[str] = "hbackbone"
     hbb_atoms: np.ndarray = np.array(
         ["H", "HN", "H1", "H2", "H3", "HT1", "HT2",
-         "HT3", "HA", "HA1", "HA2", "1HA", "2HA",
-        ]
+         "HT3", "HA", "HA1", "HA2", "1HA", "2HA"]
     )
     bb_atoms = np.concatenate([BackboneSelection.bb_atoms, hbb_atoms])
 
@@ -206,11 +205,9 @@ class HNucleicSugarSelection(
     def __init__(self, parser, tokens):
         super().__init__(parser, tokens)
         self.sug_atoms: np.ndarray = np.concatenate(
-            (
-                self.sug_atoms,
-                np.array(["H1'", "O1'", "O2'", "H2'",
-                          "H2''", "O3'", "H3'", "H3T", "H4'",]),
-            )
+            (self.sug_atoms,
+             np.array(["H1'", "O1'", "O2'", "H2'",
+                       "H2''", "O3'", "H3'", "H3T", "H4'"]))
         )
 
     def apply(self, group: AtomGroup) -> np.ndarray:
