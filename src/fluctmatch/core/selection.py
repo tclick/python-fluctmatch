@@ -53,7 +53,7 @@ class BioIonSelection(selection.Selection):
     def __init__(self, parser, tokens):
         pass
 
-    def apply(self, group: AtomGroup) -> np.ndarray -> np.ndarray:
+    def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.ion_atoms)
         return group[mask].unique
 
@@ -67,7 +67,7 @@ class WaterSelection(selection.Selection):
     def __init__(self, parser, tokens):
         pass
 
-    def apply(self, group: AtomGroup) -> np.ndarray -> np.ndarray:
+    def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.water_atoms)
         return group[mask].unique
 
@@ -81,7 +81,7 @@ class BackboneSelection(selection.BackboneSelection):
     bb_atoms: np.ndarray = np.concatenate([selection.BackboneSelection.bb_atoms,
                                            oxy_atoms])
 
-    def apply(self, group: AtomGroup) -> np.ndarray -> np.ndarray:
+    def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.bb_atoms)
         mask &= np.in1d(group.resnames, self.prot_res)
         return group[mask].unique
