@@ -15,7 +15,8 @@ include CONTRIBUTING.rst
 include LICENSE
 include README.rst
 
-include tox.ini .travis.yml appveyor.yml requirements.txt *.toml
+include tox.ini .travis.yml appveyor.yml *.toml
+include requirements.txt requirements-dev.txt Makefile
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store .*.npz
 
