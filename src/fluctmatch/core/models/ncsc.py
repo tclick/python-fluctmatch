@@ -95,14 +95,14 @@ class Model(ModelBase):
 
     def _add_masses(self, universe: mda.Universe) -> NoReturn:
         super()._add_masses(universe)
-        amine: AtomGroup = self.universe.select_atoms(self._mapping["N"])
-        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping["O"])
+        amine: mda.AtomGroup = self.universe.select_atoms(self._mapping["N"])
+        carboxyl: mda.AtomGroup = self.universe.select_atoms(self._mapping["O"])
         amine.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
         carboxyl.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
 
     def _add_charges(self, universe: mda.Universe) -> NoReturn:
         super()._add_charges(universe)
-        amine: AtomGroup = self.universe.select_atoms(self._mapping["N"])
-        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping["O"])
+        amine: mda.AtomGroup = self.universe.select_atoms(self._mapping["N"])
+        carboxyl: mda.AtomGroup = self.universe.select_atoms(self._mapping["O"])
         amine.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
         carboxyl.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
