@@ -13,6 +13,12 @@ environment:
         CONDA_CANARY: "False"
         TOXENV: py37, check, clean, docs, package_description, report
 
+      - SYS_PYTHON: "C:\\Miniconda38-x64"
+        SYS_PYTHON_VERSION: "3.8"
+        SYS_PYTHON_ARCH: "64"
+        CONDA_CANARY: "False"
+        TOXENV: py38, check, clean, docs, package_description, report
+
 init:
     - ECHO %SYS_PYTHON_VERSION% %MINICONDA%
 
@@ -30,6 +36,7 @@ install:
     # https://www.appveyor.com/docs/installed-software#python
     - if "%SYS_PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=36"
     - if "%SYS_PYTHON_VERSION%" == "3.7" set "BASE_PYTHON_VERSION=37"
+    - if "%SYS_PYTHON_VERSION%" == "3.8" set "BASE_PYTHON_VERSION=38"
     - if "%SYS_PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
     # These are already installed on appveyor.  Update them.
     - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
