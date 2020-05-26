@@ -1,0 +1,16 @@
+-r requirements.txt
+
+coverage
+tox
+twine
+setuptools
+wheel
+flaky
+pep8
+mock
+pytest
+pytest-cov
+pytest-randomly
+pytest-cache
+pytest-mock
+pytest-pep8

@@ -1,1 +1,14 @@
--e .[dev]
+cement
+jinja2
+pyyaml
+colorlog
+click
+MDAnalysis
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+bokeh
+holoviews
+datashader
