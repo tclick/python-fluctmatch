@@ -45,7 +45,6 @@ from typing import NoReturn
 from typing import Tuple
 
 import MDAnalysis as mda
-import numpy as np
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
