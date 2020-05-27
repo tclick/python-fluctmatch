@@ -52,9 +52,7 @@ from ..libs import fluctmatch
 _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
 
 
-@click.command(
-    "splittraj", short_help="Split a trajectory using Gromacs or CHARMM."
-)
+@click.command("splittraj", short_help="Split a trajectory using Gromacs or CHARMM.")
 @click.option(
     "--type",
     "program",
@@ -90,11 +88,7 @@ _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
     metavar="DIR",
     default=path.join(os.getcwd(), "data"),
     type=click.Path(
-        exists=False,
-        file_okay=False,
-        writable=True,
-        readable=True,
-        resolve_path=True,
+        exists=False, file_okay=False, writable=True, readable=True, resolve_path=True,
     ),
     help="Directory to write data.",
 )

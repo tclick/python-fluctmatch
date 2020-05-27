@@ -214,9 +214,7 @@ def cli(
     logger: logging.Logger = logging.getLogger(__name__)
 
     # Load the table, separate by I,I+r, and if requested, create a subset.
-    logger.info(
-        "Loading parameter table {}".format(click.format_filename(filename))
-    )
+    logger.info("Loading parameter table {}".format(click.format_filename(filename)))
     table = ParamTable(ressep=ressep)
     table.from_file(click.format_filename(filename))
     kb = table._separate(table.table)
@@ -247,9 +245,7 @@ def cli(
     if subset:
         segid, start, stop = subset[0]
         logger.info(
-            "Using a subset of {} between {:d} and {:d}".format(
-                segid, start, stop
-            )
+            "Using a subset of {} between {:d} and {:d}".format(segid, start, stop)
         )
         kb = kb.loc[segid].loc[start:stop]
         D_info["kb"] = kb.copy(deep=True)
@@ -263,15 +259,11 @@ def cli(
         Lrand: np.ndarray = fluctsca.randomize(kb, n_trials=ntrials)
 
     Csca: np.ndarray = fluctsca.get_correlation(kb)
-    D_sca = dict(
-        U=U, Csca=Csca, Lrand=Lrand if kpos < 1 else None, ntrials=ntrials
-    )
+    D_sca = dict(U=U, Csca=Csca, Lrand=Lrand if kpos < 1 else None, ntrials=ntrials)
 
     # Determine the number of eigenmodes if kpos = 0
     Lsca, Vsca = fluctsca.eigenVect(Csca)
-    _kpos: int = fluctsca.chooseKpos(
-        Lsca, Lrand, stddev=std
-    ) if kpos == 0 else kpos
+    _kpos: int = fluctsca.chooseKpos(Lsca, Lrand, stddev=std) if kpos == 0 else kpos
     logger.info("Selecting {:d} eigenmodes".format(_kpos))
 
     # Calculate IC sectors
@@ -295,9 +287,7 @@ def cli(
     )
 
     logger.info("Calculating the ICA for the windows.")
-    Usca: np.ndarray = U.dot(Vsca[:, :_kpos]).dot(
-        np.diag(1 / np.sqrt(Lsca[:_kpos]))
-    )
+    Usca: np.ndarray = U.dot(Vsca[:, :_kpos]).dot(np.diag(1 / np.sqrt(Lsca[:_kpos])))
     Upica: np.ndarray = time_info.mixing_.dot(Usca.T).T
     for k in range(Upica.shape[1]):
         Upica[:, k] /= np.sqrt(Upica[:, k].T.dot(Upica[:, k]))

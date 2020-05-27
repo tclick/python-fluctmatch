@@ -129,9 +129,7 @@ def cli(logfile, outdir, ressep, table1, table2):
 
     d_table = table_1 - table_2
     d_perres = table_1.per_residue.subtract(table_2.per_residue, fill_value=0.0)
-    d_interactions = table_1.interactions.subtract(
-        table_2.interactions, fill_value=0.0
-    )
+    d_interactions = table_1.interactions.subtract(table_2.interactions, fill_value=0.0)
 
     filename = Path(outdir) / "dcoupling.txt"
     with open(filename, mode="w") as output:

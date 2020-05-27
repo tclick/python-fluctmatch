@@ -57,9 +57,7 @@ from fluctmatch.analysis.paramtable import ParamTable
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
 )
-@click.option(
-    "-s", "--stats", is_flag=True, help="Calculate statistics of tables"
-)
+@click.option("-s", "--stats", is_flag=True, help="Calculate statistics of tables")
 @click.option("-g", "--hist", is_flag=True, help="Calculate histograms of tables")
 @click.option(
     "-o",
@@ -167,9 +165,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
 
             filename = outdir / "residue_stats.csv"
             with open(filename, mode="w") as stat_file:
-                logger.info(
-                    f"Writing individual residue statistics " f"to {filename}"
-                )
+                logger.info(f"Writing individual residue statistics " f"to {filename}")
                 ps._table._ressep = ressep
                 ps.residue_stats().to_csv(
                     stat_file,

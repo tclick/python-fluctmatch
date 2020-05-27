@@ -176,9 +176,7 @@ def cli(
         pass
 
     logger.info("Calculating thermodynamic properties.")
-    logger.warning(
-        "Depending upon the size of the system, this may take " "a while."
-    )
+    logger.warning("Depending upon the size of the system, this may take " "a while.")
 
     kwargs = dict(
         topology=topology,

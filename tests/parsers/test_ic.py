@@ -71,9 +71,9 @@ class TestICWriter:
 
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.ic"
-        with patch(
-            "fluctmatch.parsers.writers.IC.Writer.write"
-        ) as icw, mda.Writer(filename) as ofile:
+        with patch("fluctmatch.parsers.writers.IC.Writer.write") as icw, mda.Writer(
+            filename
+        ) as ofile:
             ofile.write(u)
             icw.assert_called()
 
@@ -83,9 +83,7 @@ class TestICWriter:
             ofile.write(u)
 
         u2 = IntCor.Reader(tmp_path / "temp.ic").read()
-        assert_allclose(
-            u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match."
-        )
+        assert_allclose(u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match.")
 
     def test_roundtrip(self, u: pd.DataFrame, tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against

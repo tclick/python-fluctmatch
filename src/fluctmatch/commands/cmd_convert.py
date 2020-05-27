@@ -48,9 +48,7 @@ from fluctmatch.core.utils import modeller
 from fluctmatch.libs.fluctmatch import write_charmm_files
 
 
-@click.command(
-    "convert", short_help="Convert from all-atom to coarse-grain model."
-)
+@click.command("convert", short_help="Convert from all-atom to coarse-grain model.")
 @click.option(
     "-s",
     "topology",
@@ -156,10 +154,7 @@ from fluctmatch.libs.fluctmatch import write_charmm_files
     help="Include segment IDs in internal coordinate files",
 )
 @click.option(
-    "--no-cmap",
-    "cmap",
-    is_flag=True,
-    help="Include CMAP section in CHARMM PSF file",
+    "--no-cmap", "cmap", is_flag=True, help="Include CMAP section in CHARMM PSF file",
 )
 @click.option(
     "--no-cheq",
@@ -170,9 +165,7 @@ from fluctmatch.libs.fluctmatch import write_charmm_files
 @click.option(
     "--uniform", "mass", is_flag=True, help="Set uniform mass of beads to 1.0"
 )
-@click.option(
-    "--write", "write_traj", is_flag=True, help="Convert the trajectory file"
-)
+@click.option("--write", "write_traj", is_flag=True, help="Convert the trajectory file")
 @click.option(
     "--list",
     "model_list",

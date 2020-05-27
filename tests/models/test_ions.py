@@ -61,8 +61,7 @@ class TestIons:
         system.create_topology(u)
 
         n_atoms: int = sum(
-            u.select_atoms(sel).residues.n_residues
-            for sel in system._mapping.values()
+            u.select_atoms(sel).residues.n_residues for sel in system._mapping.values()
         )
 
         testing.assert_equal(

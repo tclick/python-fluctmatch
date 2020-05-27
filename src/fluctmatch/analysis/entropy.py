@@ -146,9 +146,7 @@ class Entropy(object):
 
         header: List[str, str] = ["segidI", "resI"]
         table: pd.DataFrame = self._table._separate(self._table.table)
-        hist, edges = np.histogram(
-            table, range=(1e-4, table.values.max()), bins=bins
-        )
+        hist, edges = np.histogram(table, range=(1e-4, table.values.max()), bins=bins)
         hist: np.ndarray = (hist / table.size).astype(dtype=np.float)
         xaxis: np.ndarray = (edges[:-1] + edges[1:]) / 2
         try:

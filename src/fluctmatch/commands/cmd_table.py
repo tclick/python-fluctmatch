@@ -47,9 +47,7 @@ from MDAnalysis.lib.util import filename
 from fluctmatch.analysis import paramtable
 
 
-@click.command(
-    "table", short_help="Create a table from individual parameter files."
-)
+@click.command("table", short_help="Create a table from individual parameter files.")
 @click.option(
     "-d",
     "--datadir",
@@ -161,11 +159,7 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
         with open(fn, mode="w") as output:
             logger.info("Writing per-residue data to {}.".format(fn))
             pt.per_residue.to_csv(
-                output,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                output, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
             logger.info("Table successfully written.")
 
@@ -173,10 +167,6 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
         with open(fn, mode="w") as output:
             logger.info("Writing interactions to {}.".format(fn))
             pt.interactions.to_csv(
-                output,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                output, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
             logger.info("Table successfully written.")

@@ -143,8 +143,7 @@ def cli(logfile, outdir, ressep, kb, b0):
 
     idx = kb_table == 0.0
     maxkb = np.maximum(
-        kb_table[kb_table.columns[1:].values],
-        kb_table[kb_table.columns[:-1]].values,
+        kb_table[kb_table.columns[1:].values], kb_table[kb_table.columns[:-1]].values,
     )
 
     maxkb[maxkb == 0.0] = np.NaN
