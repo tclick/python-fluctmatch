@@ -1,5 +1,6 @@
 -r requirements.txt
 
+black
 coverage
 tox
 twine
@@ -7,6 +8,7 @@ setuptools
 wheel
 flaky
 pep8
+flake8
 mock
 pytest
 pytest-cov
