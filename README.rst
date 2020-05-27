@@ -7,6 +7,8 @@ Overview
 .. list-table::
     :stub-columns: 1
 
+    * - code style
+      - |code-style|
     * - docs
       - |docs|
     * - tests
@@ -15,11 +17,14 @@ Overview
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
 
-.. |docs| image:: https://readthedocs.org/projects/python-fluctmatch/badge/?style=flat
+.. |code-style| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=plastic
+    :target: https://github.com/psf/black
+
+.. |docs| image:: https://readthedocs.org/projects/python-fluctmatch/badge/?style=plastic
     :target: https://readthedocs.org/projects/python-fluctmatch
     :alt: Documentation Status
 
-.. |travis| image:: https://travis-ci.org/tclick/python-fluctmatch.svg?branch=master
+.. |travis| image:: https://travis-ci.org/tclick/python-fluctmatch.svg?style=plastic
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/tclick/python-fluctmatch
 
@@ -39,19 +44,19 @@ Overview
     :alt: Coverage Status
     :target: https://codecov.io/github/tclick/python-fluctmatch
 
-.. |version| image:: https://img.shields.io/pypi/v/fluctmatch.svg
+.. |version| image:: https://img.shields.io/pypi/v/fluctmatch.svg?style=plastic
     :alt: PyPI Package latest release
     :target: https://test.pypi.org/project/fluctmatch
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/fluctmatch.svg
+.. |wheel| image:: https://img.shields.io/pypi/wheel/fluctmatch.svg?style=plastic
     :alt: PyPI Wheel
     :target: https://test.pypi.org/project/fluctmatch
 
-.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/fluctmatch.svg
+.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/fluctmatch.svg?style=plastic
     :alt: Supported versions
     :target: https://test.pypi.org/project/fluctmatch
 
-.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/fluctmatch.svg
+.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/fluctmatch.svg?style=plastic
     :alt: Supported implementations
     :target: https://test.pypi.org/project/fluctmatch
 
