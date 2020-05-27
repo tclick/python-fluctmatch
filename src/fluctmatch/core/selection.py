@@ -222,7 +222,7 @@ class HNucleicSugarSelection(
             (
                 self.sug_atoms,
                 np.array(
-                    ["H1'", "O1'", "O2'", "H2'", "H2''", "O3'", "H3'", "H3T", "H4'",]
+                    ["H1'", "O1'", "O2'", "H2'", "H2''", "O3'", "H3'", "H3T", "H4'"]
                 ),
             )
         )
