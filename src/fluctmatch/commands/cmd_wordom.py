@@ -147,9 +147,7 @@ def cli(topology, trajectory, logfile, outfile, start, stop, step, verbose):
     if Path(outfile).suffix.upper() == ".DCD":
         kwargs["istart"] = None
     with mda.Writer(outfile, **kwargs) as trj:
-        logger.info(
-            "Converting from {} to {}".format(trajectory.format, trj.format)
-        )
+        logger.info("Converting from {} to {}".format(trajectory.format, trj.format))
         if verbose:
             with click.progressbar(
                 length=trajectory.n_frames, label="Trajectory frames written"

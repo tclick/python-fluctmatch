@@ -42,17 +42,8 @@ import abc
 import itertools
 import logging
 import string
-import warnings
 from collections import OrderedDict
-from typing import (
-    Iterable,
-    Iterator,
-    List,
-    MutableMapping,
-    NoReturn,
-    TypeVar,
-    Union,
-)
+from typing import Iterable, Iterator, List, MutableMapping, NoReturn, TypeVar, Union
 
 import MDAnalysis as mda
 import numpy as np

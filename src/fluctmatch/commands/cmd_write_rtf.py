@@ -45,9 +45,7 @@ import click
 import MDAnalysis as mda
 
 
-@click.command(
-    "write_rtf", short_help="Create an RTF file from a structure file."
-)
+@click.command("write_rtf", short_help="Create an RTF file from a structure file.")
 @click.option(
     "-s",
     "topology",

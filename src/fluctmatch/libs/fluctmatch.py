@@ -46,9 +46,9 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Mapping
 
-import click
 import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
+import click
 import numpy as np
 
 from ..fluctmatch.data import charmm_split
@@ -240,9 +240,7 @@ def write_charmm_files(
                 )
             )
             bar = stack.enter_context(click.progressbar(universe.trajectory))
-            logger.info(
-                "Writing the trajectory {}...".format(filenames["traj_file"])
-            )
+            logger.info("Writing the trajectory {}...".format(filenames["traj_file"]))
             logger.warning(
                 "This may take a while depending upon the size and "
                 "length of the trajectory."
@@ -261,8 +259,7 @@ def write_charmm_files(
     # Calculate the average coordinates from the trajectory.
     logger.info("Determining the average structure of the trajectory. ")
     logger.warning(
-        "Note: This could take a while depending upon the size of "
-        "your trajectory."
+        "Note: This could take a while depending upon the size of " "your trajectory."
     )
     positions = AverageStructure(universe.atoms).run().result
     positions = positions.reshape((*positions.shape, 1))
@@ -374,9 +371,7 @@ def split_gmx(info, data_dir=Path.cwd() / "data", **kwargs):
         )
         print(kwargs.get("system", 0), file=temp)
         temp.seek(0)
-        subprocess.check_call(
-            command, stdin=temp, stdout=log, stderr=subprocess.STDOUT
-        )
+        subprocess.check_call(command, stdin=temp, stdout=log, stderr=subprocess.STDOUT)
     fpath.unlink()
 
 

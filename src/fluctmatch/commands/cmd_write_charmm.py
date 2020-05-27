@@ -110,10 +110,7 @@ from fluctmatch.libs import fluctmatch as fmutils
     help="Include nonbonded section in CHARMM parameter file",
 )
 @click.option(
-    "--no-cmap",
-    "cmap",
-    is_flag=True,
-    help="Include CMAP section in CHARMM PSF file",
+    "--no-cmap", "cmap", is_flag=True, help="Include CMAP section in CHARMM PSF file",
 )
 @click.option(
     "--no-cheq",
@@ -121,9 +118,7 @@ from fluctmatch.libs import fluctmatch as fmutils
     is_flag=True,
     help="Include charge equilibrium section in CHARMM PSF file",
 )
-@click.option(
-    "--write", "write_traj", is_flag=True, help="Convert the trajectory file"
-)
+@click.option("--write", "write_traj", is_flag=True, help="Convert the trajectory file")
 def cli(
     topology,
     trajectory,
