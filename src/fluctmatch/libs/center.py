@@ -38,11 +38,8 @@
 # ------------------------------------------------------------------------------
 
 import numpy as np
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
-from sklearn.utils.validation import FLOAT_DTYPES
-from sklearn.utils.validation import check_array
-from sklearn.utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
 
 
 class Center2D(BaseEstimator, TransformerMixin):

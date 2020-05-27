@@ -59,11 +59,7 @@ import textwrap
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import NoReturn
-from typing import TextIO
+from typing import ClassVar, Dict, List, NoReturn, TextIO
 
 import MDAnalysis as mda
 import numpy as np
@@ -72,12 +68,9 @@ from MDAnalysis.coordinates.core import reader
 from scipy import constants
 from sklearn.metrics import mean_squared_error
 
-from ...libs import intcor
-from ...libs import parameters
+from ...libs import intcor, parameters
 from ..base import FluctMatchBase
-from ..data import charmm_init
-from ..data import charmm_nma
-from ..data import charmm_thermo
+from ..data import charmm_init, charmm_nma, charmm_thermo
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -181,15 +174,11 @@ class FluctMatch(FluctMatchBase):
             thermo_input=self.outdir / "thermo.inp",
             thermo_log=self.outdir / "thermo.log",
             thermo_data=self.outdir / "thermo.dat",
-            traj_file=(
-                self.args[1] if len(self.args) > 1 else self.outdir / "cg.dcd"
-            ),
+            traj_file=(self.args[1] if len(self.args) > 1 else self.outdir / "cg.dcd"),
         )
 
         # Location of CHARMM executable
-        self.charmmexec: str = os.environ.get(
-            "CHARMMEXEC", shutil.which("charmm")
-        )
+        self.charmmexec: str = os.environ.get("CHARMMEXEC", shutil.which("charmm"))
 
         # Boltzmann constant
         self.BOLTZ: float = self.temperature * (
@@ -201,8 +190,9 @@ class FluctMatch(FluctMatchBase):
 
         # Self consistent error information.
         self.error: pd.DataFrame = pd.DataFrame(
-            np.zeros_like(self.error_hdr, dtype=float), index=self.error_hdr).T
-        self.error.index.name : str = "step"
+            np.zeros_like(self.error_hdr, dtype=float), index=self.error_hdr
+        ).T
+        self.error.index.name: str = "step"
 
     def _create_ic_table(
         self, universe: mda.Universe, data: pd.DataFrame
@@ -210,9 +200,7 @@ class FluctMatch(FluctMatchBase):
         data: pd.DataFrame = data.set_index(self.bond_def)
         table = intcor.create_empty_table(universe.atoms)
         hdr: pd.DataFrame = table.columns
-        table: pd.DataFrame = table.set_index(self.bond_def).drop(
-            ["r_IJ"], axis=1
-        )
+        table: pd.DataFrame = table.set_index(self.bond_def).drop(["r_IJ"], axis=1)
         table: pd.DataFrame = pd.concat([table, data["r_IJ"]], axis=1)
         return table.reset_index()[hdr]
 
@@ -231,9 +219,7 @@ class FluctMatch(FluctMatchBase):
             # Write CHARMM input file.
             if not self.filenames["init_input"].exists():
                 version: int = self.kwargs.get("charmm_version", 41)
-                dimension: str = (
-                    "dimension chsize 1000000" if version >= 36 else ""
-                )
+                dimension: str = ("dimension chsize 1000000" if version >= 36 else "")
                 with open(self.filenames["init_input"], "w") as charmm_file:
                     logger.info("Writing CHARMM input file.")
                     charmm_inp: str = charmm_init.init.format(
@@ -326,22 +312,20 @@ class FluctMatch(FluctMatchBase):
                     self.dynamic_params.update(dynamic.read())
 
                     # Read the initial internal coordinate files.
-                    avg_table: pd.DataFrame = init_avg.read().set_index(
-                        self.bond_def
-                    )["r_IJ"]
+                    avg_table: pd.DataFrame = init_avg.read().set_index(self.bond_def)[
+                        "r_IJ"
+                    ]
                     fluct_table: pd.DataFrame = (
                         init_fluct.read().set_index(self.bond_def)["r_IJ"]
                     )
-                    table: pd.DataFrame = pd.concat(
-                        [fluct_table, avg_table], axis=1
-                    )
+                    table: pd.DataFrame = pd.concat([fluct_table, avg_table], axis=1)
 
                     # Set the target fluctuation values.
                     logger.info("Files loaded successfully...")
                     self.target: pd.DataFrame = copy.deepcopy(self.parameters)
-                    self.target["BONDS"]: pd.DataFrame = self.target[
-                        "BONDS"
-                    ].set_index(self.bond_def)
+                    self.target["BONDS"]: pd.DataFrame = self.target["BONDS"].set_index(
+                        self.bond_def
+                    )
                     table.columns = self.target["BONDS"].columns
                     self.target["BONDS"]: pd.Series = table.copy(
                         deep=True
@@ -417,10 +401,7 @@ class FluctMatch(FluctMatchBase):
             if self.filenames["error_data"].stat().st_size > 0:
                 with open(self.filenames["error_data"]) as data:
                     error_info: pd.DataFrame = pd.read_csv(
-                        data,
-                        header=0,
-                        skipinitialspace=True,
-                        delim_whitespace=True,
+                        data, header=0, skipinitialspace=True, delim_whitespace=True,
                     )
                     if not error_info.empty:
                         self.error["step"] = error_info["step"].values[-1]
@@ -459,21 +440,17 @@ class FluctMatch(FluctMatchBase):
                 fluct_intcor: TextIO = stack.enter_context(
                     reader(self.filenames["avg_ic"])
                 )
-                avg_ic: TextIO = avg_intcor.read().set_index(self.bond_def)[
-                    "r_IJ"
-                ]
-                fluct_ic: TextIO = fluct_intcor.read().set_index(self.bond_def)[
-                    "r_IJ"
-                ]
+                avg_ic: TextIO = avg_intcor.read().set_index(self.bond_def)["r_IJ"]
+                fluct_ic: TextIO = fluct_intcor.read().set_index(self.bond_def)["r_IJ"]
 
             vib_ic: pd.DataFrame = pd.concat([fluct_ic, avg_ic], axis=1)
             vib_ic.columns = bond_values
 
             # Calculate the r.m.s.d. between fluctuation and distances
             # compared with the target values.
-            vib_error: np.ndarray = mean_squared_error(self.target["BONDS"],
-                                                       vib_ic,
-                                                       multioutput="raw_output")
+            vib_error: np.ndarray = mean_squared_error(
+                self.target["BONDS"], vib_ic, multioutput="raw_output"
+            )
             self.error[self.error.columns[1:]] = np.sqrt(vib_error)
 
             # Calculate the new force constant.
@@ -490,9 +467,9 @@ class FluctMatch(FluctMatchBase):
                 vib_ic[column][vib_ic[column] <= force_tol] = 0.0
 
             # r.m.s.d. between previous and current force constant
-            diff: pd.Series = mean_squared_error(self.dynamic_params["BONDS"],
-                                                 vib_ic,
-                                                 multioutput="raw_values")
+            diff: pd.Series = mean_squared_error(
+                self.dynamic_params["BONDS"], vib_ic, multioutput="raw_values"
+            )
             self.error[self.error.columns[0]]: pd.Series = np.sqrt(diff.values[0])
 
             # Update the parameters and write to file.
@@ -581,9 +558,7 @@ class FluctMatch(FluctMatchBase):
 
         # Read log file
         with ExitStack as stack:
-            log_file: TextIO = stack.enter_context(
-                open(self.filenames["thermo_log"])
-            )
+            log_file: TextIO = stack.enter_context(open(self.filenames["thermo_log"]))
             data_file: TextIO = stack.enter_context(
                 open(self.filenames["thermo_data"], "w")
             )
@@ -608,7 +583,5 @@ class FluctMatch(FluctMatchBase):
             (
                 pd.DataFrame(thermo, columns=columns)
                 .drop(["RESN", "Atm/res", "Ign.frq"], axis=1)
-                .to_csv(
-                    data_file, index=False, float_format="%.4f", encoding="utf-8"
-                )
+                .to_csv(data_file, index=False, float_format="%.4f", encoding="utf-8")
             )

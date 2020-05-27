@@ -38,14 +38,10 @@
 # ------------------------------------------------------------------------------
 """Class defining noble gases."""
 
-from typing import ClassVar
-from typing import List
-from typing import MutableMapping
-from typing import NoReturn
+from typing import ClassVar, List, MutableMapping, NoReturn
 
 import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes
-from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
 from ..base import ModelBase
 
@@ -68,9 +64,7 @@ class Model(ModelBase):
             k: v for k, v in zip(resnames, np.arange(resnames.size) + 40)
         }
 
-        atomtypes: List[int] = [
-            restypes[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self) -> NoReturn:

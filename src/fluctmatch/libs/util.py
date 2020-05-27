@@ -40,8 +40,7 @@
 import io
 import logging
 import typing
-from collections.abc import Container
-from collections.abc import Iterable
+from collections.abc import Container, Iterable
 
 import numpy as np
 from sklearn.preprocessing import scale

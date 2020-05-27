@@ -44,31 +44,35 @@ import logging
 import string
 import warnings
 from collections import OrderedDict
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import MutableMapping
-from typing import NoReturn
-from typing import TypeVar
-from typing import Union
+from typing import (
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    NoReturn,
+    TypeVar,
+    Union,
+)
 
 import MDAnalysis as mda
 import numpy as np
 from MDAnalysis.coordinates.memory import MemoryReader
-from MDAnalysis.core.topologyattrs import Angles
-from MDAnalysis.core.topologyattrs import Atomids
-from MDAnalysis.core.topologyattrs import Atomnames
-from MDAnalysis.core.topologyattrs import Atomtypes
-from MDAnalysis.core.topologyattrs import Charges
-from MDAnalysis.core.topologyattrs import Dihedrals
-from MDAnalysis.core.topologyattrs import Impropers
-from MDAnalysis.core.topologyattrs import Masses
-from MDAnalysis.core.topologyattrs import Radii
-from MDAnalysis.core.topologyattrs import Resids
-from MDAnalysis.core.topologyattrs import Resnames
-from MDAnalysis.core.topologyattrs import Resnums
-from MDAnalysis.core.topologyattrs import Segids
-from MDAnalysis.core.topologyattrs import TopologyAttr
+from MDAnalysis.core.topologyattrs import (
+    Angles,
+    Atomids,
+    Atomnames,
+    Atomtypes,
+    Charges,
+    Dihedrals,
+    Impropers,
+    Masses,
+    Radii,
+    Resids,
+    Resnames,
+    Resnums,
+    Segids,
+    TopologyAttr,
+)
 from MDAnalysis.core.topologyobjects import TopologyGroup
 from MDAnalysis.topology import base as topbase
 from MDAnalysis.topology import guessers
@@ -137,9 +141,8 @@ class ModelBase(abc.ABC):
         self._extended: bool = kwargs.pop("extended", True)
         self._com: bool = kwargs.pop("com", True)
         self._guess: bool = kwargs.pop("guess_angles", True)
-        self._rmin: float = np.clip(kwargs.pop("rmin", 0.), 0., None)
-        self._rmax: float = np.clip(kwargs.pop("rmax", 10.0),
-                                    self._rmin + 0.1, None)
+        self._rmin: float = np.clip(kwargs.pop("rmin", 0.0), 0.0, None)
+        self._rmax: float = np.clip(kwargs.pop("rmax", 10.0), self._rmin + 0.1, None)
 
         # Dictionary for specific bead selection
         self._mapping: MutableMapping[str, StrMapping] = OrderedDict()
@@ -183,9 +186,7 @@ class ModelBase(abc.ABC):
         atomnames: Atomnames = Atomnames(atomnames)
 
         # Residue
-        resids: np.ndarray = np.asarray(
-            [bead.resids[0] for bead in beads], dtype=int
-        )
+        resids: np.ndarray = np.asarray([bead.resids[0] for bead in beads], dtype=int)
         resnames: np.ndarray = np.asarray(
             [bead.resnames[0] for bead in beads], dtype=object
         )
@@ -292,9 +293,7 @@ class ModelBase(abc.ABC):
             # Positions
             try:
                 positions = [
-                    bead.center_of_mass()
-                    if self._com
-                    else bead.center_of_geometry()
+                    bead.center_of_mass() if self._com else bead.center_of_geometry()
                     for bead in beads
                     if bead
                 ]
@@ -369,9 +368,7 @@ class ModelBase(abc.ABC):
                 dtype=np.float32,
             )
         except (AttributeError, mda.NoDataError):
-            masses: np.ndarray = np.zeros(
-                self.universe.atoms.n_atoms, dtype=np.float32
-            )
+            masses: np.ndarray = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
 
         self.universe.add_TopologyAttr(Masses(masses))
 
@@ -410,9 +407,7 @@ class ModelBase(abc.ABC):
 
     def _add_dihedrals(self) -> NoReturn:
         try:
-            dihedrals: TopologyGroup = guessers.guess_dihedrals(
-                self.universe.angles
-            )
+            dihedrals: TopologyGroup = guessers.guess_dihedrals(self.universe.angles)
             self.universe.add_TopologyAttr(Dihedrals(dihedrals))
         except AttributeError:
             pass
@@ -440,8 +435,7 @@ def Merge(*args: MDUniverse) -> mda.Universe:
         A merged universe.
     """
     logger.warning(
-        "This might take a while depending upon the number of "
-        "trajectory frames."
+        "This might take a while depending upon the number of " "trajectory frames."
     )
 
     # Merge universes
@@ -478,9 +472,7 @@ def Merge(*args: MDUniverse) -> mda.Universe:
 
         # Accumulate coordinates, velocities, and forces.
         for u in args:
-            positions.append(
-                [ts.positions for ts in u.trajectory if ts.has_positions]
-            )
+            positions.append([ts.positions for ts in u.trajectory if ts.has_positions])
             velocities.append(
                 [ts.velocities for ts in u.trajectory if ts.has_velocities]
             )
@@ -489,20 +481,14 @@ def Merge(*args: MDUniverse) -> mda.Universe:
         if trajectory.ts.has_positions:
             positions: np.ndarray = np.concatenate(positions, axis=1)
             if universe.atoms.n_atoms != positions.shape[1]:
-                msg = (
-                    "The number of sites does not match the number "
-                    "of coordinates."
-                )
+                msg = "The number of sites does not match the number " "of coordinates."
                 logger.error(msg)
                 raise RuntimeError(msg)
             n_frames, n_beads, _ = positions.shape
             logger.info(
-                f"The new universe has {n_beads:d} beads in "
-                f"{n_frames:d} frames."
+                f"The new universe has {n_beads:d} beads in " f"{n_frames:d} frames."
             )
-            universe.load_new(
-                positions, format=MemoryReader, dimensions=dimensions
-            )
+            universe.load_new(positions, format=MemoryReader, dimensions=dimensions)
 
         if trajectory.ts.has_velocities:
             velocities: np.ndarray = np.concatenate(velocities, axis=1)

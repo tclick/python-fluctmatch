@@ -42,10 +42,7 @@ import glob
 import multiprocessing as mp
 from os import path
 from pathlib import Path
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Union
+from typing import Dict, Generator, List, Union
 
 import numpy as np
 import pandas as pd
@@ -80,9 +77,7 @@ def _create_table(
             prm_table: pd.DataFrame = prm_file.read()["BONDS"].set_index(_header)
         table: pd.DataFrame = pd.concat([ic_table, prm_table], axis=1)
         table.reset_index(inplace=True)
-        table: pd.DataFrame = table.set_index(_index["general"])[
-            tbltype
-        ].to_frame()
+        table: pd.DataFrame = table.set_index(_index["general"])[tbltype].to_frame()
         table.columns = [Path(directory).name]
         return table
 
@@ -227,11 +222,7 @@ class ParamTable(object):
         """
         with openany(filename, mode="w") as table:
             self.table.to_csv(
-                table,
-                header=True,
-                index=True,
-                float_format="%.6f",
-                encoding="utf-8",
+                table, header=True, index=True, float_format="%.6f", encoding="utf-8",
             )
 
     @property

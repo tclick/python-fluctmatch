@@ -42,8 +42,7 @@ import glob
 import multiprocessing as mp
 from os import path
 from pathlib import Path
-from typing import Tuple
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -51,9 +50,7 @@ import pandas as pd
 from ..fluctmatch.plugins import charmm
 
 
-def calculate_thermo(
-    subdir: Union[str, Path], **kwargs
-) -> Tuple[Path, pd.DataFrame]:
+def calculate_thermo(subdir: Union[str, Path], **kwargs) -> Tuple[Path, pd.DataFrame]:
     topology: Path = Path(subdir) / kwargs.pop("topology", "fluctmatch.xplor.psf")
     trajectory: Path = Path(subdir) / kwargs.pop("trajectory", "cg.dcd")
     window: Path = Path(subdir).name
@@ -73,9 +70,7 @@ def calculate_thermo(
     return window, table
 
 
-def create_thermo_tables(
-    datadir: Union[str, Path], outdir: Union[str, Path], **kwargs
-):
+def create_thermo_tables(datadir: Union[str, Path], outdir: Union[str, Path], **kwargs):
     """Create several thermodynamics tables from CHARMM calculations.
 
     Parameters
@@ -139,39 +134,23 @@ def create_thermo_tables(
         filename = Path(outdir) / "entropy.txt"
         with open(filename, mode="w") as thermo:
             entropy.to_csv(
-                thermo,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                thermo, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
 
         filename = Path(outdir) / "enthalpy.txt"
         with open(filename, mode="w") as thermo:
             enthalpy.to_csv(
-                thermo,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                thermo, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
 
         filename = Path(outdir) / "heat_capacity.txt"
         with open(filename, mode="w") as thermo:
             heat.to_csv(
-                thermo,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                thermo, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
 
         filename = Path(outdir) / "gibbs.txt"
         with open(filename, mode="w") as thermo:
             gibbs.to_csv(
-                thermo,
-                header=True,
-                index=True,
-                float_format="%.4f",
-                encoding="utf-8",
+                thermo, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )

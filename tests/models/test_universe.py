@@ -19,11 +19,8 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.core.base import Merge
-from fluctmatch.core.base import ModelBase
-from fluctmatch.core.base import rename_universe
-from tests.datafiles import TPR
-from tests.datafiles import XTC
+from fluctmatch.core.base import Merge, ModelBase, rename_universe
+from tests.datafiles import TPR, XTC
 
 
 def test_universe():
@@ -49,9 +46,7 @@ class TestMerge:
         univ_tuple: Tuple[mda.Universe, mda.Universe] = (u, u)
         u2: mda.Universe = Merge(*univ_tuple)
 
-        positions: np.ndarray = np.concatenate(
-            [u.atoms.positions for u in univ_tuple]
-        )
+        positions: np.ndarray = np.concatenate([u.atoms.positions for u in univ_tuple])
 
         testing.assert_allclose(
             u2.atoms.positions, positions, err_msg="Coordinates don't match."
@@ -68,9 +63,7 @@ class TestMerge:
         testing.assert_equal(u.atoms.n_atoms, u2.atoms.n_atoms)
         testing.assert_equal(u2.bonds, u.bonds, err_msg="Bonds differ.")
         testing.assert_equal(u2.angles, u.angles, err_msg="Angles differ.")
-        testing.assert_equal(
-            u2.dihedrals, u.dihedrals, err_msg="Dihedrals differ."
-        )
+        testing.assert_equal(u2.dihedrals, u.dihedrals, err_msg="Dihedrals differ.")
 
 
 def test_rename_universe():

@@ -43,14 +43,7 @@ import textwrap
 import time
 from os import environ
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import TextIO
-from typing import Tuple
-from typing import Union
+from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -129,8 +122,7 @@ class Writer(topbase.TopologyWriterBase):
         atoms: mda.AtomGroup = residue.atoms
 
         print(
-            self.fmt["RES"].format(residue.resname, residue.charge),
-            file=self.rtffile,
+            self.fmt["RES"].format(residue.resname, residue.charge), file=self.rtffile,
         )
 
         # Write the atom lines with site name, type, and charge.

@@ -41,13 +41,7 @@
 import logging
 from io import StringIO
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import TextIO
-from typing import Tuple
-from typing import Union
+from typing import ClassVar, Dict, List, Optional, TextIO, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -139,9 +133,7 @@ class Reader(TopologyReaderBase):
         -------
         Dictionary with CHARMM parameters per key.
         """
-        parameters: Dict[str, pd.DataFrame] = dict.fromkeys(
-            self._prmbuffers.keys()
-        )
+        parameters: Dict[str, pd.DataFrame] = dict.fromkeys(self._prmbuffers.keys())
         headers: Tuple[str, ...] = (
             "ATOMS",
             "BONDS",
@@ -182,11 +174,7 @@ class Reader(TopologyReaderBase):
                 comment="!",
                 dtype=self._dtypes[key],
             )
-            parameters[key]: pd.DataFrame = parameters[key].fillna(
-                self._na_values[key]
-            )
+            parameters[key]: pd.DataFrame = parameters[key].fillna(self._na_values[key])
         if not parameters["ATOMS"].empty:
-            parameters["ATOMS"]: pd.DataFrame = parameters["ATOMS"].drop(
-                "hdr", axis=1
-            )
+            parameters["ATOMS"]: pd.DataFrame = parameters["ATOMS"].drop("hdr", axis=1)
         return parameters

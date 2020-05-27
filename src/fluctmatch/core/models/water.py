@@ -38,12 +38,10 @@
 # ------------------------------------------------------------------------------
 """Tests for a united atom water model."""
 
-from typing import ClassVar
-from typing import NoReturn
+from typing import ClassVar, NoReturn
 
 import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes
-from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
 from ..base import ModelBase
 from ..selection import *

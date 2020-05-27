@@ -46,9 +46,7 @@ from numpy import testing
 
 import fluctmatch.parsers.writers.RTF
 
-from ..datafiles import COR
-from ..datafiles import PSF
-from ..datafiles import RTF
+from ..datafiles import COR, PSF, RTF
 
 
 class TestRTFWriter(object):
@@ -58,9 +56,9 @@ class TestRTFWriter(object):
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.rtf"
-        with patch(
-            "fluctmatch.parsers.writers.RTF.Writer.write"
-        ) as writer, mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
+        with patch("fluctmatch.parsers.writers.RTF.Writer.write") as writer, mda.Writer(
+            filename, n_atoms=u.atoms.n_atoms
+        ) as w:
             w.write(u.atoms)
             writer.assert_called()
 

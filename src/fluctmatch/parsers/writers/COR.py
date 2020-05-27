@@ -42,14 +42,7 @@ import itertools
 import logging
 import warnings
 from pathlib import Path
-from typing import Any
-from typing import ClassVar
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import Any, ClassVar, Dict, Generator, List, Mapping, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -190,9 +183,7 @@ class Writer(CRD.CRDWriter):
             # Write Title
             logger.info(f"Writing {self.filename}")
             print(
-                self.fmt["TITLE"].format(
-                    frame=frame, where=u.trajectory.filename
-                ),
+                self.fmt["TITLE"].format(frame=frame, where=u.trajectory.filename),
                 file=crd,
             )
             print("*", file=crd)

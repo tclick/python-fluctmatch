@@ -38,17 +38,14 @@
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
-from scipy.stats import scoreatpercentile
-from scipy.stats import t
+from scipy.stats import scoreatpercentile, t
 from sklearn.utils.extmath import svd_flip
-from sklearn.utils.validation import FLOAT_DTYPES
-from sklearn.utils.validation import check_array
+from sklearn.utils.validation import FLOAT_DTYPES, check_array
 
 
 def fluct_stats(X: np.ndarray) -> dict:
@@ -170,9 +167,7 @@ def eigenVect(M: np.ndarray):
     return eigenValues, eigenVectors
 
 
-def correlate(
-    Usca: np.ndarray, Lsca: np.ndarray, kmax: int = 6
-) -> List[np.ndarray]:
+def correlate(Usca: np.ndarray, Lsca: np.ndarray, kmax: int = 6) -> List[np.ndarray]:
     """Calculate the correlation matrix of *Usca* with *Lsca* eigenvalues.
 
     Parameters
@@ -360,17 +355,14 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
         pd: np.ndarray = t.fit(Vpica[:, k])
         all_fits.append(pd)
         iqr: float = (
-            scoreatpercentile(Vpica[:, k], 75)
-            - scoreatpercentile(Vpica[:, k], 25)
+            scoreatpercentile(Vpica[:, k], 75) - scoreatpercentile(Vpica[:, k], 25)
         )
         binwidth: float = 2 * iqr * np.power(Npos, -0.33)
         nbins: int = np.round(
             (Vpica[:, k].max() - Vpica[:, k].min()) / binwidth
         ).astype(np.int)
         hist, bin_edges = np.histogram(Vpica[:, k], nbins)
-        x_dist: np.ndarray = np.linspace(
-            bin_edges.min(), bin_edges.max(), num=100
-        )
+        x_dist: np.ndarray = np.linspace(bin_edges.min(), bin_edges.max(), num=100)
         area_hist: np.ndarray = Npos * (bin_edges[2] - bin_edges[1])
         scaled_pdf.append(area_hist * t.pdf(x_dist, *pd))
         cd: np.ndarray = t.cdf(x_dist, *pd)
@@ -398,9 +390,9 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
         for kprime in (kp for kp in range(kpos) if (kp != k)):
             tmp = [v for v in icpos_tmp if v in ic_init[kprime]]
             for i in tmp:
-                remsec = np.linalg.norm(
-                    Csca_nodiag[i, ic_init[k]]
-                ) < np.linalg.norm(Csca_nodiag[i, ic_init[kprime]])
+                remsec = np.linalg.norm(Csca_nodiag[i, ic_init[k]]) < np.linalg.norm(
+                    Csca_nodiag[i, ic_init[kprime]]
+                )
                 if remsec:
                     icpos_tmp.remove(i)
         sortedpos += sorted(icpos_tmp, key=lambda i: -Vpica[i, k])
@@ -450,9 +442,7 @@ def basicICA(x, r, Niter):
     for _ in range(Niter):
         w_old = np.copy(w)
         u = w.dot(x)
-        w += r * (
-            M * np.eye(L) + (1 - 2 * (1.0 / (1 + np.exp(-u)))).dot(u.T)
-        ).dot(w)
+        w += r * (M * np.eye(L) + (1 - 2 * (1.0 / (1 + np.exp(-u)))).dot(u.T)).dot(w)
         delta = (w - w_old).ravel()
         change.append(delta.dot(delta.T))
     return [w, change]
@@ -472,7 +462,5 @@ def rotICA(V, kmax=6, learnrate=0.0001, iterations=10000):
     Vica = (W.dot(V1)).T
     for n in range(kmax):
         imax = abs(Vica[:, n]).argmax()
-        Vica[:, n] = (
-            np.sign(Vica[imax, n]) * Vica[:, n] / np.linalg.norm(Vica[:, n])
-        )
+        Vica[:, n] = np.sign(Vica[imax, n]) * Vica[:, n] / np.linalg.norm(Vica[:, n])
     return Vica, W

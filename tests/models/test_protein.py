@@ -41,13 +41,9 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.core.models import calpha
-from fluctmatch.core.models import caside
-from fluctmatch.core.models import ncsc
-from fluctmatch.core.models import polar
+from fluctmatch.core.models import calpha, caside, ncsc, polar
 
-from ..datafiles import TPR
-from ..datafiles import XTC
+from ..datafiles import TPR, XTC
 
 
 class TestCalpha:

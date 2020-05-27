@@ -39,10 +39,7 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import Optional
-from typing import Union
+from typing import ClassVar, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -131,9 +128,7 @@ class Reader(TopologyReaderBase):
             line: str = next(infile).strip().split()
             n_lines, resid_b = np.array(line, dtype=np.int)
             if resid_a != resid_b:
-                raise IOError(
-                    "A mismatch has occurred on determining the IC format."
-                )
+                raise IOError("A mismatch has occurred on determining the IC format.")
 
             # Read the internal coordinates
             table_parser: FORTRANReader = FORTRANReader(self.fmt[key])

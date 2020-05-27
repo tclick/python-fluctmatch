@@ -38,16 +38,11 @@
 # ------------------------------------------------------------------------------
 """Class for 6-bead nucleic acid."""
 
-from typing import ClassVar
-from typing import List
-from typing import Mapping
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, Mapping, NoReturn, Tuple
 
 import MDAnalysis as mda
 import numpy as np
-from MDAnalysis.core.topologyattrs import Bonds
-from MDAnalysis.core.topologyattrs import Charges
+from MDAnalysis.core.topologyattrs import Bonds, Charges
 
 from ..base import ModelBase
 from ..selection import *
@@ -56,9 +51,7 @@ from ..selection import *
 class Model(ModelBase):
     """A universe accounting for six sites involved with hydrogen bonding."""
 
-    description: ClassVar[
-        str
-    ] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
+    description: ClassVar[str] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -100,9 +93,7 @@ class Model(ModelBase):
         """
         super().create_topology(universe)
 
-        charges: np.ndarray = np.zeros(
-            self.universe.atoms.n_atoms, dtype=np.float32
-        )
+        charges: np.ndarray = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
         self.universe.add_TopologyAttr(Charges(charges))
 
     def _add_bonds(self) -> NoReturn:

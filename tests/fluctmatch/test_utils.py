@@ -43,8 +43,7 @@ from numpy import testing
 
 from fluctmatch.libs import fluctmatch as fmutils
 
-from ..datafiles import TPR
-from ..datafiles import XTC
+from ..datafiles import TPR, XTC
 
 
 def test_average_structure():

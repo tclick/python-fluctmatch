@@ -40,8 +40,7 @@
 from typing import ClassVar
 
 import numpy as np
-from MDAnalysis.core import AtomGroup
-from MDAnalysis.core import selection
+from MDAnalysis.core import AtomGroup, selection
 
 
 class BioIonSelection(selection.Selection):
@@ -78,8 +77,9 @@ class BackboneSelection(selection.BackboneSelection):
 
     token: ClassVar[str] = "backbone"
     oxy_atoms: np.ndarray = np.array(["OXT", "OT1", "OT2"])
-    bb_atoms: np.ndarray = np.concatenate([selection.BackboneSelection.bb_atoms,
-                                           oxy_atoms])
+    bb_atoms: np.ndarray = np.concatenate(
+        [selection.BackboneSelection.bb_atoms, oxy_atoms]
+    )
 
     def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.bb_atoms)
@@ -93,8 +93,21 @@ class HBackboneSelection(BackboneSelection):
 
     token: ClassVar[str] = "hbackbone"
     hbb_atoms: np.ndarray = np.array(
-        ["H", "HN", "H1", "H2", "H3", "HT1", "HT2",
-         "HT3", "HA", "HA1", "HA2", "1HA", "2HA"]
+        [
+            "H",
+            "HN",
+            "H1",
+            "H2",
+            "H3",
+            "HT1",
+            "HT2",
+            "HT3",
+            "HA",
+            "HA1",
+            "HA2",
+            "1HA",
+            "2HA",
+        ]
     )
     bb_atoms = np.concatenate([BackboneSelection.bb_atoms, hbb_atoms])
 
@@ -145,8 +158,9 @@ class AmineSelection(selection.ProteinSelection):
     """Contains atoms within the amine group of a protein."""
 
     token: ClassVar[str] = "amine"
-    amine: np.ndarray = np.array(["N", "HN", "H", "H1", "H2",
-                                  "H3", "HT1", "HT2", "HT3"])
+    amine: np.ndarray = np.array(
+        ["N", "HN", "H", "H1", "H2", "H3", "HT1", "HT2", "HT3"]
+    )
 
     def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.amine)
@@ -205,9 +219,12 @@ class HNucleicSugarSelection(
     def __init__(self, parser, tokens):
         super().__init__(parser, tokens)
         self.sug_atoms: np.ndarray = np.concatenate(
-            (self.sug_atoms,
-             np.array(["H1'", "O1'", "O2'", "H2'",
-                       "H2''", "O3'", "H3'", "H3T", "H4'"]))
+            (
+                self.sug_atoms,
+                np.array(
+                    ["H1'", "O1'", "O2'", "H2'", "H2''", "O3'", "H3'", "H3T", "H4'",]
+                ),
+            )
         )
 
     def apply(self, group: AtomGroup) -> np.ndarray:
@@ -226,8 +243,25 @@ class HBaseSelection(AdditionalNucleicSelection, selection.BaseSelection):
         self.base_atoms: np.ndarray = np.concatenate(
             (
                 self.base_atoms,
-                ["O8", "H8", "H21", "H22", "H2", "O6", "H6", "H61", "H62",
-                 "H41", "H42", "H5", "H51", "H52", "H53", "H3", "H7"],
+                [
+                    "O8",
+                    "H8",
+                    "H21",
+                    "H22",
+                    "H2",
+                    "O6",
+                    "H6",
+                    "H61",
+                    "H62",
+                    "H41",
+                    "H42",
+                    "H5",
+                    "H51",
+                    "H52",
+                    "H53",
+                    "H3",
+                    "H7",
+                ],
             )
         )
 
@@ -267,9 +301,7 @@ class NucleicC4Selection(AdditionalNucleicSelection):
     """Contains the definition for the C4' region."""
 
     token: ClassVar[str] = "sugarC4"
-    c3_atoms: np.ndarray = np.array(
-        ["C3'", "O3'", "H3'", "H3T", "C4'", "O4'", "H4'"]
-    )
+    c3_atoms: np.ndarray = np.array(["C3'", "O3'", "H3'", "H3T", "C4'", "O4'", "H4'"])
 
     def apply(self, group: AtomGroup) -> np.ndarray:
         mask: np.ndarray = np.in1d(group.names, self.c3_atoms)

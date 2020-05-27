@@ -38,23 +38,21 @@
 # ------------------------------------------------------------------------------
 """Class for elastic network model."""
 
-from typing import ClassVar
-from typing import List
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, NoReturn, Tuple
 
 import MDAnalysis as mda
 import numpy as np
-from MDAnalysis.core.topologyattrs import Angles
-from MDAnalysis.core.topologyattrs import Atomtypes
-from MDAnalysis.core.topologyattrs import Bonds
-from MDAnalysis.core.topologyattrs import Charges
-from MDAnalysis.core.topologyattrs import Dihedrals
-from MDAnalysis.core.topologyattrs import Impropers
+from MDAnalysis.core.topologyattrs import (
+    Angles,
+    Atomtypes,
+    Bonds,
+    Charges,
+    Dihedrals,
+    Impropers,
+)
 from MDAnalysis.lib import distances
 
-from ..base import ModelBase
-from ..base import rename_universe
+from ..base import ModelBase, rename_universe
 from ..selection import *
 
 

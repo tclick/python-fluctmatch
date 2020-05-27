@@ -38,10 +38,7 @@
 # ------------------------------------------------------------------------------
 """Utilities for parameter creation."""
 
-from typing import Dict
-from typing import List
-from typing import Mapping
-from typing import Union
+from typing import Dict, List, Mapping, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -118,9 +115,7 @@ def create_empty_parameters(
                 np.zeros((universe.angles.atom1.names.size, 2), dtype=np.float),
             )
         )
-        parameters["ANGLES"] = pd.DataFrame(
-            angles, columns=param_columns["ANGLES"]
-        )
+        parameters["ANGLES"] = pd.DataFrame(angles, columns=param_columns["ANGLES"])
     except (mda.NoDataError, AttributeError, IndexError):
         pass
 
@@ -132,13 +127,9 @@ def create_empty_parameters(
                 universe.dihedrals.atom2.names[:, None],
                 universe.dihedrals.atom3.names[:, None],
                 universe.dihedrals.atom4.names[:, None],
-                np.zeros(
-                    (universe.dihedrals.atom1.names.size, 1), dtype=np.float
-                ),
+                np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.float),
                 np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.int),
-                np.zeros(
-                    (universe.dihedrals.atom1.names.size, 1), dtype=np.float
-                ),
+                np.zeros((universe.dihedrals.atom1.names.size, 1), dtype=np.float),
             )
         )
         parameters["DIHEDRALS"] = pd.DataFrame(
@@ -155,13 +146,9 @@ def create_empty_parameters(
                 universe.impropers.atom2.names[:, None],
                 universe.impropers.atom3.names[:, None],
                 universe.impropers.atom4.names[:, None],
-                np.zeros(
-                    (universe.impropers.atom1.names.size, 1), dtype=np.float
-                ),
+                np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.float),
                 np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.int),
-                np.zeros(
-                    (universe.impropers.atom1.names.size, 1), dtype=np.float
-                ),
+                np.zeros((universe.impropers.atom1.names.size, 1), dtype=np.float),
             )
         )
         parameters["IMPROPER"] = pd.DataFrame(

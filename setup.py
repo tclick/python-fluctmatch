@@ -40,12 +40,10 @@
 import re
 import sys
 from glob import glob
-from os.path import basename
-from os.path import splitext
+from os.path import basename, splitext
 from pathlib import Path
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 # NOTE: keep in sync with DNApersist.__version__ in version.py
 RELEASE: str = "4.0.0-dev"

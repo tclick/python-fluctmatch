@@ -40,9 +40,7 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar
-from typing import Mapping
-from typing import Union
+from typing import ClassVar, Mapping, Union
 
 from . import PRM
 

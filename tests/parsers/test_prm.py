@@ -38,9 +38,7 @@
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
-from typing import Dict
-from typing import Mapping
-from typing import Union
+from typing import Dict, Mapping, Union
 from unittest.mock import patch
 
 import MDAnalysis as mda
@@ -60,9 +58,9 @@ class TestPRMWriter(object):
 
     def test_writer(self, u: pd.DataFrame, tmp_path: Path):
         filename: Path = tmp_path / "temp.prm"
-        with patch(
-            "fluctmatch.parsers.writers.PRM.Writer.write"
-        ) as writer, mda.Writer(filename, nonbonded=True) as ofile:
+        with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, mda.Writer(
+            filename, nonbonded=True
+        ) as ofile:
             ofile.write(u)
             writer.assert_called()
 

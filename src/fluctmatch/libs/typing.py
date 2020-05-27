@@ -39,8 +39,7 @@
 
 import logging
 from pathlib import Path
-from typing import Mapping
-from typing import TypeVar
+from typing import Mapping, TypeVar
 
 import MDAnalysis as mda
 import numpy as np

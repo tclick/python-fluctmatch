@@ -38,11 +38,7 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using N, carboxyl oxygens, and sidechains."""
 
-from typing import ClassVar
-from typing import List
-from typing import Mapping
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, Mapping, NoReturn, Tuple
 
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds

@@ -40,11 +40,7 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import ClassVar, Dict, Mapping, Optional, Union
 
 from MDAnalysis.coordinates import CRD
 
@@ -67,6 +63,6 @@ class Reader(CRD.CRDReader):
         filename: Union[str, Path],
         convert_units: bool = None,
         n_atoms: int = None,
-        **kwargs: Mapping
+        **kwargs: Mapping,
     ):
         super().__init__(filename, convert_units, n_atoms, **kwargs)

@@ -39,13 +39,10 @@
 
 import numpy as np
 from scipy import linalg
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.validation import FLOAT_DTYPES
-from sklearn.utils.validation import check_array
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
 
 from fluctmatch.decomposition.ica import ICA
 
@@ -144,15 +141,11 @@ class FluctSCA(BaseEstimator, TransformerMixin):
         )
 
         ica = ICA(
-            n_components=self.n_components_,
-            method=self.method,
-            whiten=self.whiten,
+            n_components=self.n_components_, method=self.method, whiten=self.whiten,
         )
         self.sources_ = ica.fit_transform(X)
 
         # Perform truncated singular value decomposition
-        truncated = TruncatedSVD(
-            n_components=self.n_components_, n_iter=self.max_iter
-        )
+        truncated = TruncatedSVD(n_components=self.n_components_, n_iter=self.max_iter)
         pipeline = make_pipeline(Center2D(), truncated)
         self.U_ = pipeline.fit_transform(X)

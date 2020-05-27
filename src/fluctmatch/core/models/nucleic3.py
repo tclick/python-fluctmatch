@@ -38,11 +38,7 @@
 # ------------------------------------------------------------------------------
 """Class for a 3-bead nucleic acid."""
 
-from typing import ClassVar
-from typing import List
-from typing import Mapping
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, Mapping, NoReturn, Tuple
 
 from MDAnalysis.core.topologyattrs import Bonds
 
@@ -53,9 +49,7 @@ from ..selection import *
 class Model(ModelBase):
     """A universe the phosphate, sugar, and base of the nucleic acid."""
 
-    description: ClassVar[
-        str
-    ] = "Phosohate, sugar, and nucleotide of nucleic acid"
+    description: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

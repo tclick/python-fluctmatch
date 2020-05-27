@@ -42,11 +42,7 @@ import os
 import textwrap
 import time
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -121,16 +117,12 @@ class Writer(topbase.TopologyWriterBase):
                 )
             else:
                 data: pd.DataFrame = pd.DataFrame(universe._topology.bonds.values)
-                data: pd.DataFrame = pd.concat(
-                    (data, pd.Series(dist)), axis="columns"
-                )
+                data: pd.DataFrame = pd.concat((data, pd.Series(dist)), axis="columns")
         except AttributeError:
             AttributeError("No bonds were found.")
 
         # Write the data to the file.
         with open(self.filename, "w") as stream_file:
             print(textwrap.dedent(self.title).strip(), file=stream_file)
-            np.savetxt(
-                stream_file, data, fmt=textwrap.dedent(self.fmt.strip("\n"))
-            )
+            np.savetxt(stream_file, data, fmt=textwrap.dedent(self.fmt.strip("\n")))
             print("RETURN", file=stream_file)

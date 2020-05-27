@@ -41,8 +41,7 @@ from typing import Union
 
 import numpy as np
 from scipy.sparse import linalg
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 
 
@@ -77,7 +76,6 @@ class Eigh(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from fluctmatch.decomposition.svd import SVD
     >>> X = np.arange(4, dtype=np.float).reshape((2,2))
     >>> eigh = Eigh()
     >>> eigh.fit(X)
@@ -117,9 +115,7 @@ class Eigh(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def transform(
-        self, X: np.ndarray, y: Union[np.ndarray, None] = None
-    ) -> np.ndarray:
+    def transform(self, X: np.ndarray, y: Union[np.ndarray, None] = None) -> np.ndarray:
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters

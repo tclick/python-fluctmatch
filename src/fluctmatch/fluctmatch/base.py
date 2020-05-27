@@ -40,9 +40,7 @@
 import abc
 import os
 from pathlib import Path
-from typing import Dict
-from typing import List
-from typing import NoReturn
+from typing import Dict, List, NoReturn
 
 
 class FluctMatchBase(metaclass=abc.ABCMeta):

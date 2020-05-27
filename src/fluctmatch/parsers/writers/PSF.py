@@ -43,12 +43,7 @@ import textwrap
 import time
 from os import environ
 from pathlib import Path
-from typing import ClassVar
-from typing import Mapping
-from typing import Optional
-from typing import TextIO
-from typing import Tuple
-from typing import Union
+from typing import ClassVar, Mapping, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -202,8 +197,7 @@ class Writer(base.TopologyWriterBase):
         """
         fmt: str = self._fmt[self._fmtkey]
         print(
-            self.sect_hdr.format(self._universe.atoms.n_atoms, "NATOM"),
-            file=psffile,
+            self.sect_hdr.format(self._universe.atoms.n_atoms, "NATOM"), file=psffile,
         )
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.0] = 0.0
@@ -246,9 +240,7 @@ class Writer(base.TopologyWriterBase):
             print("\n", file=psffile)
             return
 
-        values: np.ndarray = np.asarray(
-            getattr(self._universe, attr).to_indices()
-        ) + 1
+        values: np.ndarray = np.asarray(getattr(self._universe, attr).to_indices()) + 1
         values: np.ndarray = values.astype(object)
         n_rows, n_cols = values.shape
         n_values: int = n_perline // n_cols
@@ -257,9 +249,7 @@ class Writer(base.TopologyWriterBase):
             values: np.ndarray = np.concatenate(
                 (values, np.full((n_extra, n_cols), "", dtype=np.object))
             )
-        values: np.ndarray = values.reshape(
-            (values.shape[0] // n_values, n_perline)
-        )
+        values: np.ndarray = values.reshape((values.shape[0] // n_values, n_perline))
         print(self.sect_hdr.format(n_rows, header), file=psffile)
         np.savetxt(psffile, values, fmt=f"%{self.col_width:d}s", delimiter="")
         print(file=psffile)
@@ -273,9 +263,7 @@ class Writer(base.TopologyWriterBase):
         # NNB
         nnb: np.ndarray = np.full(n_atoms, "0", dtype=np.object)
         if missing > 0:
-            nnb: np.ndarray = np.concatenate(
-                [nnb, np.full(missing, "", dtype=object)]
-            )
+            nnb: np.ndarray = np.concatenate([nnb, np.full(missing, "", dtype=object)])
         nnb: np.ndarray = nnb.reshape((nnb.size // n_cols, n_cols))
 
         print(self.sect_hdr.format(0, "NNB\n"), file=psffile)

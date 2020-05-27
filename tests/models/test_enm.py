@@ -40,8 +40,7 @@ from numpy import testing
 
 from fluctmatch.core.models import enm
 
-from ..datafiles import DCD
-from ..datafiles import PSF
+from ..datafiles import DCD, PSF
 
 
 class TestEnm:

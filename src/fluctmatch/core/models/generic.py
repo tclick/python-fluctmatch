@@ -38,10 +38,7 @@
 # ------------------------------------------------------------------------------
 """Model a generic system of all atoms."""
 
-from typing import ClassVar
-from typing import List
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, NoReturn, Tuple
 
 import MDAnalysis as mda
 import numpy as np

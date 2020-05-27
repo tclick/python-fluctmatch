@@ -38,8 +38,7 @@
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
-from typing import ClassVar
-from typing import List
+from typing import ClassVar, List
 from unittest.mock import patch
 
 import MDAnalysis as mda
@@ -51,8 +50,7 @@ from numpy.testing import assert_equal
 import fluctmatch.parsers.parsers.PSF as PSFParser
 import fluctmatch.parsers.writers.PSF
 
-from ..datafiles import COR
-from ..datafiles import PSF
+from ..datafiles import COR, PSF
 
 
 class TestPSFWriter(object):
@@ -62,9 +60,9 @@ class TestPSFWriter(object):
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.xplor.psf"
-        with patch(
-            "fluctmatch.parsers.writers.PSF.Writer.write"
-        ) as writer, mda.Writer(filename) as w:
+        with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, mda.Writer(
+            filename
+        ) as w:
             w.write(u.atoms)
             writer.assert_called()
 

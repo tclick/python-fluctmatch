@@ -39,8 +39,7 @@
 
 import logging
 import traceback
-from typing import List
-from typing import Union
+from typing import List, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -70,9 +69,7 @@ _HEADER: List[str] = [
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def create_empty_table(
-    universe: Union[mda.Universe, mda.AtomGroup]
-) -> pd.DataFrame:
+def create_empty_table(universe: Union[mda.Universe, mda.AtomGroup]) -> pd.DataFrame:
     """Create an empty table of internal coordinates from an atomgroup
 
     Parameters
@@ -134,9 +131,7 @@ def create_empty_table(
         else:
             n_angles: int = len(angles)
             atom1, atom2, atom3 = angles.atom1, angles.atom2, angles.atom3
-            zeros: pd.DataFrame = pd.DataFrame(
-                np.zeros((n_angles, 5), dtype=np.float)
-            )
+            zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_angles, 5), dtype=np.float))
             cols: pd.DataFrame = pd.DataFrame(
                 [
                     atom1.segids,
@@ -162,9 +157,7 @@ def create_empty_table(
             dihedrals.atom3,
             dihedrals.atom4,
         )
-        zeros: pd.DataFrame = pd.DataFrame(
-            np.zeros((n_dihedrals, 5), dtype=np.float)
-        )
+        zeros: pd.DataFrame = pd.DataFrame(np.zeros((n_dihedrals, 5), dtype=np.float))
         cols: pd.DataFrame = pd.DataFrame(
             [
                 atom1.segids,

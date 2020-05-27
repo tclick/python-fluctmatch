@@ -39,22 +39,20 @@
 
 import logging
 from copy import deepcopy
-from typing import Dict
-from typing import NoReturn
-from typing import Tuple
-from typing import Union
+from typing import Dict, NoReturn, Tuple, Union
 
 import numpy as np
 from numpy.random import RandomState
 from scipy import linalg
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import FastICA
-from sklearn.utils.validation import FLOAT_DTYPES
-from sklearn.utils.validation import as_float_array
-from sklearn.utils.validation import check_array
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import (
+    FLOAT_DTYPES,
+    as_float_array,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+)
 
 logger: logging.Logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
@@ -225,9 +223,7 @@ def _infomax(
 
     # initialize training
     weights: np.ndarray = (
-        np.identity(n_features, dtype=np.float64)
-        if weights is None
-        else weights.T
+        np.identity(n_features, dtype=np.float64) if weights is None else weights.T
     )
 
     BI: np.ndarray = block * np.identity(n_features, dtype=np.float64)
@@ -266,9 +262,7 @@ def _infomax(
             if extended:
                 # extended ICA update
                 y: float = np.tanh(u)
-                j: np.ndarray = BI - signs[None, :] * np.dot(u.T, y) - np.dot(
-                    u.T, u
-                )
+                j: np.ndarray = BI - signs[None, :] * np.dot(u.T, y) - np.dot(u.T, u)
                 weights += l_rate * np.dot(weights, j)
             if use_bias:
                 bias += l_rate * np.reshape(
@@ -395,8 +389,7 @@ def _infomax(
         if l_rate > min_l_rate:
             if verbose:
                 logger.info(
-                    "... lowering learning rate to %g"
-                    "\n... re-starting..." % l_rate
+                    "... lowering learning rate to %g" "\n... re-starting..." % l_rate
                 )
         else:
             raise ValueError(
@@ -622,9 +615,7 @@ class ICA(BaseEstimator, TransformerMixin):
                 "rather use method='extended-infomax'."
             )
         if method == "fastica":
-            update: Dict = dict(
-                algorithm="parallel", fun="logcosh", fun_args=None
-            )
+            update: Dict = dict(algorithm="parallel", fun="logcosh", fun_args=None)
             fit_params.update(
                 dict((k, v) for k, v in update.items() if k not in fit_params)
             )
@@ -677,10 +668,7 @@ class ICA(BaseEstimator, TransformerMixin):
             self.mixing_: np.ndarray = ica.mixing_
         elif self.method in ("infomax", "extended-infomax"):
             self.components_: np.ndarray = _infomax(
-                data,
-                random_state=random_state,
-                whiten=self.whiten,
-                **self.fit_params,
+                data, random_state=random_state, whiten=self.whiten, **self.fit_params,
             )[: self.n_components]
             self.mixing_: np.ndarray = linalg.pinv(self.components_)
 
@@ -696,9 +684,7 @@ class ICA(BaseEstimator, TransformerMixin):
         sources: np.ndarray = np.dot(data, self.components_.T)
         return sources
 
-    def inverse_transform(
-        self, data: np.ndarray, copy: bool = True
-    ) -> np.ndarray:
+    def inverse_transform(self, data: np.ndarray, copy: bool = True) -> np.ndarray:
         check_is_fitted(self, "mixing_")
 
         data: np.ndarray = check_array(data, copy=copy, dtype=FLOAT_DTYPES)

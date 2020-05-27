@@ -35,12 +35,9 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.core.models import dma
-from fluctmatch.core.models import tip3p
-from fluctmatch.core.models import water
+from fluctmatch.core.models import dma, tip3p, water
 
-from ..datafiles import DMA
-from ..datafiles import TIP3P
+from ..datafiles import DMA, TIP3P
 
 
 class TestWater:
@@ -214,9 +211,7 @@ class TestTip3p:
             err_msg=("Expected and actual number of angles " "not equal"),
         )
         testing.assert_equal(
-            len(cg_universe.dihedrals),
-            0,
-            err_msg="No dihedral angles should exist.",
+            len(cg_universe.dihedrals), 0, err_msg="No dihedral angles should exist.",
         )
         testing.assert_equal(
             len(cg_universe.impropers),
@@ -280,15 +275,12 @@ class TestDma:
             err_msg=("Expected and actual number of angles " "not equal"),
         )
         testing.assert_equal(
-            len(cg_universe.dihedrals),
-            0,
-            err_msg="No dihedral angles should exist.",
+            len(cg_universe.dihedrals), 0, err_msg="No dihedral angles should exist.",
         )
         testing.assert_equal(
             len(cg_universe.impropers),
             system.universe.residues.n_residues * 3,
             err_msg=(
-                "Expected and actual number of improper "
-                "dihedral angles not equal."
+                "Expected and actual number of improper " "dihedral angles not equal."
             ),
         )

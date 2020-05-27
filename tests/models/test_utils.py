@@ -36,8 +36,7 @@ from numpy import testing
 from fluctmatch.core import utils
 from fluctmatch.core.models import polar
 
-from ..datafiles import TPR
-from ..datafiles import XTC
+from ..datafiles import TPR, XTC
 
 
 class TestModeller:
@@ -53,9 +52,7 @@ class TestModeller:
     def system(self) -> polar.Model:
         return polar.Model()
 
-    def test_creation(
-        self, u: mda.Universe, u2: mda.Universe, system: polar.Model
-    ):
+    def test_creation(self, u: mda.Universe, u2: mda.Universe, system: polar.Model):
         u3 = system.transform(u)
 
         testing.assert_raises(

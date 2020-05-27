@@ -1,4 +1,3 @@
-
 # ------------------------------------------------------------------------------
 #   python-fluctmatch
 #   Copyright (c) 2013-2020 Timothy H. Click, Ph.D.
@@ -39,15 +38,10 @@
 # ------------------------------------------------------------------------------
 """Tests for DMA solvent model."""
 
-from typing import ClassVar
-from typing import List
-from typing import Mapping
-from typing import NoReturn
-from typing import Tuple
+from typing import ClassVar, List, Mapping, NoReturn, Tuple
 
 import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Atomtypes
-from MDAnalysis.core.topologyattrs import Bonds
+from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
 from ..base import ModelBase
 
@@ -71,9 +65,7 @@ class Model(ModelBase):
         }
 
     def _add_atomtypes(self) -> NoReturn:
-        atomtypes: List[int] = [
-            self._types[atom.name] for atom in self.universe.atoms
-        ]
+        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
         self.universe.add_TopologyAttr(Atomtypes(atomtypes))
 
     def _add_bonds(self) -> NoReturn:

@@ -44,8 +44,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from fluctmatch.libs.intcor import create_empty_table
-from tests.datafiles import COR
-from tests.datafiles import PSF
+from tests.datafiles import COR, PSF
 
 
 class TestIntcorUtils:
@@ -58,7 +57,5 @@ class TestIntcorUtils:
         table: pd.DataFrame = create_empty_table(u)
 
         assert_allclose(
-            table["r_IJ"],
-            empty,
-            err_msg="The table shouldn't contain any values.",
+            table["r_IJ"], empty, err_msg="The table shouldn't contain any values.",
         )

@@ -43,19 +43,12 @@ import textwrap
 import time
 from os import environ
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import Mapping
-from typing import MutableMapping
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import ClassVar, Dict, Mapping, MutableMapping, Optional, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-from MDAnalysis.lib.util import asiterable
-from MDAnalysis.lib.util import iterable
+from MDAnalysis.lib.util import asiterable, iterable
 
 from ..base import TopologyWriterBase
 
@@ -168,15 +161,10 @@ class Writer(TopologyWriterBase):
 
             if self._nonbonded:
                 atom_list: np.ndarray = np.concatenate(
-                    (
-                        parameters["BONDS"]["I"].values,
-                        parameters["BONDS"]["J"].values,
-                    )
+                    (parameters["BONDS"]["I"].values, parameters["BONDS"]["J"].values,)
                 )
                 atom_list: np.ndarray = np.unique(atom_list)[:, np.newaxis]
                 nb_list: np.ndarray = np.zeros((atom_list.size, 3))
                 nb_list: np.ndarray = np.hstack((atom_list, nb_list))
-                np.savetxt(
-                    prmfile, nb_list, fmt=self._fmt["NONBONDED"], delimiter=""
-                )
+                np.savetxt(prmfile, nb_list, fmt=self._fmt["NONBONDED"], delimiter="")
             print("\nEND", file=prmfile)

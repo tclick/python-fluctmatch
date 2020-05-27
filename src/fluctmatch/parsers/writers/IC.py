@@ -41,11 +41,7 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import ClassVar
-from typing import Dict
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -82,9 +78,7 @@ class Writer(TopologyWriterBase):
         # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
         STANDARD=("%5d %3s %-4s%3s %-4%3s %-4%3s %-4%9.4f%8.2f%8.2f%8.2f%9.4f"),
         # fortran_format = "(I9,1X,4(I5,1X,A8),F9.4,3F8.2,F9.4)"
-        EXTENDED=(
-            "%10d %5s %-8s%5s %-8s%5s %-8s%5s %-8s%9.4f%8.2f%8.2f%8.2f%9.4f"
-        ),
+        EXTENDED=("%10d %5s %-8s%5s %-8s%5s %-8s%5s %-8s%9.4f%8.2f%8.2f%8.2f%9.4f"),
         # fortran_format = "(I5,4(1X,A4,1X,A4,1X,A4,"":""),F12.6,3F12.4,F12.6)"
         STANDARD_RESID=(
             "%5d %-4s %-4s %-4s: %-4s %-4s %-4s: %-4s %-4s %-4s: %-4s %-4s "
@@ -138,7 +132,5 @@ class Writer(TopologyWriterBase):
             line[0, 0] += n_rows
             line[0, 1] += 2 if self._resid else 1
             np.savetxt(outfile, line, fmt="%5d", delimiter="")
-            np.savetxt(
-                outfile, ictable.reset_index().values, fmt=self.fmt[self.key]
-            )
+            np.savetxt(outfile, ictable.reset_index().values, fmt=self.fmt[self.key])
             logger.info("Table successfully written.")

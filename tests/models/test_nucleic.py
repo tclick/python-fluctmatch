@@ -39,12 +39,9 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.core.models import nucleic3
-from fluctmatch.core.models import nucleic4
-from fluctmatch.core.models import nucleic6
+from fluctmatch.core.models import nucleic3, nucleic4, nucleic6
 
-from ..datafiles import TPR
-from ..datafiles import XTC
+from ..datafiles import TPR, XTC
 
 
 class TestNucleic3:
@@ -110,8 +107,7 @@ class TestNucleic4:
         system.create_topology(u)
 
         n_atoms = sum(
-            u.select_atoms(sel).residues.n_residues
-            for sel in system._mapping.values()
+            u.select_atoms(sel).residues.n_residues for sel in system._mapping.values()
         )
         testing.assert_equal(
             system.universe.atoms.n_atoms,
@@ -199,9 +195,7 @@ class TestNucleic6:
     def test_charges(self, u: mda.Universe, system: nucleic6.Model):
         system.create_topology(u)
 
-        charges: np.ndarray = np.zeros(
-            system.universe.atoms.n_atoms, dtype=np.float32
-        )
+        charges: np.ndarray = np.zeros(system.universe.atoms.n_atoms, dtype=np.float32)
         testing.assert_allclose(
             system.universe.atoms.charges, charges, err_msg="Charges should be 0."
         )

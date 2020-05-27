@@ -39,8 +39,7 @@
 """Class definition for beads using N, carboxyl oxygens, and polar sidechains.
 """
 
-from typing import ClassVar
-from typing import Mapping
+from typing import ClassVar, Mapping
 
 from ..selection import *
 from . import ncsc

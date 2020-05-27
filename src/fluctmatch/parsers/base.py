@@ -39,13 +39,10 @@
 
 import os
 import time
-from typing import Mapping
-from typing import Union
+from typing import Mapping, Union
 
 import MDAnalysis as mda
-from MDAnalysis.coordinates.base import IOBase
-from MDAnalysis.coordinates.base import _Readermeta
-from MDAnalysis.coordinates.base import _Writermeta
+from MDAnalysis.coordinates.base import IOBase, _Readermeta, _Writermeta
 
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
