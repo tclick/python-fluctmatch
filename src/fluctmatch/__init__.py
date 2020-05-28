@@ -36,6 +36,11 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Setup the Python program.
+
+Various parsers are registered in the MDAnalysis ecosystem and an iterative function
+is defined.
+"""
 import importlib
 import logging
 import pkgutil
@@ -54,7 +59,7 @@ logger.addHandler(logging.NullHandler())
 __version__: str = "4.0.0"
 
 
-def iter_namespace(ns_pkg):
+def iter_namespace(ns_pkg) -> pkgutil.ModuleInfo:
     """Iterate over a namespace package. [1]_
 
     Parameters

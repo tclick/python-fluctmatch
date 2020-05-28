@@ -55,28 +55,30 @@ Why does this file exist, and why not put this in __main__?
 import os
 import sys
 from pathlib import Path
+from typing import Any, List, NoReturn, Union
 
 import click
+from click import core
 
 CONTEXT_SETTINGS = dict(
     auto_envvar_prefix="COMPLEX", help_option_names=["-h", "--help"]
 )
 
 
-class Context(object):
+class Context:
     """Context manager for click command-line interface."""
 
     def __init__(self):
         self.verbose = False
         self.home = Path.home()
 
-    def log(self, msg, *args):
+    def log(self, msg: str, *args: List[str]) -> NoReturn:
         """Logs a message to stderr."""
         if args:
             msg %= args
         click.echo(msg, file=sys.stderr)
 
-    def vlog(self, msg, *args):
+    def vlog(self, msg: str, *args: List[str]) -> NoReturn:
         """Logs a message to stderr only if verbose is enabled."""
         if self.verbose:
             self.log(msg, *args)
@@ -90,7 +92,7 @@ class ComplexCLI(click.MultiCommand):
     """Complex command-line options with subcommands for fluctmatch.
     """
 
-    def list_commands(self, ctx):
+    def list_commands(self, ctx: Any) -> List[str]:
         """List available commands.
 
         Parameters
@@ -102,21 +104,21 @@ class ComplexCLI(click.MultiCommand):
         -------
             List of available commands
         """
-        rv = []
+        commands = []
         for filename in os.listdir(cmd_folder):
             if filename.endswith(".py") and filename.startswith("cmd_"):
-                rv.append(filename[4:-3])
-        rv.sort()
-        return rv
+                commands.append(filename[4:-3])
+        commands.sort()
+        return commands
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx: Any, cmd_name: str) -> Union[core.Command, NoReturn]:
         """Run the selected command
 
         Parameters
         ----------
         ctx : :class:`Context`
             click context
-        name : str
+        cmd_name : str
             command name
 
         Returns
@@ -125,8 +127,8 @@ class ComplexCLI(click.MultiCommand):
         """
         try:
             if sys.version_info[0] == 2:
-                name = name.encode("ascii", "replace")
-            mod = __import__("fluctmatch.commands.cmd_" + name, None, None, ["cli"])
+                cmd_name = cmd_name.encode("ascii", "replace")
+            mod = __import__("fluctmatch.commands.cmd_" + cmd_name, None, None, ["cli"])
         except ImportError:
             return
         return mod.cli
@@ -135,4 +137,5 @@ class ComplexCLI(click.MultiCommand):
 @click.command(cls=ComplexCLI, context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 def main():
+    """Main command-line interface"""
     pass
