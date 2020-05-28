@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Installation of the program."""
 
 import re
 import sys
@@ -61,10 +62,19 @@ if (major, minor) < (3, 6):
 
 
 def read(*names, **kwargs):
-    return open(
-        Path().joinpath(Path(__file__).parent, *names),
-        encoding=kwargs.get("encoding", "utf8"),
-    ).read()
+    """Return the contents of a file.
+
+    Parameters
+    ----------
+    names : str
+        list of filenames
+    kwargs : dict
+        encoding type of the file
+    """
+    encoding = kwargs.get("encoding", "utf8")
+    filename = Path().joinpath(Path(__file__).parent, *names)
+    with open(filename, encoding=encoding) as text_file:
+        return text_file.read()
 
 
 if __name__ == "__main__":
@@ -103,17 +113,7 @@ if __name__ == "__main__":
             "Topic :: Scientific/Engineering :: Chemistry",
         ],
         keywords=["elastic network model", "fluctuation matching"],
-        install_requires=[
-            "click",
-            "MDAnalysis",
-            "matplotlib",
-            "numpy",
-            "pandas",
-            "scipy",
-            "scikit-learn",
-        ],
-        extras_require=dict(
-            dev=["MDAnalysisTests", "pytest", "tox", "coverage", "coveralls"]
-        ),
+        install_requires=read("requirements.txt").split(),
+        extras_require=dict(dev=read("requirements-dev.txt").split()),
         entry_points={"console_scripts": ["fluctmatch = fluctmatch.cli:main"]},
     )
