@@ -40,8 +40,6 @@
 
 import logging
 import textwrap
-import time
-from os import environ
 from pathlib import Path
 from typing import ClassVar, Mapping, Optional, TextIO, Tuple, Union
 

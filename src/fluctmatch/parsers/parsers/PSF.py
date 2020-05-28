@@ -117,19 +117,19 @@ class Reader(PSFParser.PSFParser):
 
             next(psffile)
             title: str = next(psffile).split()
-            if not (title[1] == "!NTITLE"):
+            if title[1] != "!NTITLE":
                 err: str = f"{psffile.name} is not a valid PSF file"
                 logger.error(err)
                 raise ValueError(err)
             # psfremarks = [psffile.next() for i in range(int(title[0]))]
             for _ in range(int(title[0])):
                 next(psffile)
-            logger.info(f"PSF file {psffile.name}: format {self._format}")
+            logger.info("PSF file %s: format %s", psffile.name, self._format)
 
             # Atoms first and mandatory
             top: Topology = self._parse_sec(psffile, ("NATOM", 1, 1, self._parseatoms))
             # Then possibly other sections
-            sections: Tuple[Tuple] = (
+            sections = (
                 # ("atoms", ("NATOM", 1, 1, self._parseatoms)),
                 (Bonds, ("NBOND", 2, 4, self._parsesection)),
                 (Angles, ("NTHETA", 3, 3, self._parsesection)),
@@ -228,39 +228,39 @@ class Reader(PSFParser.PSFParser):
                 logger.error(err)
                 raise ValueError(err)
             try:
-                vals: List[str] = atom_parser.read(line)
+                values: List[str] = atom_parser.read(line)
             except ValueError:
                 # last ditch attempt: this *might* be a NAMD/VMD
                 # space-separated "PSF" file from VMD version < 1.9.1
                 try:
                     atom_parser: FORTRANReader = FORTRANReader(atom_parsers["NAMD"])
-                    vals: List[str] = atom_parser.read(line)
+                    values: List[str] = atom_parser.read(line)
                     logger.warning(
                         "Guessing that this is actually a NAMD-type "
                         "PSF file... continuing with fingers "
                         "crossed!"
                     )
-                    logger.info(f"First NAMD-type line: {i}: {line.rstrip()}")
+                    logger.info("First NAMD-type line: %s: %s", i, line.rstrip())
                 except ValueError:
                     atom_parser: FORTRANReader = FORTRANReader(
                         atom_parsers[self._format].replace("A6", "A4")
                     )
-                    vals: List[str] = atom_parser.read(line)
+                    values: List[str] = atom_parser.read(line)
                     logger.warning(
                         "Guessing that this is actually a pre "
                         "CHARMM36 PSF file... continuing with "
                         "fingers crossed!"
                     )
-                    logger.info(f"First NAMD-type line: {i}: {line.rstrip()}")
+                    logger.info("First NAMD-type line: %s: %s", i, line.rstrip())
 
-            atomids[i]: int = vals[0]
-            segids[i]: str = vals[1] if vals[1] else "SYSTEM"
-            resids[i]: int = vals[2]
-            resnames[i]: str = vals[3]
-            atomnames[i]: str = vals[4]
-            atomtypes[i]: Union[int, str] = vals[5]
-            charges[i]: float = vals[6]
-            masses[i]: float = vals[7]
+            atomids[i]: int = values[0]
+            segids[i]: str = values[1] if values[1] else "SYSTEM"
+            resids[i]: int = values[2]
+            resnames[i]: str = values[3]
+            atomnames[i]: str = values[4]
+            atomtypes[i]: Union[int, str] = values[5]
+            charges[i]: float = values[6]
+            masses[i]: float = values[7]
 
         # Atom
         atomids: Atomids = Atomids(atomids - 1)

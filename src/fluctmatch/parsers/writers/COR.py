@@ -120,12 +120,12 @@ class Writer(CRD.CRDWriter):
         selection         MDAnalysis AtomGroup
         frame             optionally move to frame FRAME
         """
-        u: mda.Universe = selection.universe
+        universe: mda.Universe = selection.universe
         if frame is not None:
-            u.trajectory[frame]  # advance to frame
+            universe.trajectory[frame]  # advance to frame
         else:
             try:
-                frame: int = u.trajectory.ts.frame
+                frame: int = universe.trajectory.ts.frame
             except AttributeError:
                 frame: int = 0
 
@@ -174,16 +174,19 @@ class Writer(CRD.CRDWriter):
                 f"default values."
             )
             logger.warning(
-                f"Supplied AtomGroup was missing the following "
-                f"attributes: {miss}. These will be written with "
-                f"default values."
+                "Supplied AtomGroup was missing the following "
+                "attributes: %s. These will be written with "
+                "default values.",
+                miss,
             )
 
         with open(self.filename, "w") as crd:
             # Write Title
-            logger.info(f"Writing {self.filename}")
+            logger.info("Writing %s", self.filename)
             print(
-                self.fmt["TITLE"].format(frame=frame, where=u.trajectory.filename),
+                self.fmt["TITLE"].format(
+                    frame=frame, where=universe.trajectory.filename
+                ),
                 file=crd,
             )
             print("*", file=crd)

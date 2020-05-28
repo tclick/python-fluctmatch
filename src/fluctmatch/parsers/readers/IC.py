@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Read CHARMM internal coordinate files."""
 
 import logging
 from pathlib import Path
@@ -112,7 +113,7 @@ class Reader(TopologyReaderBase):
         """
         table: pd.DataFrame = pd.DataFrame()
         with open(self.filename) as infile:
-            logger.info(f"Reading {self.filename}")
+            logger.info("Reading %s", self.filename)
 
             # Read title and header lines
             for line in infile:

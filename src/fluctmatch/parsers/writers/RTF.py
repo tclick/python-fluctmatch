@@ -40,8 +40,6 @@
 
 import logging
 import textwrap
-import time
-from os import environ
 from pathlib import Path
 from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
 
@@ -175,8 +173,8 @@ class Writer(topbase.TopologyWriterBase):
                 dtype: np.dtype = np.dtype(
                     (np.void, names.dtype.itemsize * names.shape[1])
                 )
-                b: np.ndarray = np.ascontiguousarray(np.sort(names)).view(dtype)
-                _, idx = np.unique(b, return_index=True)
+                sorted: np.ndarray = np.ascontiguousarray(np.sort(names)).view(dtype)
+                _, idx = np.unique(sorted, return_index=True)
                 names: np.ndarray = names[idx]
 
                 # Add padding for missing columns.

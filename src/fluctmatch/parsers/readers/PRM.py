@@ -153,7 +153,8 @@ class Reader(TopologyReaderBase):
                 if line in headers:
                     section: str = line
                     continue
-                elif (
+
+                if (
                     line.startswith("NONBONDED")
                     or line.startswith("CMAP")
                     or line.startswith("END")
@@ -163,7 +164,7 @@ class Reader(TopologyReaderBase):
 
                 print(line, file=self._prmbuffers[section])
 
-        for key, value in parameters.items():
+        for key, _ in parameters.items():
             self._prmbuffers[key].seek(0)
             parameters[key]: pd.DataFrame = pd.read_csv(
                 self._prmbuffers[key],

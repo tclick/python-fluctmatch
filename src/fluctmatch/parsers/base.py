@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Definitions of base classes for reading and writing topology files."""
 
 import os
 import time
@@ -46,6 +47,8 @@ from MDAnalysis.coordinates.base import IOBase, _Readermeta, _Writermeta
 
 
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
+    """Base class for reading topology files."""
+
     def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
 
@@ -55,6 +58,8 @@ class TopologyReaderBase(IOBase, metaclass=_Readermeta):
 
 
 class TopologyWriterBase(IOBase, metaclass=_Writermeta):
+    """Base class for writing topology files."""
+
     def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
 

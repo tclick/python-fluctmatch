@@ -38,9 +38,7 @@
 # ------------------------------------------------------------------------------
 """Write CHARMM stream file."""
 
-import os
 import textwrap
-import time
 from pathlib import Path
 from typing import ClassVar, Dict, Mapping, Optional, Union
 
@@ -74,19 +72,23 @@ class Writer(topbase.TopologyWriterBase):
         self.filename: Path = Path(filename).with_suffix(".stream")
         self._version: int = kwargs.get("charmm_version", 41)
 
-        w: int = 4 if self._version < 36 else 8
+        width: int = 4 if self._version < 36 else 8
         if self._version >= 36:
-            self.fmt: str = f"""
+            self.fmt: str = """
                 IC EDIT
-                DIST %-{w}s %{w}d %-{w}s %-{w}s %{w}d %-{w}s%{w}.1f
+                DIST %-{}s %{}d %-{}s %-{}s %{}d %-{}s%{}.1f
                 END
-                """
+                """.format(
+                *[width,] * 7
+            )
         else:
-            self.fmt = f"""
+            self.fmt = """
                 IC EDIT
-                DIST BYNUM %{w}d BYNUM %{w}d %{w}.1f
+                DIST BYNUM %{}d BYNUM %{}d %{}.1f
                 END
-                """
+                """.format(
+                *[width,] * 3
+            )
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
         """Write the bond information to a CHARMM-formatted stream file.
@@ -103,15 +105,15 @@ class Writer(topbase.TopologyWriterBase):
             n_bonds: int = universe.atoms.bonds.bonds()
             dist: np.ndarray = np.zeros_like(n_bonds, dtype=float)
             if self._version >= 36:
-                a1, a2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
+                atom1, atom2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
                 data: pd.DataFrame = pd.DataFrame.from_dict(
                     dict(
-                        segidI=a1.segids,
-                        resI=a1.resids,
-                        I=a1.names,
-                        segidJ=a2.segids,
-                        resJ=a2.resids,
-                        J=a2.names,
+                        segidI=atom1.segids,
+                        resI=atom1.resids,
+                        I=atom1.names,
+                        segidJ=atom2.segids,
+                        resJ=atom2.resids,
+                        J=atom2.names,
                         b0=dist,
                     )
                 )

@@ -116,7 +116,7 @@ class Writer(TopologyWriterBase):
             ictable.index += 1
 
         with open(self.filename, "w") as outfile:
-            logger.info(f"Writing to {self.filename}")
+            logger.info("Writing to %s", self.filename)
             # Save the title lines
             print(textwrap.dedent(self.title).strip(), file=outfile)
 

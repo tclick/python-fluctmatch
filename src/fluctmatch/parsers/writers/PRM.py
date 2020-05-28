@@ -40,15 +40,12 @@
 
 import logging
 import textwrap
-import time
-from os import environ
 from pathlib import Path
 from typing import ClassVar, Dict, Mapping, MutableMapping, Optional, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-from MDAnalysis.lib.util import asiterable, iterable
 
 from ..base import TopologyWriterBase
 
