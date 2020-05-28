@@ -16,3 +16,4 @@ pytest-randomly
 pytest-cache
 pytest-mock
 pytest-pep8
+MDAnalysisTests
