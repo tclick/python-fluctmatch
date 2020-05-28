@@ -79,7 +79,7 @@ class Writer(topbase.TopologyWriterBase):
                 DIST %-{}s %{}d %-{}s %-{}s %{}d %-{}s%{}.1f
                 END
                 """.format(
-                *[width,] * 7
+                *[width] * 7
             )
         else:
             self.fmt = """
@@ -87,7 +87,7 @@ class Writer(topbase.TopologyWriterBase):
                 DIST BYNUM %{}d BYNUM %{}d %{}.1f
                 END
                 """.format(
-                *[width,] * 3
+                *[width] * 3
             )
 
     def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
