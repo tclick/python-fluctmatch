@@ -8,7 +8,9 @@ clean:
 
 conda:
 	conda create -y -p ${CONDA_DIR} pip
-	conda activate $(basename ${CONDA_DIR}) && pip install -r requirements-dev.txt && python setup.py develop
+	conda activate $(basename ${CONDA_DIR}) && \
+		pip install -r requirements.txt -r requirements-dev.txt && \
+		python setup.py develop
 
 virtualenv:
 	virtualenv --prompt '|> python-fluctmatch <| ' env
