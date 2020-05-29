@@ -648,14 +648,11 @@ class ICA(BaseEstimator, TransformerMixin):
         if hasattr(self, "mixing_"):
             del self.components_
             del self.mixing_
-            del self.pca_components_
-            del self.pca_explained_variance_
-            del self.mean_
 
     def fit(self, data: np.ndarray) -> "ICA":
         """Aux function."""
         self._reset()
-        self.n_samples, n_features = data.shape
+        self.n_samples, self.n_features = data.shape
         random_state: RandomState = check_random_state(self.random_state)
 
         # take care of ICA
