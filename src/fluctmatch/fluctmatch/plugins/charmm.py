@@ -159,17 +159,17 @@ class FluctMatch(FluctMatchBase):
             init_fluct_ic=self.outdir / "init.fluct.ic",
             avg_ic=self.outdir / "average.ic",
             fluct_ic=self.outdir / "fluct.ic",
-            dynamic_prm=self.outdir / self.prefix.with_prefix(".dist.prm"),
-            fixed_prm=self.outdir / self.prefix.with_prefix(".prm"),
-            psf_file=self.outdir / self.prefix.with_prefix(".psf"),
-            xplor_psf_file=self.outdir / self.prefix.with_prefix(".xplor.psf"),
-            crd_file=self.outdir / self.prefix.with_prefix(".cor"),
-            stream_file=self.outdir / self.prefix.with_prefix(".stream"),
-            topology_file=self.outdir / self.prefix.with_prefix(".rtf"),
-            nma_crd=self.outdir / self.prefix.with_prefix(".mini.cor"),
-            nma_vib=self.outdir / self.prefix.with_prefix(".vib"),
-            charmm_input=self.outdir / self.prefix.with_prefix(".inp"),
-            charmm_log=self.outdir / self.prefix.with_prefix(".log"),
+            dynamic_prm=self.outdir / self.prefix.with_suffix(".dist.prm"),
+            fixed_prm=self.outdir / self.prefix.with_suffix(".prm"),
+            psf_file=self.outdir / self.prefix.with_suffix(".psf"),
+            xplor_psf_file=self.outdir / self.prefix.with_suffix(".xplor.psf"),
+            crd_file=self.outdir / self.prefix.with_suffix(".cor"),
+            stream_file=self.outdir / self.prefix.with_suffix(".stream"),
+            topology_file=self.outdir / self.prefix.with_suffix(".rtf"),
+            nma_crd=self.outdir / self.prefix.with_suffix(".mini.cor"),
+            nma_vib=self.outdir / self.prefix.with_suffix(".vib"),
+            charmm_input=self.outdir / self.prefix.with_suffix(".inp"),
+            charmm_log=self.outdir / self.prefix.with_suffix(".log"),
             error_data=self.outdir / "error.dat",
             thermo_input=self.outdir / "thermo.inp",
             thermo_log=self.outdir / "thermo.log",
@@ -181,12 +181,12 @@ class FluctMatch(FluctMatchBase):
         self.charmmexec: str = os.environ.get("CHARMMEXEC", shutil.which("charmm"))
 
         # Boltzmann constant
-        self.BOLTZ: float = self.temperature * (
+        self.boltzmann: float = self.temperature * (
             constants.k * constants.N_A / (constants.calorie * constants.kilo)
         )
 
         # Bond factor mol^2-Ang./kcal^2
-        self.KFACTOR: float = 0.02
+        self.k_factor: float = 0.02
 
         # Self consistent error information.
         self.error: pd.DataFrame = pd.DataFrame(
@@ -281,12 +281,12 @@ class FluctMatch(FluctMatchBase):
                 self.target["BONDS"]: pd.DataFrame = target.copy(deep=True)
                 self.parameters: Dict = copy.deepcopy(self.target)
                 self.parameters["BONDS"]["Kb"]: pd.Series = (
-                    self.BOLTZ / np.square(self.parameters["BONDS"]["Kb"])
+                    self.boltzmann / np.square(self.parameters["BONDS"]["Kb"])
                 )
                 self.dynamic_params: pd.DataFrame = copy.deepcopy(self.parameters)
-                logger.info(f"Writing {self.filenames['fixed_prm']}...")
+                logger.info("Writing %s...",)
                 fixed.write(self.parameters)
-                logger.info(f"Writing {self.filenames['dynamic_prm']}...")
+                logger.info("Writing %s...", self.filenames["dynamic_prm"])
                 dynamic.write(self.dynamic_params)
         else:
             if not self.filenames["fixed_prm"].exists():
@@ -414,7 +414,7 @@ class FluctMatch(FluctMatchBase):
 
         # Run simulation
         logger.info("Starting fluctuation matching")
-        st: float = time.time()
+        start: float = time.time()
 
         for i in range(1, max_cycles + 1):
             with ExitStack() as stack:
@@ -458,7 +458,7 @@ class FluctMatch(FluctMatchBase):
             optimized: pd.DataFrame = vib_ic.pow(-2)
             target: pd.DataFrame = self.target["BONDS"].pow(-2)
             optimized -= target
-            optimized *= self.BOLTZ * self.KFACTOR
+            optimized *= self.boltzmann * self.k_factor
             vib_ic[column]: pd.DataFrame = self.parameters["BONDS"].sub(optimized)
             vib_ic[column]: pd.Series = vib_ic[column].apply(
                 lambda x: np.clip(x, a_min=0, a_max=None)
@@ -506,7 +506,7 @@ class FluctMatch(FluctMatchBase):
             if (self.error[self.error.columns[1]] < tol).bool():
                 break
 
-        logger.info(f"Fluctuation matching completed in {time.time() - st:.6f}")
+        logger.info("Fluctuation matching completed in %.6f", time.time() - start)
         self.target["BONDS"] = self.target["BONDS"].reset_index()
 
     def calculate_thermo(self, nma_exec: str = None) -> NoReturn:
