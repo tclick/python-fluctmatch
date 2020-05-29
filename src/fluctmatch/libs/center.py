@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""A scikit-learn-inspired class to center across both rows and columns."""
 
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -111,7 +112,6 @@ class Center2D(BaseEstimator, TransformerMixin):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            warn_on_dtype=True,
             estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
@@ -148,7 +148,6 @@ class Center2D(BaseEstimator, TransformerMixin):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            warn_on_dtype=True,
             estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
@@ -177,7 +176,6 @@ class Center2D(BaseEstimator, TransformerMixin):
             X,
             accept_sparse=("csr", "csc"),
             copy=copy,
-            warn_on_dtype=True,
             estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",

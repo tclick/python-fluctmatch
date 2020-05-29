@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Varios classes and functions for use in fluctuation matching."""
 
 import logging
 import shutil
@@ -46,9 +47,9 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Mapping
 
+import click
 import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
-import click
 import numpy as np
 
 from ..fluctmatch.data import charmm_split
@@ -189,11 +190,14 @@ def write_charmm_files(
     n_dihedrals = len(universe.dihedrals)
     n_impropers = len(universe.impropers)
     logger.warning(
-        f"The system has {n_atoms:d} atoms, {n_bonds:d} bonds, "
-        f"{n_angles:d} angles, {n_dihedrals:d} dihedrals, and "
-        f"{n_impropers:d} impropers. Depending upon the size of "
-        f"the system, file writing may take a while and have a "
-        f"large file size."
+        "The system has %d atoms, %d bonds, %d angles, %d dihedrals, and %d "
+        "impropers. Depending upon the size of the system, file writing may take a "
+        "while and have a large file size.",
+        n_atoms,
+        n_bonds,
+        n_angles,
+        n_dihedrals,
+        n_impropers,
     )
 
     # Write required CHARMM input files.
@@ -211,20 +215,20 @@ def write_charmm_files(
             mda.Writer(filenames["xplor_psf_file"].as_posix(), **kwargs)
         )
 
-        logger.info(f"Writing {rtf.filename}...")
+        logger.info("Writing %s...", rtf.filename)
         rtf.write(universe)
 
-        logger.info(f"Writing {stream.filename}...")
+        logger.info("Writing %s...", stream.filename)
         stream.write(universe)
 
-        logger.info(f"Writing {psf.filename}...")
+        logger.info("Writing %s...", psf.filename)
         psf.write(universe)
 
         # Write an XPLOR version of the PSF
         atomtypes = topologyattrs.Atomtypes(universe.atoms.names)
         universe._topology.add_TopologyAttr(topologyattr=atomtypes)
         universe._generate_from_topology()
-        logger.info(f"Writing {xplor.filename}...")
+        logger.info("Writing %s...", xplor.filename)
         psf.write(universe)
 
     # Write the new trajectory in Gromacs XTC format.
@@ -239,27 +243,27 @@ def write_charmm_files(
                     remarks="Written by fluctmatch.",
                 )
             )
-            bar = stack.enter_context(click.progressbar(universe.trajectory))
-            logger.info("Writing the trajectory {}...".format(filenames["traj_file"]))
+            progress_bar = stack.enter_context(click.progressbar(universe.trajectory))
+            logger.info("Writing the trajectory %s...", filenames["traj_file"])
             logger.warning(
-                "This may take a while depending upon the size and "
-                "length of the trajectory."
+                "This may take a while depending upon the size and length of the "
+                "trajectory."
             )
-            for ts in bar:
-                trj.write(ts)
+            for time_step in progress_bar:
+                trj.write(time_step)
 
     # Write an XPLOR version of the PSF
     atomtypes = topologyattrs.Atomtypes(universe.atoms.names)
     universe._topology.add_TopologyAttr(topologyattr=atomtypes)
     universe._generate_from_topology()
     with mda.Writer(filenames["xplor_psf_file"], **kwargs) as psf:
-        logger.info("Writing {}...".format(filenames["xplor_psf_file"]))
+        logger.info("Writing %s...", filenames["xplor_psf_file"])
         psf.write(universe)
 
     # Calculate the average coordinates from the trajectory.
-    logger.info("Determining the average structure of the trajectory. ")
+    logger.info("Determining the average structure of the trajectory.")
     logger.warning(
-        "Note: This could take a while depending upon the size of " "your trajectory."
+        "Note: This could take a while depending upon the size of your trajectory."
     )
     positions = AverageStructure(universe.atoms).run().result
     positions = positions.reshape((*positions.shape, 1))
@@ -286,7 +290,7 @@ def write_charmm_files(
     # avg_universe.load_new(
     #     positions, )
     with mda.Writer(filenames["crd_file"].as_posix(), dt=1.0, **kwargs) as crd:
-        logger.info(f"Writing {crd.filename}...")
+        logger.info("Writing %s...", crd.filename)
         crd.write(avg_universe.atoms)
 
 
@@ -360,14 +364,15 @@ def split_gmx(info, data_dir=Path.cwd() / "data", **kwargs):
             "-e",
             f"{stop:d}",
         ]
-    fd, fpath = tempfile.mkstemp(text=True)
+    _, fpath = tempfile.mkstemp(text=True)
     fpath = Path(fpath)
     with ExitStack() as stack:
         temp = stack.enter_context(open(fpath, mode="w+"))
         log = stack.enter_context(open(logfile, mode="w"))
         logger.info(
-            f"Writing trajectory to {outfile} and "
-            f"writing Gromacs output to {logfile}"
+            "Writing trajectory to %s and writing Gromacs output to %s",
+            outfile,
+            logfile,
         )
         print(kwargs.get("system", 0), file=temp)
         temp.seek(0)

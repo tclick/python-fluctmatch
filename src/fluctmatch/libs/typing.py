@@ -36,6 +36,7 @@
 #   doi:10.1016/bs.mie.2016.05.024.
 #
 # ------------------------------------------------------------------------------
+"""Define some helpful typing variables."""
 
 import logging
 from pathlib import Path
