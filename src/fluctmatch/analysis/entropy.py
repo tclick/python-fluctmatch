@@ -46,7 +46,7 @@ from scipy import stats
 from fluctmatch.analysis.paramtable import ParamTable
 
 
-class Entropy(object):
+class Entropy:
     """Calculate various entropic contributions from the coupling strengths.
     """
 

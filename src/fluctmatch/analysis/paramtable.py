@@ -82,7 +82,7 @@ def _create_table(
         return table
 
 
-class ParamTable(object):
+class ParamTable:
     """Create a parameter table time series for distance or coupling strength.
 
     """

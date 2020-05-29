@@ -41,7 +41,7 @@ import numpy as np
 import pandas as pd
 
 
-class ParamStats(object):
+class ParamStats:
     """Calculate parameter statistics from a parameter table.
     """
 

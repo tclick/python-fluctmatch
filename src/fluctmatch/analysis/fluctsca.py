@@ -361,7 +361,7 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
         nbins: int = np.round(
             (Vpica[:, k].max() - Vpica[:, k].min()) / binwidth
         ).astype(np.int)
-        hist, bin_edges = np.histogram(Vpica[:, k], nbins)
+        _, bin_edges = np.histogram(Vpica[:, k], nbins)
         x_dist: np.ndarray = np.linspace(bin_edges.min(), bin_edges.max(), num=100)
         area_hist: np.ndarray = Npos * (bin_edges[2] - bin_edges[1])
         scaled_pdf.append(area_hist * t.pdf(x_dist, *pd))
@@ -387,7 +387,7 @@ def icList(Vpica: np.ndarray, kpos: int, Csca: np.ndarray, p_cut: float = 0.95):
     np.fill_diagonal(Csca_nodiag, 0.0)
     for k in range(kpos):
         icpos_tmp: list = list(ic_init[k])
-        for kprime in (kp for kp in range(kpos) if (kp != k)):
+        for kprime in (kp for kp in range(kpos) if kp != k):
             tmp = [v for v in icpos_tmp if v in ic_init[kprime]]
             for i in tmp:
                 remsec = np.linalg.norm(Csca_nodiag[i, ic_init[k]]) < np.linalg.norm(
@@ -458,7 +458,7 @@ def rotICA(V, kmax=6, learnrate=0.0001, iterations=10000):
     >>> Vica, W = rotICA(V, kmax=6, learnrate=.0001, iterations=10000)
     """
     V1 = V[:, :kmax].T
-    [W, changes_s] = basicICA(V1, learnrate, iterations)
+    [W, _] = basicICA(V1, learnrate, iterations)
     Vica = (W.dot(V1)).T
     for n in range(kmax):
         imax = abs(Vica[:, n]).argmax()
