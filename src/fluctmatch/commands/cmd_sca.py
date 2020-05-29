@@ -214,7 +214,7 @@ def cli(
     logger: logging.Logger = logging.getLogger(__name__)
 
     # Load the table, separate by I,I+r, and if requested, create a subset.
-    logger.info("Loading parameter table {}".format(click.format_filename(filename)))
+    logger.info("Loading parameter table %s", click.format_filename(filename))
     table = ParamTable(ressep=ressep)
     table.from_file(click.format_filename(filename))
     kb = table._separate(table.table)
@@ -274,7 +274,7 @@ def cli(
     try:
         Vpica: np.ndarray = time_info.fit_transform(Vsca[:, :_kpos])
     except IndexError:
-        logger.error(f"An error occurred while using {ictype}. Exiting...")
+        logger.error("An error occurred while using %s. Exiting...",)
         sys.exit(os.EX_DATAERR)
 
     ics, icsize, sortedpos, cutoff, scaled_pd, pdf = fluctsca.icList(
@@ -282,8 +282,10 @@ def cli(
     )
     percentage: float = len(sortedpos) / D_info["npos"] * 100
     logger.info(
-        f"{len(sortedpos):d} residues are within {_kpos:d} "
-        f"sectors: {percentage:.2f}%"
+        "%d residues are within %d sectors: percentage:.2f%%",
+        len(sortedpos),
+        _kpos,
+        percentage,
     )
 
     logger.info("Calculating the ICA for the windows.")
@@ -317,5 +319,5 @@ def cli(
 
     D = dict(info=D_info, sca=D_sca, sector=D_sector)
     with open(click.format_filename(output), mode="wb") as dbf:
-        logger.info("Saving data to {}".format(click.format_filename(output)))
+        logger.info("Saving data to %s", click.format_filename(output))
         pickle.dump(D, dbf, protocol=pickle.HIGHEST_PROTOCOL)

@@ -136,5 +136,5 @@ def cli(topology, trajectory, logfile, outfile, decl, mass):
         universe.atoms.mass = 1.0
 
     with mda.Writer(outfile, **kwargs) as rtf:
-        logger.info("Writing {}...".format(outfile))
+        logger.info("Writing %s...", outfile)
         rtf.write(universe, decl=not decl)

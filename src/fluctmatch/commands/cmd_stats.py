@@ -130,7 +130,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
-    logger.info(f"Reading {table}")
+    logger.info("Reading %s", table)
     pt = ParamTable(ressep=ressep)
     pt.from_file(table)
     ps = ParamStats(pt)
@@ -139,7 +139,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
     if stats:
         filename = outdir / "_".join((tbltype.lower(), "table", "stats.csv"))
         with open(filename, mode="w") as stat_file:
-            logger.info(f"Writing table statistics to {filename}")
+            logger.info("Writing table statistics to %s", filename)
             ps.table_stats().to_csv(
                 stat_file,
                 header=True,
@@ -152,7 +152,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
         if tbltype == "Kb":
             filename = outdir / "interaction_stats.csv"
             with open(filename, mode="w") as stat_file:
-                logger.info(f"Writing residue-residue statistics to {filename}")
+                logger.info("Writing residue-residue statistics to %s", filename)
                 ps._table._ressep = 0
                 ps.interaction_stats().to_csv(
                     stat_file,
@@ -165,7 +165,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
 
             filename = outdir / "residue_stats.csv"
             with open(filename, mode="w") as stat_file:
-                logger.info(f"Writing individual residue statistics " f"to {filename}")
+                logger.info("Writing individual residue statistics to %s", filename)
                 ps._table._ressep = ressep
                 ps.residue_stats().to_csv(
                     stat_file,
@@ -179,7 +179,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
     if hist:
         filename = outdir / "_".join((tbltype.lower(), "table", "hist.csv"))
         with open(filename, mode="w") as stat_file:
-            logger.info(f"Writing table histogram to {filename}")
+            logger.info("Writing table histogram to %s", filename)
             ps.table_hist().to_csv(
                 stat_file, index=True, float_format="%.4f", encoding="utf-8"
             )
@@ -188,7 +188,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
         if tbltype == "Kb":
             filename = outdir / "interaction_hist.csv"
             with open(filename, mode="w") as stat_file:
-                logger.info(f"Writing residue-residue histogram to {filename}")
+                logger.info("Writing residue-residue histogram to %s", filename)
                 ps._table._ressep = 0
                 ps.interaction_hist().to_csv(
                     stat_file, index=True, float_format="%.4f", encoding="utf-8"
@@ -197,7 +197,7 @@ def cli(logfile, stats, hist, outdir, ressep, tbltype, table):
 
             filename = outdir / "residue_hist.csv"
             with open(filename, mode="w") as stat_file:
-                logger.info(f"Writing individual residue histogram to {filename}")
+                logger.info("Writing individual residue histogram to %s", filename)
                 ps._table._ressep = ressep
                 ps.residue_hist().to_csv(
                     stat_file, index=True, float_format="%.4f", encoding="utf-8"

@@ -157,7 +157,7 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
     if tbltype == "Kb":
         fn = outdir / filename("perres", ext="csv")
         with open(fn, mode="w") as output:
-            logger.info("Writing per-residue data to {}.".format(fn))
+            logger.info("Writing per-residue data to %s.", fn)
             pt.per_residue.to_csv(
                 output, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )
@@ -165,7 +165,7 @@ def cli(data_dir, logfile, outdir, prefix, tbltype, ressep, verbose):
 
         fn = outdir / filename("interactions", ext="csv")
         with open(fn, mode="w") as output:
-            logger.info("Writing interactions to {}.".format(fn))
+            logger.info("Writing interactions to %s.", fn)
             pt.interactions.to_csv(
                 output, header=True, index=True, float_format="%.4f", encoding="utf-8",
             )

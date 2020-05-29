@@ -142,7 +142,7 @@ def cli(logfile, top1, top2, table, outfile):
     ).set_index(["segid", "res"])
 
     with open(table) as tbl:
-        logger.info(f"Loading {table}.")
+        logger.info("Loading %s.", table)
         constants = pd.read_csv(
             tbl, header=0, skipinitialspace=True, delim_whitespace=True
         )
@@ -167,7 +167,7 @@ def cli(logfile, top1, top2, table, outfile):
     constants.set_index(cols, inplace=True)
 
     with open(outfile, "w") as output:
-        logger.info(f"Writing updated table to {outfile}.")
+        logger.info("Writing updated table to %s.", outfile)
         constants = constants.to_csv(
             header=True, index=True, sep=" ", float_format="%.4f"
         )

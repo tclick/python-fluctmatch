@@ -117,15 +117,15 @@ def cli(logfile, outdir, ressep, table1, table2):
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
-    logger.info("Loading {}".format(table1))
+    logger.info("Loading %s", table1)
     table_1 = paramtable.ParamTable(ressep=ressep)
     table_1.from_file(table1)
-    logger.info("{} loaded".format(table1))
+    logger.info("%s loaded", table1)
 
-    logger.info("Loading {}".format(table2))
+    logger.info("Loading %s", table2)
     table_2 = paramtable.ParamTable(ressep=ressep)
     table_2.from_file(table2)
-    logger.info("{} loaded".format(table2))
+    logger.info("%s loaded", table2)
 
     d_table = table_1 - table_2
     d_perres = table_1.per_residue.subtract(table_2.per_residue, fill_value=0.0)
@@ -133,7 +133,7 @@ def cli(logfile, outdir, ressep, table1, table2):
 
     filename = Path(outdir) / "dcoupling.txt"
     with open(filename, mode="w") as output:
-        logger.info(f"Writing table differences to {filename}")
+        logger.info("Writing table differences to %s", filename)
         d_table.to_csv(
             output, header=True, index=True, float_format="%.4f", encoding="utf-8"
         )
@@ -141,7 +141,7 @@ def cli(logfile, outdir, ressep, table1, table2):
 
     filename = Path(outdir) / "dperres.txt"
     with open(filename, mode="w") as output:
-        logger.info(f"Writing per residue differences to {filename}")
+        logger.info("Writing per residue differences to %s", filename)
         d_perres.to_csv(
             output, header=True, index=True, float_format="%.4f", encoding="utf-8"
         )
@@ -149,7 +149,7 @@ def cli(logfile, outdir, ressep, table1, table2):
 
     filename = Path(outdir) / "dinteractions.txt"
     with open(filename, mode="w") as output:
-        logger.info(f"Writing residue-residue differences to {filename}")
+        logger.info("Writing residue-residue differences to %s", filename)
         d_interactions.to_csv(
             output, header=True, index=True, float_format="%.4f", encoding="utf-8"
         )
