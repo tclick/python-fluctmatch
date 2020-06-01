@@ -2,6 +2,7 @@ cement
 jinja2
 pyyaml
 colorlog
+phx-class-registry
 click
 MDAnalysis
 numpy

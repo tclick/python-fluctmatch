@@ -43,7 +43,7 @@ from typing import List
 
 import MDAnalysis as mda
 
-from .. import _MODELS
+from .. import models
 from .base import Merge, ModelBase
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def modeller(*args, **kwargs) -> mda.Universe:
     try:
         if "ENM" in models:
             logger.warning("ENM model detected. All other core are " "being ignored.")
-            model: ModelBase = _MODELS["ENM"](**kwargs)
+            model: ModelBase = models["ENM"](**kwargs)
             return model.transform(mda.Universe(*args, **kwargs))
     except Exception as exc:
         logger.exception("An error occurred while trying to create the universe.")
@@ -77,11 +77,11 @@ def modeller(*args, **kwargs) -> mda.Universe:
 
     try:
         universe: List[mda.Universe] = [
-            _MODELS[_]().transform(mda.Universe(*args)) for _ in models
+            models[_]().transform(mda.Universe(*args)) for _ in models
         ]
     except KeyError:
         tb: List[str] = traceback.format_exc()
-        msg: str = f"One of the core is not implemented. Please try {_MODELS.keys()}"
+        msg: str = f"One of the core is not implemented. Please try {models.keys()}"
         logger.exception(msg)
         raise KeyError(msg).with_traceback(tb)
     else:

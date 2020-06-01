@@ -49,6 +49,7 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Create a universe for N-dimethylacetamide."""
 
+    model: ClassVar[str] = "DNA"
     description: ClassVar[str] = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
 
     def __init__(self, **kwargs):

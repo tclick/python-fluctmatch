@@ -53,6 +53,7 @@ from ..selection import *
 class Model(base.ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
 
+    model: ClassVar[str] = "GENERIC"
     description: ClassVar[str] = (
         "all heavy atoms excluding proteins and nucleic acids"
     )

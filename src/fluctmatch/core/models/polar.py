@@ -48,6 +48,7 @@ from . import ncsc
 class Model(ncsc.Model):
     """Universe consisting of the amine, carboxyl, and polar regions."""
 
+    model: ClassVar[str] = "POLAR"
     description: ClassVar[
         str
     ] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"

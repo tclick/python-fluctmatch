@@ -43,7 +43,7 @@ from pathlib import Path
 
 import click
 
-from fluctmatch import _MODELS
+from fluctmatch import models
 from fluctmatch.core.utils import modeller
 from fluctmatch.libs.fluctmatch import write_charmm_files
 
@@ -114,7 +114,7 @@ from fluctmatch.libs.fluctmatch import write_charmm_files
     "-m",
     "--model",
     metavar="MODEL",
-    type=click.Choice(_MODELS.keys()),
+    type=click.Choice(models.keys()),
     multiple=True,
     help="Model(s) to convert to",
 )
@@ -229,7 +229,7 @@ def cli(
     logger: logging.Logger = logging.getLogger(__name__)
 
     if model_list:
-        for k, v in _MODELS.items():
+        for k, v in models.items():
             print(f"{k:20}{v.description}")
         return
 

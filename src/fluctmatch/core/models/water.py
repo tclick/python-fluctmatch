@@ -50,6 +50,7 @@ from ..selection import *
 class Model(ModelBase):
     """Create a universe consisting of the water oxygen."""
 
+    model: ClassVar[str] = "WATER"
     description: ClassVar[str] = "c.o.m./c.o.g. of whole water molecule"
 
     def __init__(self, **kwargs):

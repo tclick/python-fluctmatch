@@ -50,6 +50,7 @@ from ..selection import *
 class Model(ModelBase):
     """Universe defined by the protein C-alpha."""
 
+    model: ClassVar[str] = "CALPHA"
     description: ClassVar[str] = "C-alpha of a protein"
 
     def __init__(self, **kwargs):

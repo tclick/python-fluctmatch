@@ -50,6 +50,7 @@ from ..selection import *
 class Model(ModelBase):
     """Universe consisting of the C-alpha and sidechains of a protein."""
 
+    model: ClassVar[str] = "CASIDE"
     description: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
     def __init__(self, **kwargs):

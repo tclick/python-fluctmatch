@@ -50,6 +50,7 @@ from ..selection import *
 class Model(ModelBase):
     """Select ions normally found within biological systems."""
 
+    model: ClassVar[str] = "BIOIONS"
     description: ClassVar[
         str
     ] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"

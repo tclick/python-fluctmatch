@@ -49,6 +49,7 @@ from ..selection import *
 class Model(ModelBase):
     """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
 
+    model: ClassVar[str] = "NUCLEIC4"
     description: ClassVar[str] = (
         "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of nucleic acid"
     )

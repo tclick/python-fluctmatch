@@ -47,11 +47,13 @@ import pkgutil
 from typing import MutableMapping
 
 import MDAnalysis as mda
+from class_registry import ClassRegistryInstanceCache
 
 import fluctmatch.core.models
 import fluctmatch.parsers.parsers
 import fluctmatch.parsers.readers
 import fluctmatch.parsers.writers
+from fluctmatch.core.base import models
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -75,6 +77,10 @@ def iter_namespace(ns_pkg) -> pkgutil.ModuleInfo:
     # import_module to work without having to do additional modification to
     # the name.
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+
+
+for _, name, _ in iter_namespace(fluctmatch.core.models):
+    importlib.import_module(name).Model
 
 
 # Update the parsers in MDAnalysis
@@ -102,7 +108,8 @@ mda._SINGLEFRAME_WRITERS.update(
     }
 )
 
-_MODELS: MutableMapping = {
-    name.split(".")[-1].upper(): importlib.import_module(name).Model
-    for _, name, _ in iter_namespace(fluctmatch.core.models)
-}
+_MODELS: ClassRegistryInstanceCache = ClassRegistryInstanceCache(models)
+# _MODELS: MutableMapping = {
+#     name.split(".")[-1].upper(): importlib.import_module(name).Model
+#     for _, name, _ in iter_namespace(fluctmatch.core.models)
+# }

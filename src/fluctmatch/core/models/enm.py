@@ -101,6 +101,7 @@ class Model(ModelBase):
 
     """
 
+    model: ClassVar[str] = "ENM"
     description: ClassVar[str] = "Elastic network model"
 
     def __init__(self, **kwargs):

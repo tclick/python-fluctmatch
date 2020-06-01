@@ -49,6 +49,7 @@ from . import generic
 class Model(generic.Model):
     """Universe consisting of all heavy atoms in proteins and nucleic acids."""
 
+    model: ClassVar[str] = "UNITED"
     description: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"
 
     def __init__(self, **kwargs):

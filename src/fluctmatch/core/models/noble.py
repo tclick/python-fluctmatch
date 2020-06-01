@@ -49,6 +49,7 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Select atoms column VIII of the periodic table."""
 
+    model: ClassVar[str] = "NOBLE"
     description: ClassVar[str] = "Noble gases (He Ne Kr Xe)"
 
     def __init__(self, **kwargs):

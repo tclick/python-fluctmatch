@@ -49,6 +49,7 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Create a universe containing all three water atoms."""
 
+    model: ClassVar[str] = "TIP3P"
     description: ClassVar[str] = "All-atom watter"
 
     def __init__(self, **kwargs):

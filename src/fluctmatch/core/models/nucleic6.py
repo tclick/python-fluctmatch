@@ -51,6 +51,7 @@ from ..selection import *
 class Model(ModelBase):
     """A universe accounting for six sites involved with hydrogen bonding."""
 
+    model: ClassVar[str] = "NUCLEIC6"
     description: ClassVar[str] = "Phosphate, C2', C4', and 3 sites on the nucleotide"
 
     def __init__(self, **kwargs):

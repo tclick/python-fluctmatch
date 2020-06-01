@@ -47,6 +47,7 @@ from typing import Iterable, Iterator, List, MutableMapping, NoReturn, TypeVar, 
 
 import MDAnalysis as mda
 import numpy as np
+from class_registry import AutoRegister, ClassRegistry
 from MDAnalysis.coordinates.memory import MemoryReader
 from MDAnalysis.core.topologyattrs import (
     Angles,
@@ -71,10 +72,11 @@ from MDAnalysis.topology import guessers
 from ..libs.typing import StrMapping
 
 logger: logging.Logger = logging.getLogger(__name__)
-MDUniverse = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
+MDUniverse: TypeVar = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
+models: ClassRegistry = ClassRegistry("model")
 
 
-class ModelBase(abc.ABC):
+class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
     """Base class for creating coarse-grain core.
 
     Parameters
