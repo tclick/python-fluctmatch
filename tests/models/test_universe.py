@@ -76,6 +76,6 @@ def test_rename_universe():
 
 
 def test_registry():
-    from fluctmatch import models
+    from fluctmatch import _MODELS
 
-    assert len(models) > 0
+    assert len(list(_MODELS.keys())) > 0
