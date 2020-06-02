@@ -53,7 +53,7 @@ import fluctmatch.core.models
 import fluctmatch.parsers.parsers
 import fluctmatch.parsers.readers
 import fluctmatch.parsers.writers
-from fluctmatch.core.base import models
+from fluctmatch.core.base import models as _MODELS
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -107,9 +107,3 @@ mda._SINGLEFRAME_WRITERS.update(
         for _, name, _ in iter_namespace(fluctmatch.parsers.writers)
     }
 )
-
-_MODELS: ClassRegistryInstanceCache = ClassRegistryInstanceCache(models)
-# _MODELS: MutableMapping = {
-#     name.split(".")[-1].upper(): importlib.import_module(name).Model
-#     for _, name, _ in iter_namespace(fluctmatch.core.models)
-# }
