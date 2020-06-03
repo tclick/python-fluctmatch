@@ -65,7 +65,10 @@ class SplitBase(abc.ABC, metaclass=AutoRegister(splitter)):
         exec_file: Union[Path, str] = None,
     ):
         self._data_dir: Path = Path(data_dir)
-        self._executable: Path = Path(exec_file)
+        try:
+            self._executable: Path = Path(exec_file)
+        except TypeError:
+            self._executable: Path = Path()
 
     @property
     def data(self) -> Path:
