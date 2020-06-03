@@ -44,10 +44,8 @@ is defined.
 import importlib
 import logging
 import pkgutil
-from typing import MutableMapping
 
 import MDAnalysis as mda
-from class_registry import ClassRegistryInstanceCache
 
 import fluctmatch.core.models
 import fluctmatch.parsers.parsers
