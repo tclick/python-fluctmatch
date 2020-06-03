@@ -38,40 +38,45 @@
 # ------------------------------------------------------------------------------
 
 import functools
+import importlib
 import logging
 import logging.config
-import multiprocessing as mp
-import os
-from os import path
+import shutil
+from pathlib import Path
+from typing import Dict, Iterator, List
 
 import click
-from MDAnalysis.lib import util as mdutil
+from pathos.multiprocessing import ProcessPool as Pool
 
-from ..libs import fluctmatch
+import fluctmatch.libs.split
 
-_CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
+from .. import iter_namespace
+from ..libs.splitbase import splitter
+
+for _, name, _ in iter_namespace(fluctmatch.libs.split):
+    importlib.import_module(name).Split
 
 
 @click.command("splittraj", short_help="Split a trajectory using Gromacs or CHARMM.")
 @click.option(
     "--type",
     "program",
-    type=click.Choice(_CONVERT.keys()),
-    default="GMX",
+    type=click.Choice(splitter.keys()),
+    default="gmx",
     help="Split using an external MD program",
 )
 @click.option(
     "-s",
     "topology",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.tpr"),
+    default=Path.cwd() / "md.tpr",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Gromacs topology file (e.g., tpr gro g96 pdb brk ent)",
 )
 @click.option(
     "--toppar",
     metavar="DIR",
-    default=path.join(os.getcwd(), "toppar"),
+    default=Path.cwd() / "toppar",
     type=click.Path(exists=False, file_okay=False, resolve_path=True),
     help="Location of CHARMM topology/parameter files",
 )
@@ -79,14 +84,14 @@ _CONVERT = dict(GMX=fluctmatch.split_gmx, CHARMM=fluctmatch.split_charmm)
     "-f",
     "trajectory",
     metavar="FILE",
-    default=path.join(os.getcwd(), "md.xtc"),
+    default=Path.cwd() / "md.xtc",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Trajectory file (e.g. xtc trr dcd)",
 )
 @click.option(
     "--data",
     metavar="DIR",
-    default=path.join(os.getcwd(), "data"),
+    default=Path.cwd() / "data",
     type=click.Path(
         exists=False, file_okay=False, writable=True, readable=True, resolve_path=True,
     ),
@@ -202,43 +207,50 @@ def cli(
     )
     logger: logging.Logger = logging.getLogger(__name__)
 
-    if program == "GMX" and mdutil.which("gmx") is None:
-        msg = (
-            "Gromacs 5.0+ is required. If installed, please ensure that it "
-            "is in your path."
+    try:
+        executable: Path = Path(shutil.which(program))
+    except TypeError:
+        msg: Dict[str, str] = dict(
+            gmx=(
+                "Gromacs 5.0+ is required. If installed, please ensure that it "
+                "is in your path."
+            ),
+            charmm=(
+                "CHARMM is required. If installed, please ensure that it is in "
+                "your path."
+            ),
         )
-        logger.error(msg=msg)
-        raise OSError(msg)
-    if program == "CHARMM" and mdutil.which("charmm") is None:
-        msg = (
-            "CHARMM is required. If installed, please ensure that it is in "
-            "your path."
-        )
-        logger.error(msg=msg)
-        raise OSError(msg)
+        logger.error(msg=msg[program])
+        raise OSError(msg[program])
 
-    half_size = window_size // 2
-    beg = start - half_size if start >= window_size else start
-    values = zip(
-        range(beg, stop + 1, half_size),
-        range(beg + window_size - 1, stop + 1, half_size),
+    half_size: int = window_size // 2
+    beginning: int = start - half_size if start >= window_size else start
+    values: Iterator = zip(
+        range(beginning, stop + 1, half_size),
+        range(beginning + window_size - 1, stop + 1, half_size),
     )
-    values = [((y // half_size) - 1, x, y) for x, y in values]
 
-    func = functools.partial(
-        _CONVERT[program],
-        data_dir=data,
-        topology=topology,
-        toppar=toppar,
-        trajectory=trajectory,
-        index=index,
-        outfile=outfile,
-        logfile=logfile,
-        system=system,
+    splitter[program].data = data
+    splitter[program].executable = shutil.which(program)
+    values: List[Dict] = [
+        dict(
+            toppar=toppar,
+            index=index,
+            outfile=outfile,
+            logfile=logfile,
+            system=system,
+            subdir=str((y // half_size) - 1),
+            start=x,
+            stop=y,
+        )
+        for x, y in values
+    ]
+    func: functools.partialmethod = functools.partialmethod(
+        splitter[program], topology, trajectory
     )
 
     # Run multiple instances simultaneously
-    pool = mp.Pool()
-    pool.map_async(func, values)
+    pool: Pool = Pool()
+    pool.amap(func, values)
     pool.close()
     pool.join()
