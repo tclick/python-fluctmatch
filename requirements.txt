@@ -13,3 +13,4 @@ matplotlib
 bokeh
 holoviews
 datashader
+pathos
