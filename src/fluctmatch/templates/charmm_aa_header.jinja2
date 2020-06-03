@@ -1,0 +1,83 @@
+! ------------------------------------------------------------------------------
+!   python-fluctmatch
+!   Copyright (c) 2013-2020 Timothy H. Click, Ph.D.
+!
+!   All rights reserved.
+!
+!   Redistribution and use in source and binary forms, with or without
+!   modification, are permitted provided that the following conditions are met:
+!
+!   Redistributions of source code must retain the above copyright notice, this
+!   list of conditions and the following disclaimer.
+!
+!   Redistributions in binary form must reproduce the above copyright notice,
+!   this list of conditions and the following disclaimer in the documentation
+!   and/or other materials provided with the distribution.
+!
+!   Neither the name of the author nor the names of its contributors may be used
+!   to endorse or promote products derived from this software without specific
+!   prior written permission.
+!
+!    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+!    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+!    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+!    ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+!    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+!    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+!    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+!    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+!    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+!    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+!    DAMAGE.
+!
+!   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+!   Simulation. Meth Enzymology. 578 (2016), 327-342,
+!   Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+!   doi:10.1016/bs.mie.2016.05.024.
+!
+! ------------------------------------------------------------------------------
+{{ data.header }}
+
+{% if data.version >= 36 %}dimension chsize 500000 maxres 3000000{% endif %}
+bomlev -5 ! This is for CHARMM 39
+
+set toppar {{ data.toppar }}
+set begin {{ data.start }}
+set end {{ data.stop }}
+{% if data.version < 36 %}
+read rtf  card name @toppar/top_all27_prot_na.rtf
+read para card {flex} name @toppar/par_all27_prot_na.prm
+
+read rtf  card name @toppar/top_all27_lipid.rtf append
+read para card {flex} name @toppar/par_all27_lipid.prm append
+
+read rtf  card name @toppar/top_all35_sugar.rtf append
+read para card {flex} name @toppar/par_all35_sugar.prm append
+{% else %}
+read rtf  card name @toppar/top_all36_prot.rtf
+read para card {flex} name @toppar/par_all36_prot.prm
+
+read rtf  card name @toppar/top_all36_na.rtf append
+read para card {flex} name @toppar/par_all36_na.prm append
+
+read rtf  card name @toppar/top_all36_carb.rtf append
+read para card {flex} name @toppar/par_all36_carb.prm append
+
+read rtf  card name @toppar/top_all36_lipid.rtf append
+read para card {flex} name @toppar/par_all36_lipid.prm append
+
+read rtf  card name @toppar/top_all36_cgenff.rtf append
+read para card {flex} name @toppar/par_all36_cgenff.prm append
+{% endif %}
+stream @toppar/toppar_water_ions.str
+{% if data.suffix == ".PSF" %}
+read psf card name {{ data.topology }}
+{% elif data.suffix == ".COR" or data.suffix == "CRD" %}
+read sequence coor resi name {{ data.topology }}
+{% elif data.suffix == ".PDB" %}
+read sequence pdb resi {{ data.topology }}
+{% endif %}
+
+! File handles
+set input  10
+set output 20

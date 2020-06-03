@@ -1,0 +1,23 @@
+
+set ndcd    1
+
+! Load the trajectory
+open read  unit @input file name {data.trajectory}
+
+! Gather information from the first trajectory assuming that all trajectories
+! are similar.
+traj query unit @input
+
+calc nmod = 3*?NATOM
+vibran nmodes @nmod
+    coor dyna sele all end nopr first @input nunit @ndcd begin ?START -
+        nskip ?SKIP orient sele all end
+    quasi first @input nunit @ndcd nskip ?SKIP begin ?START sele all end -
+        temp @temp thermo resi
+end
+
+! Calculate the entropy of the residues
+calc ts = ?stot * @temp
+close unit @input
+
+stop

@@ -1,0 +1,72 @@
+{% if data.initialize %}
+! Determine "experimental" normal mode analysis information and output to a
+! file using the "extended" format, which will be used for all file output.
+ioformat extended
+ic fill
+
+! Load the trajectories
+open read unit @input file name {{ data.trajectory }}
+
+! Gather information from the first trajectory assuming that all
+! trajectories are similar.
+! Calculate the beginning and final times for a trajectory sequence.
+traj query unit @input
+
+! Calculate internal coordinate average movement
+ic dyna aver first @input nunit 1 skip ?SKIP
+write ic card resid name {{ data.average0 }}
+* Internal coordinate averages
+
+! Calculate fluctuations in internal coordinate movement
+ic dyna fluc first @input nunit 1 skip ?SKIP
+write ic card resid name {{ data.fluctuation0 }}
+* Internal coordinate fluctuations
+{% else %}
+calc fluctu  @input + 1
+{% if data.vibrations %}calc vibu    @fluctu + 1{% endif %}
+
+ener
+
+! Minimize structure using steepest descent and ABNR
+mini   sd nstep 100
+mini abnr nstep 2000
+
+coor orie rms mass
+scalar wmain copy mass
+
+ioformat extended
+write coor card name "{{ data.nma_coord }}"
+
+stream "{{ data.stream }}"
+
+ic fill
+write ic card resid name "{{ data.average }}"
+
+calc nmode   ?natom * 3
+set nmodes   @nmode
+set type     temp
+
+open write unit @fluctu card name "{{ data.fluctuation }}"
+{% if data.vibrations %}
+open write unit @vibu   card name "{{ data.normal_modes }}"
+{% endif %}
+! Perform normal mode analysis at desired temperature for vibrational normal
+! modes
+vibran nmode @nmodes
+    diag fini
+    fluc ic @type @temp tfre 0.0 mode 7 thru @nmodes
+    ic save
+    ic write unit @fluctu resid
+    {% if data.vibrations %}
+    write normal card mode 1 thru @nmodes unit @vibu
+    {% endif %}
+end
+
+close unit @fluctu
+{% if data.vibrations %}
+close unit @vibu
+{% endif %}
+{% endif %}
+close unit @input
+
+stop

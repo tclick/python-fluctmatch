@@ -1,0 +1,20 @@
+
+! Load the trajectory
+open read  unit @input file name {{ data.trajectory }}
+open write unit @output file name {{ data.output }}
+
+! Gather information from the first trajectory assuming that all trajectories
+! are similar.
+traj query unit @input
+
+if @start .gt. 1 then
+    calc nother @start - 1
+else
+    set nother @start
+endif
+traj first @input skip ?SKIP begin @start stop @stop -
+    iwrite @output noth @nother
+
+close @input
+close @output
+stop
