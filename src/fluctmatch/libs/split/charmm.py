@@ -40,9 +40,9 @@
 import logging
 import shutil
 import subprocess
-from os import PathLike
+import textwrap
 from pathlib import Path
-from typing import List, NoReturn, Union
+from typing import Any, Dict, List, NoReturn, Union
 
 from jinja2 import Environment, PackageLoader, Template
 
@@ -51,7 +51,7 @@ from ..splitbase import SplitBase
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class CharmmSplit(SplitBase):
+class Split(SplitBase):
     """Create a smaller trajectory from a CHARMM trajectory.
 
     Parameters
@@ -70,8 +70,13 @@ class CharmmSplit(SplitBase):
         exec_file: Union[Path, str] = None,
     ):
         super().__init__(data_dir=data_dir, exec_file=exec_file)
-        if self._executable is None:
-            self._executable = shutil.which("charmm")
+        if not self._executable.is_file():
+            try:
+                self._executable: Path = Path(shutil.which(self.split_type))
+            except TypeError:
+                msg: str = "Cannot find CHARMM executable file."
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def split(
         self, topology: Union[Path, str], trajectory: Union[Path, str], **kwargs: dict
@@ -99,6 +104,11 @@ class CharmmSplit(SplitBase):
         charmm_version : int
             Version of CHARMM
         """
+        title: str = """
+            * Create a subtrajectory from a larger CHARMM trajectory.
+            * This is for <= c35.
+            *
+        """
         suffixes: List[str] = [".PSF", ".COR", ".CRD", ".PDB"]
         subdir: Path = self._data_dir / kwargs.get("subdir", "1")
 
@@ -106,7 +116,8 @@ class CharmmSplit(SplitBase):
         subdir.mkdir(parents=True, exist_ok=True)
 
         # Various filenames
-        data = dict(
+        data: Dict[str, Any] = dict(
+            title=textwrap.dedent(title[1:]),
             topology=Path(topology),
             suffix=Path(topology).suffix.upper(),
             trajectory=Path(trajectory),
@@ -129,12 +140,13 @@ class CharmmSplit(SplitBase):
             raise FileNotFoundError(f"{data['topology']} not found.")
         if not data["trajectory"].exists():
             raise FileNotFoundError(f"{data['trajectory']} not found.")
-        input_file: PathLike = subdir / "split.inp"
-        log_file: PathLike = kwargs.get("logfile", subdir / "split.log")
+        input_file: Path = subdir / "split.inp"
+        log_file: Path = kwargs.get("logfile", subdir / "split.log")
 
         with open(input_file, mode="w") as charmm_input:
             env: Environment = Environment(PackageLoader("fluctmatch"), autoescape=True)
-            template: Template = env.get_template("charmm_split.jinja2")
-            print(template.render(**data), file=charmm_input)
+            header: Template = env.get_template("charmm_aa_header.jinja2")
+            body: Template = env.get_template("charmm_split.jinja2")
+            print(header.render(**data) + body.render_async(**data), file=charmm_input)
         command = [self._executable, "-i", input_file, "-o", log_file]
         subprocess.check_call(command)

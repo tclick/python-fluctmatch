@@ -42,7 +42,6 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import ExitStack
-from os import PathLike
 from pathlib import Path
 from typing import List, NoReturn, Union
 
@@ -51,7 +50,7 @@ from ..splitbase import SplitBase
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class CharmmSplit(SplitBase):
+class Split(SplitBase):
     """Create a smaller trajectory from a Gromacs trajectory.
 
     Parameters
@@ -70,8 +69,13 @@ class CharmmSplit(SplitBase):
         exec_file: Union[Path, str] = None,
     ):
         super().__init__(data_dir=data_dir, exec_file=exec_file)
-        if self._executable is None:
-            self._executable = shutil.which("charmm")
+        if not self._executable.is_file():
+            try:
+                self._executable: Path = Path(shutil.which(self.split_type))
+            except TypeError:
+                msg: str = "Cannot find Gromacs executable file."
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def split(
         self, topology: Union[Path, str], trajectory: Union[Path, str], **kwargs: dict
