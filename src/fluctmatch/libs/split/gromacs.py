@@ -104,7 +104,6 @@ class Split(SplitBase):
             Atom selection from Gromacs index file (0 = System, 1 = Protein)
         """
         subdir: Path = self._data_dir / kwargs.get("subdir", "1")
-        gromacs_exec: str = shutil.which("gmx")
 
         # Attempt to create the necessary subdirectory
         subdir.mkdir(parents=True, exist_ok=True)

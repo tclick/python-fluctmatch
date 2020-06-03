@@ -231,7 +231,7 @@ def cli(
     )
 
     splitter[program].data = data
-    splitter[program].executable = shutil.which(program)
+    splitter[program].executable = executable
     values: List[Dict] = [
         dict(
             toppar=toppar,
