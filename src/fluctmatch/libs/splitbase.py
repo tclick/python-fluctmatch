@@ -61,6 +61,7 @@ class SplitBase(abc.ABC, metaclass=AutoRegister(splitter)):
 
     def __init__(
         self,
+        *,
         data_dir: Union[Path, str, None] = Path.cwd() / "data",
         exec_file: Union[Path, str] = None,
     ):
@@ -90,7 +91,11 @@ class SplitBase(abc.ABC, metaclass=AutoRegister(splitter)):
 
     @abc.abstractmethod
     def split(
-        self, topology: Union[Path, str], trajectory: Union[Path, str], **kwargs: dict
+        self,
+        topology: Union[Path, str],
+        trajectory: Union[Path, str],
+        /,
+        **kwargs: dict,
     ) -> NoReturn:
         """Split a trajectory into smaller trajectories.
 
