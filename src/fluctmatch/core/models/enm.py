@@ -51,7 +51,7 @@ from MDAnalysis.core.topologyattrs import (
     Impropers,
 )
 from MDAnalysis.lib import distances
-
+import MDAnalysis.topology.guessers as guessers
 from ..base import ModelBase, rename_universe
 from ..selection import *
 
@@ -158,8 +158,18 @@ class Model(ModelBase):
         pairs: np.ndarray = np.unique(pairs, axis=0)
         pairs: List[Tuple[int, int]] = list(zip(pairs[:, 0], pairs[:, 1]))
         bonds: Bonds = Bonds(pairs)
+        angles: Angles = Angles(
+            guessers.guess_angles(bonds)
+        ) if self._guess else Angles([])
+        dihedrals: Dihedrals = Dihedrals(
+            guessers.guess_dihedrals(angles)
+        ) if self._guess else Dihedrals([])
+        impropers: Impropers = Impropers(
+            guessers.guess_improper_dihedrals(angles)
+        ) if self._guess else Impropers([])
+
+        # Add topology information
         self.universe.add_TopologyAttr(bonds)
-        if not self._guess:
-            self.universe.add_TopologyAttr(Angles([]))
-            self.universe.add_TopologyAttr(Dihedrals([]))
-            self.universe.add_TopologyAttr(Impropers([]))
+        self.universe.add_TopologyAttr(angles)
+        self.universe.add_TopologyAttr(dihedrals)
+        self.universe.add_TopologyAttr(impropers)
