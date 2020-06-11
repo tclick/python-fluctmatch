@@ -1,18 +1,6 @@
 image: Visual Studio 2019
 environment:
   matrix:
-      - SYS_PYTHON: "C:\\Miniconda36-x64"
-        SYS_PYTHON_VERSION: "3.6"
-        SYS_PYTHON_ARCH: "64"
-        CONDA_CANARY: "False"
-        TOXENV: py36, check, clean, docs, package_description, report
-
-      - SYS_PYTHON: "C:\\Miniconda37-x64"
-        SYS_PYTHON_VERSION: "3.7"
-        SYS_PYTHON_ARCH: "64"
-        CONDA_CANARY: "False"
-        TOXENV: py37, check, clean, docs, package_description, report
-
       - SYS_PYTHON: "C:\\Miniconda38-x64"
         SYS_PYTHON_VERSION: "3.8"
         SYS_PYTHON_ARCH: "64"
