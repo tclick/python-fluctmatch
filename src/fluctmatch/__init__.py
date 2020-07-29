@@ -77,10 +77,6 @@ def iter_namespace(ns_pkg) -> pkgutil.ModuleInfo:
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
-for _, name, _ in iter_namespace(fluctmatch.core.models):
-    importlib.import_module(name).Model
-
-
 # Update the parsers in MDAnalysis
 mda._PARSERS.update(
     {
