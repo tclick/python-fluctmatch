@@ -9,6 +9,7 @@ numpy
 pandas
 scipy
 scikit-learn
+static-frame
 matplotlib
 bokeh
 holoviews
