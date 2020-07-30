@@ -40,11 +40,10 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar, Dict, Optional, Union
+from typing import ClassVar, Dict, Iterator, List, Optional, Union
 
 import numpy as np
-import pandas as pd
-from MDAnalysis.lib.util import FORTRANReader
+import static_frame as sf
 
 from ..base import TopologyReaderBase
 
@@ -62,24 +61,25 @@ class Reader(TopologyReaderBase):
     format: ClassVar[str] = "IC"
     units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
 
-    fmt: Dict[str, str] = dict(
-        # fortran_format = "(I5,1X,4(I3,1X,A4),F9.4,3F8.2,F9.4)"
-        STANDARD="I5,1X,I3,1X,A4,I3,1X,A4,I3,1X,A4,I3,1X,A4,F9.4,3F8.2,F9.4",
-        # fortran_format = "(I9,1X,4(I5,1X,A8),F9.4,3F8.2,F9.4)"
-        EXTENDED="I9,1X,I5,1X,A8,I5,1X,A8,I5,1X,A8,I5,1X,A8,F9.4,3F8.2,F9.4",
-        # fortran_format = "(I5,4(1X,A4,1X,A4,1X,A4,"":""),F12.6,3F12.4,F12.6)"
-        STANDARD_RESID=(
-            "I5,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,1X,A4,1X,A4,1X,A4,A1,"
-            "1X,A4,1X,A4,1X,A4,A1,F12.6,3F12.4,F12.6"
-        ),
-        # fortran_format = "(I10,4(1X,A8,1X,A8,1X,A8,"":""),F12.6,3F12.4,F12.6)"
-        EXTENDED_RESID=(
-            "I10,1X,A8,1X,A8,1X,A8,A1,1X,A8,1X,A8,1X,A8,A1,1X,A8,1X,A8,1X,A8,"
-            "A1,1X,A8,1X,A8,1X,A8,A1,F12.6,3F12.4,F12.6"
-        ),
-    )
-    cols: np.ndarray = np.asarray(
-        [
+    _cols: Dict[str, List[str]] = dict(
+        STANDARD=[
+            "#",
+            "resI",
+            "I",
+            "resJ",
+            "J",
+            "resK",
+            "K",
+            "resL",
+            "L",
+            "r_IJ",
+            "T_IJK",
+            "P_IJKL",
+            "T_JKL",
+            "r_KL",
+        ],
+        RESID=[
+            "#",
             "segidI",
             "resI",
             "I",
@@ -97,13 +97,51 @@ class Reader(TopologyReaderBase):
             "P_IJKL",
             "T_JKL",
             "r_KL",
-        ]
+        ],
+    )
+    _dtypes: Dict[str, List[type]] = dict(
+        STANDARD=[
+            int,
+            int,
+            str,
+            int,
+            str,
+            str,
+            str,
+            str,
+            str,
+            float,
+            float,
+            float,
+            float,
+            float,
+        ],
+        RESID=[
+            int,
+            str,
+            int,
+            str,
+            str,
+            int,
+            str,
+            str,
+            str,
+            str,
+            str,
+            str,
+            str,
+            float,
+            float,
+            float,
+            float,
+            float,
+        ],
     )
 
     def __init__(self, filename: Union[str, Path]):
         self.filename: Path = Path(filename).with_suffix(".ic")
 
-    def read(self) -> pd.DataFrame:
+    def read(self) -> sf.Frame:
         """Read the internal coordinates file.
 
         Returns
@@ -111,33 +149,33 @@ class Reader(TopologyReaderBase):
         :class:`~pandas.DataFrame`
             An internal coordinates table.
         """
-        table: pd.DataFrame = pd.DataFrame()
         with open(self.filename) as infile:
             logger.info("Reading %s", self.filename)
 
             # Read title and header lines
             for line in infile:
                 line: str = line.split("!")[0].strip()
-                if line.startswith("*") or not line:
-                    continue  # ignore TITLE and empty lines
+                if line.startswith("*") or line.startswith("!") or not line:
+                    continue  # ignore TITLE, comments, and empty lines
                 break
-            line: np.ndarray = np.fromiter(line.strip().split(), dtype=np.int)
-            key: str = "EXTENDED" if line[0] == 30 else "STANDARD"
-            key += "_RESID" if line[1] == 2 else ""
+            line: List = list(map(int, line.split()))
+            key: str = "RESID" if line[1] == 2 else "STANDARD"
             resid_a = line[1]
 
-            line: str = next(infile).strip().split()
-            n_lines, resid_b = np.array(line, dtype=np.int)
+            n_lines, resid_b = list(map(int, next(infile).split()))
             if resid_a != resid_b:
                 raise IOError("A mismatch has occurred on determining the IC format.")
 
             # Read the internal coordinates
-            table_parser: FORTRANReader = FORTRANReader(self.fmt[key])
-            table: pd.DataFrame = pd.DataFrame(
-                [table_parser.read(_) for _ in infile], dtype=np.object
-            ).set_index(0)
-            table: pd.DataFrame = table[table != ":"].dropna(axis=1)
-            table: pd.DataFrame = table.apply(pd.to_numeric, errors="ignore")
+            rows: List = []
+            for line in infile:
+                columns: Iterator = filter(lambda x: x != ":", line.split())
+                rows.append(list(columns))
+            table: sf.Frame = sf.Frame.from_records(
+                rows, columns=self._cols[key], dtypes=self._dtypes, name="IC"
+            )
+            table: sf.Frame = table.set_index(table.columns[0], drop=True)
+
             if n_lines != table.shape[0]:
                 raise IOError(
                     f"A mismatch has occurred between the number of "
@@ -145,16 +183,5 @@ class Reader(TopologyReaderBase):
                     f"({n_lines:d} != {len(table):d})"
                 )
 
-            if key == "STANDARD":
-                idx: np.ndarray = np.where(
-                    (self.cols != "segidI")
-                    & (self.cols != "segidJ")
-                    & (self.cols != "segidK")
-                    & (self.cols != "segidL")
-                )
-                columns: np.ndarray = self.cols[idx]
-            else:
-                columns: np.ndarray = self.cols
-            table.columns = columns
             logger.info("Table read successfully.")
         return table
