@@ -39,12 +39,11 @@
 """Class to read CHARMM parameter files."""
 
 import logging
-from io import StringIO
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, TextIO, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
+import static_frame as sf
 
 from ..base import TopologyReaderBase
 
@@ -64,14 +63,14 @@ class Reader(TopologyReaderBase):
     format: ClassVar[str] = "PRM"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
-    _prmindex: ClassVar[Dict[str, np.ndarray]] = dict(
+    _index: ClassVar[Dict[str, np.ndarray]] = dict(
         ATOMS=np.arange(1, 4),
         BONDS=np.arange(4),
         ANGLES=np.arange(7),
         DIHEDRALS=np.arange(6),
     )
-    _prmcolumns: ClassVar[Dict[str, List[str]]] = dict(
-        ATOMS=["hdr", "type", "atom", "mass"],
+    _columns: ClassVar[Dict[str, List[str]]] = dict(
+        ATOMS=["header", "type", "atom", "mass"],
         BONDS=["I", "J", "Kb", "b0"],
         ANGLES=["I", "J", "K", "Ktheta", "theta0", "Kub", "S0"],
         DIHEDRALS=["I", "J", "K", "L", "Kchi", "n", "delta"],
@@ -118,12 +117,8 @@ class Reader(TopologyReaderBase):
 
     def __init__(self, filename: Union[str, Path]):
         self.filename: Path = Path(filename).with_suffix(".prm")
-        self._prmbuffers: Dict[str, TextIO] = dict(
-            ATOMS=StringIO(),
-            BONDS=StringIO(),
-            ANGLES=StringIO(),
-            DIHEDRALS=StringIO(),
-            IMPROPER=StringIO(),
+        self._buffers: Dict[str, List] = dict(
+            ATOMS=[], BONDS=[], ANGLES=[], DIHEDRALS=[], IMPROPER=[],
         )
 
     def read(self) -> Dict:
@@ -133,7 +128,7 @@ class Reader(TopologyReaderBase):
         -------
         Dictionary with CHARMM parameters per key.
         """
-        parameters: Dict[str, pd.DataFrame] = dict.fromkeys(self._prmbuffers.keys())
+        parameters: Dict[str, sf.Frame] = dict.fromkeys(self._buffers.keys())
         headers: Tuple[str, ...] = (
             "ATOMS",
             "BONDS",
@@ -162,20 +157,15 @@ class Reader(TopologyReaderBase):
                 ):
                     break
 
-                print(line, file=self._prmbuffers[section])
+                self._buffers[section].append(line.split())
 
         for key, _ in parameters.items():
-            self._prmbuffers[key].seek(0)
-            parameters[key]: pd.DataFrame = pd.read_csv(
-                self._prmbuffers[key],
-                header=None,
-                names=self._prmcolumns[key],
-                skipinitialspace=True,
-                delim_whitespace=True,
-                comment="!",
-                dtype=self._dtypes[key],
+            parameters[key]: sf.Frame = sf.Frame.from_records(
+                self._buffers[key],
+                columns=self._columns[key],
+                dtypes=self._dtypes[key],
+                name=key.lower(),
             )
-            parameters[key]: pd.DataFrame = parameters[key].fillna(self._na_values[key])
-        if not parameters["ATOMS"].empty:
-            parameters["ATOMS"]: pd.DataFrame = parameters["ATOMS"].drop("hdr", axis=1)
+        if parameters["ATOMS"].size > 0:
+            parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].drop["hdr"]
         return parameters
