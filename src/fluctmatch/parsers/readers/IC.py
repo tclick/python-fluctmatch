@@ -172,11 +172,12 @@ class Reader(TopologyReaderBase):
                 columns: Iterator = filter(lambda x: x != ":", line.split())
                 rows.append(list(columns))
             table: sf.Frame = sf.Frame.from_records(
-                rows, columns=self._cols[key], dtypes=self._dtypes, name="IC"
+                rows, columns=self._cols[key], dtypes=self._dtypes[key], name="IC"
             )
-            table: sf.Frame = table.set_index(table.columns[0], drop=True)
+            if table.loc[0, "#"] == 0:
+                table: sf.Frame = table.assign["#"](table["#"] + 1)
 
-            if n_lines != table.shape[0]:
+            if n_lines != len(table):
                 raise IOError(
                     f"A mismatch has occurred between the number of "
                     f"lines expected and the number of lines read. "
