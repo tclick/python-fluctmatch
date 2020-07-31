@@ -44,7 +44,7 @@ from pathlib import Path
 from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import numpy as np
-import pandas as pd
+import static_frame as sf
 
 from ..base import TopologyWriterBase
 
@@ -95,42 +95,36 @@ class Writer(TopologyWriterBase):
         super().__init__()
 
         self.filename: Path = Path(filename).with_suffix(".ic")
-        self._intcor: pd.DataFrame = None
+        self._intcor: Union[sf.Frame, None] = None
         self._extended: bool = kwargs.get("extended", True)
         self._resid: bool = kwargs.get("resid", True)
         self.key: str = "EXTENDED" if self._extended else "STANDARD"
         self.key += "_RESID" if self._resid else ""
 
-    def write(self, table: pd.DataFrame):
+    def write(self, table: sf.Frame):
         """Write an internal coordinates table.
 
         Parameters
         ----------
-        table : :class:`~pandas.DataFrame`
+        table : :class:`~static_frame.Frame`
             A CHARMM-compliant internal coordinate table.
         """
-        ictable: pd.DataFrame = table.copy()
-
-        # Increment index.
-        if ictable.index[0] == 0:
-            ictable.index += 1
-
         with open(self.filename, "w") as outfile:
             logger.info("Writing to %s", self.filename)
             # Save the title lines
             print(textwrap.dedent(self.title).strip(), file=outfile)
 
             # Save the header information
-            line: np.ndarray = np.zeros((1, 20), dtype=np.int)
+            line: np.ndarray = np.zeros((1, 20), dtype=int)
             line[0, 0]: int = 30 if self._extended else 20
             line[0, 1]: int = 2 if self._resid else 1
             np.savetxt(outfile, line, fmt="%4d", delimiter="")
 
             # Save the internal coordinates
-            line: np.ndarray = np.zeros((1, 2), dtype=np.int)
-            n_rows, _ = ictable.shape
+            line: np.ndarray = np.zeros((1, 2), dtype=int)
+            n_rows, _ = table.shape
             line[0, 0] += n_rows
             line[0, 1] += 2 if self._resid else 1
             np.savetxt(outfile, line, fmt="%5d", delimiter="")
-            np.savetxt(outfile, ictable.reset_index().values, fmt=self.fmt[self.key])
+            np.savetxt(outfile, table.values, fmt=self.fmt[self.key])
             logger.info("Table successfully written.")
