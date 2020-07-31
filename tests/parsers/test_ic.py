@@ -41,24 +41,23 @@ from pathlib import Path
 from unittest.mock import patch
 
 import MDAnalysis as mda
-import pandas as pd
 import pytest
+import static_frame as sf
 from numpy.testing import assert_allclose
 
 import fluctmatch.parsers.readers.IC as IntCor
-import fluctmatch.parsers.writers.IC
 from tests.datafiles import IC
 
 
 class TestICReader:
     expected_rows: int = 7566
-    expected_cols: int = 17
+    expected_cols: int = 18
 
     @pytest.fixture()
-    def u(self) -> pd.DataFrame:
+    def u(self) -> sf.Frame:
         return IntCor.Reader(IC).read()
 
-    def test_reader(self, u: pd.DataFrame):
+    def test_reader(self, u: sf.Frame):
         rows, cols = u.shape
         assert self.expected_rows == rows
         assert self.expected_cols == cols
@@ -66,10 +65,10 @@ class TestICReader:
 
 class TestICWriter:
     @pytest.fixture()
-    def u(self) -> pd.DataFrame:
+    def u(self) -> sf.Frame:
         return IntCor.Reader(IC).read()
 
-    def test_writer(self, u: pd.DataFrame, tmp_path: Path):
+    def test_writer(self, u: sf.Frame, tmp_path: Path):
         filename: Path = tmp_path / "temp.ic"
         with patch("fluctmatch.parsers.writers.IC.Writer.write") as icw, mda.Writer(
             filename
@@ -77,7 +76,7 @@ class TestICWriter:
             ofile.write(u)
             icw.assert_called()
 
-    def test_bond_distances(self, u: pd.DataFrame, tmp_path: Path):
+    def test_bond_distances(self, u: sf.Frame, tmp_path: Path):
         filename: Path = tmp_path / "temp.ic"
         with mda.Writer(filename) as ofile:
             ofile.write(u)
@@ -85,7 +84,7 @@ class TestICWriter:
         u2 = IntCor.Reader(tmp_path / "temp.ic").read()
         assert_allclose(u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match.")
 
-    def test_roundtrip(self, u: pd.DataFrame, tmp_path: Path):
+    def test_roundtrip(self, u: sf.Frame, tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
         # the original. This is more rigorous as it checks all formatting.
         filename: Path = tmp_path / "temp.ic"
