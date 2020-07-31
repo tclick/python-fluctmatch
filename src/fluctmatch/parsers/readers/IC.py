@@ -42,7 +42,6 @@ import logging
 from pathlib import Path
 from typing import ClassVar, Dict, Iterator, List, Optional, Union
 
-import numpy as np
 import static_frame as sf
 
 from ..base import TopologyReaderBase
