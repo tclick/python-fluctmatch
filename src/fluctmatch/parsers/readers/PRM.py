@@ -77,35 +77,13 @@ class Reader(TopologyReaderBase):
         IMPROPER=["I", "J", "K", "L", "Kchi", "n", "delta"],
     )
     _dtypes: ClassVar[Dict[str, Dict]] = dict(
-        ATOMS=dict(hdr=np.str, type=np.int, atom=np.str, mass=np.float),
-        BONDS=dict(I=np.str, J=np.str, Kb=np.float, b0=np.float),
+        ATOMS=dict(header=str, type=int, atom=str, mass=float),
+        BONDS=dict(I=str, J=str, Kb=float, b0=float),
         ANGLES=dict(
-            I=np.str,
-            J=np.str,
-            K=np.str,
-            Ktheta=np.float,
-            theta0=np.float,
-            Kub=np.object,
-            S0=np.object,
+            I=str, J=str, K=str, Ktheta=float, theta0=float, Kub=object, S0=object,
         ),
-        DIHEDRALS=dict(
-            I=np.str,
-            J=np.str,
-            K=np.str,
-            L=np.str,
-            Kchi=np.float,
-            n=np.int,
-            delta=np.float,
-        ),
-        IMPROPER=dict(
-            I=np.str,
-            J=np.str,
-            K=np.str,
-            L=np.str,
-            Kchi=np.float,
-            n=np.int,
-            delta=np.float,
-        ),
+        DIHEDRALS=dict(I=str, J=str, K=str, L=str, Kchi=float, n=int, delta=float,),
+        IMPROPER=dict(I=str, J=str, K=str, L=str, Kchi=float, n=int, delta=float,),
     )
     _na_values: ClassVar[Dict[str, Dict]] = dict(
         ATOMS=dict(type=-1, mass=0.0),
@@ -167,5 +145,5 @@ class Reader(TopologyReaderBase):
                 name=key.lower(),
             )
         if parameters["ATOMS"].size > 0:
-            parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].drop["hdr"]
+            parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].drop["header"]
         return parameters
