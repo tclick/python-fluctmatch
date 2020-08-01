@@ -45,7 +45,6 @@ from typing import ClassVar, Dict, Mapping, MutableMapping, Optional, Tuple, Uni
 
 import MDAnalysis as mda
 import numpy as np
-import pandas as pd
 import static_frame as sf
 
 from ..base import TopologyWriterBase
