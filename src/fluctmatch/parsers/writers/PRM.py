@@ -46,6 +46,7 @@ from typing import ClassVar, Dict, Mapping, MutableMapping, Optional, Tuple, Uni
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
+import static_frame as sf
 
 from ..base import TopologyWriterBase
 
@@ -96,7 +97,7 @@ class Writer(TopologyWriterBase):
 
     def write(
         self,
-        parameters: MutableMapping[str, pd.DataFrame],
+        parameters: MutableMapping[str, sf.Frame],
         atomgroup: Optional[mda.AtomGroup] = None,
     ):
         """Write a CHARMM-formatted parameter file.
@@ -115,7 +116,7 @@ class Writer(TopologyWriterBase):
             print(textwrap.dedent(self.title).strip(), file=prmfile)
             print(file=prmfile)
 
-            if self._version > 35 and parameters["ATOMS"].empty:
+            if self._version > 35 and parameters["ATOMS"].size == 0:
                 if atomgroup:
                     atom_types: np.ndarray = (
                         atomgroup.types
@@ -125,8 +126,8 @@ class Writer(TopologyWriterBase):
                     atoms: np.ndarray = np.vstack(
                         (atom_types, atomgroup.types, atomgroup.masses)
                     )
-                    parameters["ATOMS"]: pd.DataFrame = pd.DataFrame(
-                        atoms.T, columns=parameters["ATOMS"].columns
+                    parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].assign["type"](
+                        atoms.T
                     )
                 else:
                     raise RuntimeError(
@@ -134,19 +135,19 @@ class Writer(TopologyWriterBase):
                         "provide a MDAnalsys.AtomGroup"
                     )
 
-            if self._version >= 39 and not parameters["ATOMS"].empty:
-                parameters["ATOMS"]["type"]: int = -1
+            if self._version >= 39 and parameters["ATOMS"].size > 0:
+                parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].assign["type"](-1)
 
             for key in self._headers:
-                value: pd.DataFrame = parameters[key]
-                if self._version < 35 and key == "ATOMS":
+                section: sf.Frame = parameters[key]
+                if self._version < 36 and key == "ATOMS":
                     continue
-                if value.empty:
+                if section.size == 0:
                     continue
-                if not value.empty:
-                    print(key, file=prmfile)
-                    np.savetxt(prmfile, value, fmt=self._fmt[key])
-                    print(file=prmfile)
+
+                print(key, file=prmfile)
+                np.savetxt(prmfile, section.values, fmt=self._fmt[key])
+                print(file=prmfile)
 
             nb_header: str = (
                 """
@@ -157,11 +158,32 @@ class Writer(TopologyWriterBase):
             print(textwrap.dedent(nb_header[1:])[:-1], file=prmfile)
 
             if self._nonbonded:
-                atom_list: np.ndarray = np.concatenate(
-                    (parameters["BONDS"]["I"].values, parameters["BONDS"]["J"].values,)
+                if parameters["ATOMS"].size > 0:
+                    atom_list: sf.Series = parameters["ATOMS"]["atom"]
+                else:
+                    i: sf.Series = parameters["BONDS"]["I"]
+                    index: int = parameters["BONDS"]["J"].size
+                    j: sf.Series = parameters["BONDS"]["J"].relabel(
+                        np.arange(index) + index
+                    )
+                    atom_list: sf.Series = (
+                        sf.Series.from_concat([i, j])
+                        .drop_duplicated(exclude_first=True)
+                        .sort_values()
+                    )
+                atom_list: sf.Frame = (
+                    atom_list.to_frame().relabel(np.arange(atom_list.size))
                 )
-                atom_list: np.ndarray = np.unique(atom_list)[:, np.newaxis]
-                nb_list: np.ndarray = np.zeros((atom_list.size, 3))
-                nb_list: np.ndarray = np.hstack((atom_list, nb_list))
-                np.savetxt(prmfile, nb_list, fmt=self._fmt["NONBONDED"], delimiter="")
+                nb_list: sf.Frame = sf.Frame(
+                    np.zeros((atom_list.size, 3)), index=atom_list.index
+                )
+                nb_list: sf.Frame = atom_list.join_inner(
+                    nb_list,
+                    left_depth_level=0,
+                    right_depth_level=0,
+                    composite_index=False,
+                )
+                np.savetxt(
+                    prmfile, nb_list.values, fmt=self._fmt["NONBONDED"], delimiter=""
+                )
             print("\nEND", file=prmfile)
