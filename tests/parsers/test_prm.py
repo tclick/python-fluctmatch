@@ -43,6 +43,7 @@ from unittest.mock import patch
 
 import MDAnalysis as mda
 import pandas as pd
+import static_frame as sf
 import pytest
 from numpy.testing import assert_allclose
 
@@ -53,44 +54,44 @@ from tests.datafiles import PRM
 
 class TestPRMWriter(object):
     @pytest.fixture()
-    def u(self) -> Dict[str, pd.DataFrame]:
+    def parameters(self) -> Dict[str, sf.Frame]:
         return ParamReader.Reader(PRM).read()
 
-    def test_writer(self, u: pd.DataFrame, tmp_path: Path):
+    def test_writer(self, parameters: sf.Frame, tmp_path: Path):
         filename: Path = tmp_path / "temp.prm"
         with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, mda.Writer(
             filename, nonbonded=True
         ) as ofile:
-            ofile.write(u)
+            ofile.write(parameters)
             writer.assert_called()
 
-    def test_parameters(self, u: Mapping[str, pd.DataFrame], tmp_path: Path):
+    def test_parameters(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
         filename: Path = tmp_path / "temp.prm"
         with mda.Writer(filename, nonbonded=True) as ofile:
-            ofile.write(u)
+            ofile.write(parameters)
 
-        u2 = ParamReader.Reader(filename).read()
+        new_parameters: sf.Frame = ParamReader.Reader(filename).read()
         assert_allclose(
-            u["ATOMS"]["mass"],
-            u2["ATOMS"]["mass"],
+            parameters["ATOMS"]["mass"],
+            new_parameters["ATOMS"]["mass"],
             err_msg="The atomic masses don't match.",
         )
         assert_allclose(
-            u["BONDS"]["Kb"],
-            u2["BONDS"]["Kb"],
+            parameters["BONDS"]["Kb"],
+            new_parameters["BONDS"]["Kb"],
             err_msg="The force constants don't match.",
         )
 
-    def test_roundtrip(self, u: Mapping[str, pd.DataFrame], tmp_path: Path):
+    def test_roundtrip(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
         # the original. This is more rigorous as it checks all formatting.
         filename: Path = tmp_path / "temp.prm"
         with mda.Writer(filename, nonbonded=True) as ofile:
-            ofile.write(u)
+            ofile.write(parameters)
 
         def PRM_iter(fn: Union[str, Path]):
-            with open(fn) as inf:
-                for line in inf:
+            with open(fn) as input_file:
+                for line in input_file:
                     if not line.startswith("*"):
                         yield line
 
