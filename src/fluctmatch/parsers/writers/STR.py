@@ -44,7 +44,7 @@ from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
-import pandas as pd
+import static_frame as sf
 
 from .. import base as topbase
 
@@ -100,13 +100,12 @@ class Writer(topbase.TopologyWriterBase):
             definitions.
         """
         # Create the table
-        data: Union[pd.DataFrame, np.ndarray]
         try:
             n_bonds: int = universe.atoms.bonds.bonds()
             dist: np.ndarray = np.zeros_like(n_bonds, dtype=float)
             if self._version >= 36:
                 atom1, atom2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: pd.DataFrame = pd.DataFrame.from_dict(
+                data: sf.Frame = sf.Frame.from_dict(
                     dict(
                         segidI=atom1.segids,
                         resI=atom1.resids,
@@ -118,13 +117,17 @@ class Writer(topbase.TopologyWriterBase):
                     )
                 )
             else:
-                data: pd.DataFrame = pd.DataFrame(universe._topology.bonds.values)
-                data: pd.DataFrame = pd.concat((data, pd.Series(dist)), axis="columns")
+                data: sf.Frame = sf.Frame(universe._topology.bonds.values)
+                data: sf.Frame = data.from_concat(
+                    [sf.Series(dist),]
+                )
         except AttributeError:
             AttributeError("No bonds were found.")
 
         # Write the data to the file.
         with open(self.filename, "w") as stream_file:
             print(textwrap.dedent(self.title).strip(), file=stream_file)
-            np.savetxt(stream_file, data, fmt=textwrap.dedent(self.fmt.strip("\n")))
+            np.savetxt(
+                stream_file, data.values, fmt=textwrap.dedent(self.fmt.strip("\n"))
+            )
             print("RETURN", file=stream_file)
