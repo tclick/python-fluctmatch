@@ -45,7 +45,7 @@ from typing import ClassVar, Mapping, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
-import pandas as pd
+import static_frame as sf
 
 from .. import base
 
@@ -199,7 +199,7 @@ class Writer(base.TopologyWriterBase):
         )
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.0] = 0.0
-        lines: np.ndarray = np.hstack(
+        lines: sf.Frame = sf.Frame.from_records(
             (
                 np.arange(atoms.n_atoms)[:, np.newaxis] + 1,
                 atoms.segids[:, np.newaxis],
@@ -211,20 +211,18 @@ class Writer(base.TopologyWriterBase):
                 atoms.masses[:, np.newaxis],
                 np.zeros_like(atoms.ids[:, np.newaxis]),
             )
-        )
-        lines: pd.DataFrame = pd.DataFrame(lines)
+        ).T
 
         if self._cheq:
             fmt += "%10.6f%18s"
-            cheq: np.ndarray = np.hstack(
+            cheq: sf.Frame = sf.Frame.from_records(
                 (
                     np.zeros_like(atoms.masses[:, np.newaxis]),
                     np.full_like(atoms.names[:, np.newaxis], "-0.301140E-02"),
                 )
-            )
-            cheq: pd.DataFrame = pd.DataFrame(cheq)
-            lines: pd.DataFrame = pd.concat([lines, cheq], axis=1)
-        np.savetxt(psffile, lines, fmt=fmt)
+            ).T
+            lines: sf.Frame = sf.Frame.from_concat([lines, cheq], axis=1)
+        np.savetxt(psffile, lines.values, fmt=fmt)
         print(file=psffile)
 
     def _write_sec(self, psffile: TextIO, section_info: Tuple[str, str, int]):
