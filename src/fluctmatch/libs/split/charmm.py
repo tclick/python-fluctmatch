@@ -145,8 +145,8 @@ class Split(SplitBase):
 
         with open(input_file, mode="w") as charmm_input:
             env: Environment = Environment(PackageLoader("fluctmatch"), autoescape=True)
-            header: Template = env.get_template("charmm_aa_header.jinja2")
-            body: Template = env.get_template("charmm_split.jinja2")
+            header: Template = env.get_template("charmm_aa_header.j2")
+            body: Template = env.get_template("charmm_split.j2")
             print(header.render(**data) + body.render_async(**data), file=charmm_input)
         command = [self._executable, "-i", input_file, "-o", log_file]
         subprocess.check_call(command)
