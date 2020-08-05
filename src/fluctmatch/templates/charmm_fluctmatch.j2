@@ -14,12 +14,12 @@ traj query unit @input
 
 ! Calculate internal coordinate average movement
 ic dyna aver first @input nunit 1 skip ?SKIP
-write ic card resid name {{ data.average0 }}
+write ic card resid name {{ data.average }}
 * Internal coordinate averages
 
 ! Calculate fluctuations in internal coordinate movement
 ic dyna fluc first @input nunit 1 skip ?SKIP
-write ic card resid name {{ data.fluctuation0 }}
+write ic card resid name {{ data.fluctuation }}
 * Internal coordinate fluctuations
 {% else %}
 calc fluctu  @input + 1
@@ -57,15 +57,11 @@ vibran nmode @nmodes
     fluc ic @type @temp tfre 0.0 mode 7 thru @nmodes
     ic save
     ic write unit @fluctu resid
-    {% if data.vibrations %}
-    write normal card mode 1 thru @nmodes unit @vibu
-    {% endif %}
+    {% if data.vibrations %}write normal card mode 1 thru @nmodes unit @vibu{% endif %}
 end
 
 close unit @fluctu
-{% if data.vibrations %}
-close unit @vibu
-{% endif %}
+{% if data.vibrations %}close unit @vibu{% endif %}
 {% endif %}
 close unit @input
 

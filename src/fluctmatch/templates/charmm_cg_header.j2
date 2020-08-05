@@ -46,7 +46,7 @@ read rtf card name "{data.residue}"
 
 ! Open PSF and coordinate files
 read psf card name "{data.topology}"
-read coor card name "{data.coordinate}"
+read coor card name "{data.coordinates}"
 coor copy comp
 
 {% if data.initialize %}stream "{data.stream}"{% endif %}
