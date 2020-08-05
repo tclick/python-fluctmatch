@@ -144,7 +144,9 @@ class Split(SplitBase):
         log_file: Path = kwargs.get("logfile", subdir / "split.log")
 
         with open(input_file, mode="w") as charmm_input:
-            env: Environment = Environment(PackageLoader("fluctmatch"), autoescape=True)
+            env: Environment = Environment(
+                loader=PackageLoader("fluctmatch"), autoescape=True
+            )
             header: Template = env.get_template("charmm_aa_header.j2")
             body: Template = env.get_template("charmm_split.j2")
             print(header.render(**data) + body.render_async(**data), file=charmm_input)
