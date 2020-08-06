@@ -50,7 +50,7 @@ read psf card name "{{ topology }}"
 read coor card name "{{ coordinates }}"
 coor copy comp
 
-stream "{{ stream }}"
+{%if initialize %}stream "{{ stream }}"{% endif %}
 
 skip all excl bond
 update inbfrq 0
