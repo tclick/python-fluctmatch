@@ -29,7 +29,7 @@ from ...parsers.readers import IC
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class CharmmInit(base.FluctMatchBase):
+class FluctMatch(base.FluctMatchBase):
     def __init__(
         self,
         *,
@@ -51,7 +51,7 @@ class CharmmInit(base.FluctMatchBase):
         prefix : Path or str
             Filename prefix
         """
-        super(CharmmInit, self).__init__(
+        super(FluctMatch, self).__init__(
             output_dir=output_dir,
             temperature=temperature,
             logfile=logfile,
