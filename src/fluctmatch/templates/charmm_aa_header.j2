@@ -36,15 +36,15 @@
 !   doi:10.1016/bs.mie.2016.05.024.
 !
 ! ------------------------------------------------------------------------------
-{{ data.title }}
+{{ title }}
 
-{% if data.version >= 36 %}dimension chsize 500000 maxres 3000000{% endif %}
+{% if version >= 36 %}dimension chsize 500000 maxres 3000000{% endif %}
 bomlev -5 ! This is for CHARMM 39
 
-set toppar {{ data.toppar }}
-set begin {{ data.start }}
-set end {{ data.stop }}
-{% if data.version < 36 %}
+set toppar {{ toppar }}
+set begin {{ start }}
+set end {{ stop }}
+{% if version < 36 %}
 read rtf  card name @toppar/top_all27_prot_na.rtf
 read para card {flex} name @toppar/par_all27_prot_na.prm
 
@@ -70,12 +70,12 @@ read rtf  card name @toppar/top_all36_cgenff.rtf append
 read para card {flex} name @toppar/par_all36_cgenff.prm append
 {% endif %}
 stream @toppar/toppar_water_ions.str
-{% if data.suffix == ".PSF" %}
-read psf card name {{ data.topology }}
-{% elif data.suffix == ".COR" or data.suffix == "CRD" %}
-read sequence coor resi name {{ data.topology }}
-{% elif data.suffix == ".PDB" %}
-read sequence pdb resi {{ data.topology }}
+{% if suffix == ".PSF" %}
+read psf card name {{ topology }}
+{% elif suffix == ".COR" or suffix == "CRD" %}
+read sequence coor resi name {{ topology }}
+{% elif suffix == ".PDB" %}
+read sequence pdb resi {{ topology }}
 {% endif %}
 
 ! File handles
