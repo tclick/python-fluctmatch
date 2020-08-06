@@ -39,99 +39,71 @@
 """Defines the base class for fluctuation matching."""
 
 import abc
-import os
 from pathlib import Path
-from typing import Dict, List, NoReturn
+from typing import Any, Dict, NoReturn, Union
+
+from scipy import constants
 
 
 class FluctMatchBase(metaclass=abc.ABCMeta):
     """Base class for fluctuation matching."""
 
-    def __init__(self, *args: List, **kwargs: Dict):
+    def __init__(
+        self,
+        *,
+        temperature: float = 300.0,
+        output_dir: Union[Path, str] = Path.home(),
+        logfile: Union[Path, str] = "output.log",
+        prefix: Union[Path, str] = "fluctmatch",
+    ):
         """Initialization of fluctuation matching.
 
         Parameters
         ----------
-        topology : filename or Topology object
-            A CHARMM/XPLOR PSF topology file, PDB file or Gromacs GRO file; used
-            to define the list of atoms. If the file includes bond information,
-            partial charges, atom masses, ... then these data will be available
-            to MDAnalysis. A "structure" file (PSF, PDB or GRO, in the sense of
-            a topology) is always required. Alternatively, an existing
-            :class:`MDAnalysis.core.topology.Topology` instance may also be
-            given.
-        extended
-            Renames the residues and atoms according to the extended CHARMM PSF
-            format. Standard CHARMM PSF limits the residue and atom names to
-            four characters, but the extended CHARMM PSF permits eight
-            characters. The residues and atoms are renamed according to the
-            number of segments (1: A, 2: B, etc.) and then the residue number or
-            atom index number.
-         xplor
-            Assigns the atom type as either a numerical or an alphanumerical
-            designation. CHARMM normally assigns a numerical designation, but
-            the XPLOR version permits an alphanumerical designation with a
-            maximum size of 4. The numerical form corresponds to the atom index
-            number plus a factor of 100, and the alphanumerical form will be
-            similar the standard CHARMM atom name.
-        topology_format
-            Provide the file format of the topology file; ``None`` guesses it
-            from the file extension [``None``] Can also pass a subclass of
-            :class:`MDAnalysis.topology.base.TopologyReaderBase` to define a
-            custom reader to be used on the topology file.
-        format
-            Provide the file format of the coordinate or trajectory file;
-            ``None`` guesses it from the file extension. Note that this keyword
-            has no effect if a list of file names is supplied because the
-            "chained" reader has to guess the file format for each individual
-            list member. [``None``] Can also pass a subclass of
-            :class:`MDAnalysis.coordinates.base.ProtoReader` to define a custom
-            reader to be used on the trajectory file.
-        guess_bonds : bool, optional
-            Once Universe has been loaded, attempt to guess the connectivity
-            between atoms.  This will populate the .bonds .angles and .dihedrals
-            attributes of the Universe.
-        vdwradii : dict, optional
-            For use with *guess_bonds*. Supply a dict giving a vdwradii for each
-            atom type which are used in guessing bonds.
-        is_anchor : bool, optional
-            When unpickling instances of
-            :class:`MDAnalysis.core.groups.AtomGroup` existing Universes are
-            searched for one where to anchor those atoms. Set to ``False`` to
-            prevent this Universe from being considered. [``True``]
-        anchor_name : str, optional
-            Setting to other than ``None`` will cause
-            :class:`MDAnalysis.core.groups.AtomGroup` instances pickled from the
-            Universe to only unpickle if a compatible Universe with matching
-            *anchor_name* is found. Even if *anchor_name* is set *is_anchor*
-            will still be honored when unpickling.
-        in_memory
-            After reading in the trajectory, transfer it to an in-memory
-            representations, which allow for manipulation of coordinates.
-        in_memory_step
-            Only read every nth frame into in-memory representation.
-        outdir
+        output_dir, Path or str
             Output directory
-        temperature
+        temperature : float
             Temperature (in K)
-        rmin
-            Minimum distance to consider for bond lengths.
-        rmax
-            Maximum distance to consider for bond lengths.
+        logfile : Path or str
+            Output log file
+        prefix : Union[Path, str]
+            Filename prefix
         """
-        self.parameters: Dict = dict()
-        self.target: Dict = dict()
-
-        self.outdir: Path = Path(kwargs.get("outdir", os.getcwd()))
-        self.prefix: Path = Path(kwargs.get("prefix", "fluctmatch"))
-        self.temperature: float = kwargs.get("temperature", 300.0)
-        if self.temperature < 0:
+        if temperature < 0:
             raise IOError("Temperature cannot be negative.")
-        self.args: List = args
-        self.kwargs: Dict = kwargs
+
+        self.data: Dict[str, Any] = dict(temperature=temperature)
+        self.output_dir: Path = Path(output_dir)
+        self.logfile: Path = self.output_dir / logfile
+        self.prefix: Path = Path(prefix)
 
         # Attempt to create the necessary subdirectory
-        self.outdir.mkdir(exist_ok=True, parents=True)
+        self.output_dir.mkdir(exist_ok=True, parents=True)
+
+        # Boltzmann constant
+        self.boltzmann: float = temperature * (
+            constants.k * constants.N_A / (constants.calorie * constants.kilo)
+        )
+
+        # Bond factor mol^2-Ang./kcal^2
+        self.k_factor: float = 0.02
+
+    @abc.abstractmethod
+    def calculate(self):
+        """Calculate the force constants from the fluctuations."""
+        pass
+
+    @abc.abstractmethod
+    def simulate(
+        self,
+        *,
+        input_dir: Union[Path, str] = Path.home(),
+        executable: Union[Path, str] = None,
+        topology: Union[Path, str] = "cg.xplor.psf",
+        trajectory: Union[Path, str] = "cg.dcd",
+    ):
+        """Perform normal mode analysis of the system."""
+        pass
 
     @abc.abstractmethod
     def initialize(self, nma_exec: str = None, restart: bool = False) -> NoReturn:
