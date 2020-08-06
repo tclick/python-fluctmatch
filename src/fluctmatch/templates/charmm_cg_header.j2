@@ -42,14 +42,15 @@
 bomlev -5 ! This is for CHARMM 39
 
 ! Open CHARMM topology and parameter file
-read rtf card name "{residue}"
+read rtf card name "{{ residue }}"
+{% if parameter %}read para card {flex} name "{parameter}"{% endif %}
 
 ! Open PSF and coordinate files
-read psf card name "{topology}"
-read coor card name "{coordinates}"
+read psf card name "{{ topology }}"
+read coor card name "{{ coordinates }}"
 coor copy comp
 
-{% if initialize %}stream "{stream}"{% endif %}
+stream "{{ stream }}"
 
 skip all excl bond
 update inbfrq 0
