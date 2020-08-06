@@ -21,6 +21,7 @@ write ic card resid name {{ average }}
 ic dyna fluc first @input nunit 1 skip ?SKIP
 write ic card resid name {{ fluctuation }}
 * Internal coordinate fluctuations
+
 {% else %}
 calc fluctu  @input + 1
 {% if vibrations %}calc vibu    @fluctu + 1{% endif %}
@@ -36,6 +37,7 @@ scalar wmain copy mass
 
 ioformat extended
 write coor card name "{{ nma_coord }}"
+*
 
 stream "{{ stream }}"
 
@@ -47,8 +49,11 @@ set nmodes   @nmode
 set type     temp
 
 open write unit @fluctu card name "{{ fluctuation }}"
+*
+
 {% if vibrations %}
 open write unit @vibu   card name "{{ normal_modes }}"
+*
 {% endif %}
 ! Perform normal mode analysis at desired temperature for vibrational normal
 ! modes
