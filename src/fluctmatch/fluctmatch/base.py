@@ -40,9 +40,12 @@
 
 import abc
 from pathlib import Path
-from typing import Any, Dict, NoReturn, Union
+from typing import Optional, TypeVar, Union
 
+import static_frame as sf
 from scipy import constants
+
+TFMBase = TypeVar("TFMBase", bound="FluctMatchBase")
 
 
 class FluctMatchBase(metaclass=abc.ABCMeta):
@@ -55,7 +58,7 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         output_dir: Union[Path, str] = Path.home(),
         logfile: Union[Path, str] = "output.log",
         prefix: Union[Path, str] = "fluctmatch",
-    ):
+    ) -> None:
         """Initialization of fluctuation matching.
 
         Parameters
@@ -72,75 +75,37 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         if temperature < 0:
             raise IOError("Temperature cannot be negative.")
 
-        self.data: Dict[str, Any] = dict(temperature=temperature)
-        self.output_dir: Path = Path(output_dir)
-        self.logfile: Path = self.output_dir / logfile
-        self.prefix: Path = Path(prefix)
+        self.data = dict(temperature=temperature)
+        self.output_dir = Path(output_dir)
+        self.logfile = self.output_dir / logfile
+        self.prefix = Path(prefix)
 
         # Attempt to create the necessary subdirectory
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
-        # Boltzmann constant
-        self.boltzmann: float = temperature * (
+        # Boltzmann constant (in kcal/mol)
+        self.BOLTZMANN: float = temperature * (
             constants.k * constants.N_A / (constants.calorie * constants.kilo)
         )
 
         # Bond factor mol^2-Ang./kcal^2
-        self.k_factor: float = 0.02
+        self.K_FACTOR: float = 0.02
 
     @abc.abstractmethod
-    def calculate(self):
+    def calculate(
+        self: TFMBase, *, error_data: bool = False, target: Optional[sf.Frame] = None
+    ) -> tuple:
         """Calculate the force constants from the fluctuations."""
         pass
 
     @abc.abstractmethod
     def simulate(
-        self,
+        self: TFMBase,
         *,
         input_dir: Union[Path, str] = Path.home(),
         executable: Union[Path, str] = None,
         topology: Union[Path, str] = "cg.xplor.psf",
         trajectory: Union[Path, str] = "cg.dcd",
-    ):
+    ) -> None:
         """Perform normal mode analysis of the system."""
-        pass
-
-    @abc.abstractmethod
-    def initialize(self, nma_exec: str = None, restart: bool = False) -> NoReturn:
-        """Create an elastic network model from a basic coarse-grain model.
-
-        Parameters
-        ----------
-        nma_exec : str
-            executable file for normal mode analysis
-        restart : bool, optional
-            Reinitialize the object by reading files instead of doing initial
-            calculations.
-        """
-        pass
-
-    @abc.abstractmethod
-    def run(
-        self,
-        nma_exec: str = None,
-        tol: float = 1.0e-4,
-        min_cycles: int = 200,
-        max_cycles: int = 200,
-        force_tol: float = 0.02,
-    ) -> NoReturn:
-        """Perform a self-consistent fluctuation matching.
-
-        Parameters
-        ----------
-        nma_exec : str
-            executable file for normal mode analysis
-        tol : float, optional
-            error tolerance
-        min_cycles : int, optional
-            minimum number of fluctuation matching cycles
-        max_cycles : int, optional
-            maximum number of fluctuation matching cycles
-        force_tol : float, optional
-            force constants <= force tolerance become zero after min_cycles
-        """
         pass
