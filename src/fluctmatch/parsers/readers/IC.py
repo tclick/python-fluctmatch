@@ -39,8 +39,9 @@
 """Read CHARMM internal coordinate files."""
 
 import logging
+from collections import namedtuple
 from pathlib import Path
-from typing import ClassVar, Dict, Iterator, List, Optional, Union
+from typing import ClassVar, Dict, Iterator, Optional, Union
 
 import static_frame as sf
 
@@ -57,49 +58,20 @@ class Reader(TopologyReaderBase):
          name of the output file or a stream
     """
 
-    format: ClassVar[str] = "IC"
-    units: Dict[str, Optional[str]] = dict(time=None, length="Angstrom")
+    format = "IC"
+    units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
-    _cols: Dict[str, List[str]] = dict(
-        STANDARD=[
-            "#",
-            "resI",
-            "I",
-            "resJ",
-            "J",
-            "resK",
-            "K",
-            "resL",
-            "L",
-            "r_IJ",
-            "T_IJK",
-            "P_IJKL",
-            "T_JKL",
-            "r_KL",
-        ],
-        RESID=[
-            "#",
-            "segidI",
-            "resI",
-            "I",
-            "segidJ",
-            "resJ",
-            "J",
-            "segidK",
-            "resK",
-            "K",
-            "segidL",
-            "resL",
-            "L",
-            "r_IJ",
-            "T_IJK",
-            "P_IJKL",
-            "T_JKL",
-            "r_KL",
-        ],
+    _types = namedtuple("_types", "STANDARD RESID")
+    _cols = _types(
+        STANDARD=tuple(
+            "# resI I resJ J resK K resL L r_IJ T_IJK P_IJKL T_JKL r_KL".split()
+        ),
+        RESID=tuple(
+            "# segidI resI I segidJ resJ J segidK resK K segidL resL L r_IJ T_IJK P_IJKL T_JKL r_KL".split()
+        ),
     )
-    _dtypes: Dict[str, List[type]] = dict(
-        STANDARD=[
+    _dtypes = _types(
+        STANDARD=(
             int,
             int,
             str,
@@ -114,8 +86,8 @@ class Reader(TopologyReaderBase):
             float,
             float,
             float,
-        ],
-        RESID=[
+        ),
+        RESID=(
             int,
             str,
             int,
@@ -134,11 +106,11 @@ class Reader(TopologyReaderBase):
             float,
             float,
             float,
-        ],
+        ),
     )
 
-    def __init__(self, filename: Union[str, Path]):
-        self.filename: Path = Path(filename).with_suffix(".ic")
+    def __init__(self, filename: Union[str, Path]) -> None:
+        self.filename: Path = Path(filename).with_suffix("." + self.format.lower())
 
     def read(self) -> sf.Frame:
         """Read the internal coordinates file.
@@ -157,8 +129,8 @@ class Reader(TopologyReaderBase):
                 if line.startswith("*") or line.startswith("!") or not line:
                     continue  # ignore TITLE, comments, and empty lines
                 break
-            line: List = list(map(int, line.split()))
-            key: str = "RESID" if line[1] == 2 else "STANDARD"
+            line = list(map(int, line.split()))
+            key = "RESID" if line[1] == 2 else "STANDARD"
             resid_a = line[1]
 
             n_lines, resid_b = list(map(int, next(infile).split()))
@@ -166,12 +138,15 @@ class Reader(TopologyReaderBase):
                 raise IOError("A mismatch has occurred on determining the IC format.")
 
             # Read the internal coordinates
-            rows: List = []
+            rows = []
             for line in infile:
                 columns: Iterator = filter(lambda x: x != ":", line.split())
                 rows.append(list(columns))
             table: sf.Frame = sf.Frame.from_records(
-                rows, columns=self._cols[key], dtypes=self._dtypes[key], name="IC"
+                rows,
+                columns=getattr(self._cols, key),
+                dtypes=getattr(self._dtypes, key),
+                name="IC",
             )
             if table.loc[0, "#"] == 0:
                 table: sf.Frame = table.assign["#"](table["#"] + 1)

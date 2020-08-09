@@ -39,10 +39,10 @@
 """Class to read CHARMM parameter files."""
 
 import logging
+from collections import namedtuple
 from pathlib import Path
 from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import static_frame as sf
 
 from ..base import TopologyReaderBase
@@ -60,61 +60,39 @@ class Reader(TopologyReaderBase):
          name of the output file or a stream
     """
 
-    format: ClassVar[str] = "PRM"
+    format = "PRM"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
-    _index: ClassVar[Dict[str, np.ndarray]] = dict(
-        ATOMS=np.arange(1, 4),
-        BONDS=np.arange(4),
-        ANGLES=np.arange(7),
-        DIHEDRALS=np.arange(6),
+    _headers = namedtuple("_neaders", ("ATOMS BONDS ANGLES DIHEDRALS IMPROPERS"))
+    _columns = _headers(
+        ATOMS=tuple("header type atom mass".split()),
+        BONDS=tuple("I J Kb b0".split()),
+        ANGLES=tuple("I J K Ktheta theta0 Kub S0".split()),
+        DIHEDRALS=tuple("I J K L Kchi n delta".split()),
+        IMPROPERS=tuple("I J K L Kchi n delta".split()),
     )
-    _columns: ClassVar[Dict[str, List[str]]] = dict(
-        ATOMS=["header", "type", "atom", "mass"],
-        BONDS=["I", "J", "Kb", "b0"],
-        ANGLES=["I", "J", "K", "Ktheta", "theta0", "Kub", "S0"],
-        DIHEDRALS=["I", "J", "K", "L", "Kchi", "n", "delta"],
-        IMPROPER=["I", "J", "K", "L", "Kchi", "n", "delta"],
-    )
-    _dtypes: ClassVar[Dict[str, Dict]] = dict(
+    _dtypes = _headers(
         ATOMS=dict(header=str, type=int, atom=str, mass=float),
         BONDS=dict(I=str, J=str, Kb=float, b0=float),
         ANGLES=dict(
             I=str, J=str, K=str, Ktheta=float, theta0=float, Kub=object, S0=object,
         ),
         DIHEDRALS=dict(I=str, J=str, K=str, L=str, Kchi=float, n=int, delta=float,),
-        IMPROPER=dict(I=str, J=str, K=str, L=str, Kchi=float, n=int, delta=float,),
-    )
-    _na_values: ClassVar[Dict[str, Dict]] = dict(
-        ATOMS=dict(type=-1, mass=0.0),
-        BONDS=dict(Kb=0.0, b0=0.0),
-        ANGLES=dict(Ktheta=0.0, theta0=0.0, Kub="", S0=""),
-        DIHEDRALS=dict(Kchi=0.0, n=0, delta=0.0),
-        IMPROPER=dict(Kchi=0.0, n=0, delta=0.0),
+        IMPROPERS=dict(I=str, J=str, K=str, L=str, Kchi=float, n=int, delta=float,),
     )
 
-    def __init__(self, filename: Union[str, Path]):
-        self.filename: Path = Path(filename).with_suffix(".prm")
-        self._buffers: Dict[str, List] = dict(
-            ATOMS=[], BONDS=[], ANGLES=[], DIHEDRALS=[], IMPROPER=[],
-        )
+    def __init__(self, filename: Union[str, Path]) -> None:
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
 
-    def read(self) -> Dict:
+    def read(self) -> namedtuple:
         """Parse the parameter file.
 
         Returns
         -------
         Dictionary with CHARMM parameters per key.
         """
-        parameters: Dict[str, sf.Frame] = dict.fromkeys(self._buffers.keys())
-        headers: Tuple[str, ...] = (
-            "ATOMS",
-            "BONDS",
-            "ANGLES",
-            "DIHEDRALS",
-            "IMPROPER",
-        )
-        section: str
+        headers: Tuple[str, ...] = self._headers._fields
+        buffers: Dict[str, List] = {_: [] for _ in self._headers._fields}
 
         with open(self.filename) as prmfile:
             for line in prmfile:
@@ -124,7 +102,7 @@ class Reader(TopologyReaderBase):
 
                 # Parse sections
                 if line in headers:
-                    section: str = line
+                    section = line
                     continue
 
                 if (
@@ -135,15 +113,20 @@ class Reader(TopologyReaderBase):
                 ):
                     break
 
-                self._buffers[section].append(line.split())
+                buffers[section].append(line.split())
 
-        for key, _ in parameters.items():
-            parameters[key]: sf.Frame = sf.Frame.from_records(
-                self._buffers[key],
-                columns=self._columns[key],
-                dtypes=self._dtypes[key],
-                name=key.lower(),
-            )
-        if parameters["ATOMS"].size > 0:
-            parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].drop["header"]
+        parameters = self._headers(
+            **{
+                _: sf.Frame.from_records(
+                    buffers[_],
+                    columns=getattr(self._columns, _),
+                    dtypes=getattr(self._dtypes, _),
+                    name=_.lower(),
+                )
+                for _ in self._headers._fields
+            }
+        )
+        if parameters.ATOMS.size > 0:
+            parameters = parameters._replace(ATOMS=parameters.ATOMS.drop["header"])
+
         return parameters
