@@ -55,7 +55,7 @@ class Reader(CRD.CRDReader):
        Frames now 0-based instead of 1-based.
     """
 
-    format: ClassVar[str] = "COR"
+    format = "COR"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
     def __init__(
@@ -64,5 +64,5 @@ class Reader(CRD.CRDReader):
         convert_units: bool = None,
         n_atoms: int = None,
         **kwargs: Mapping,
-    ):
+    ) -> None:
         super().__init__(filename, convert_units, n_atoms, **kwargs)

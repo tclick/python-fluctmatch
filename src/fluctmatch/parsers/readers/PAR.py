@@ -40,7 +40,7 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar, Union
+from typing import Union
 
 from . import PRM
 
@@ -51,9 +51,7 @@ logger.addHandler(logging.NullHandler())
 class Reader(PRM.Reader):
     """Read CHARMM parameter files with extension .par"""
 
-    format: ClassVar[str] = "PAR"
+    format = "PAR"
 
-    def __init__(self, filename: Union[str, Path]):
+    def __init__(self, filename: Union[str, Path]) -> None:
         super().__init__(filename)
-
-        self.filename: Path = Path(filename).with_suffix(".par")
