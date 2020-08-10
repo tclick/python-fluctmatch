@@ -42,7 +42,7 @@ import itertools
 import logging
 import warnings
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Generator, List, Mapping, Optional, Union
+from typing import Any, ClassVar, Dict, Generator, List, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -70,33 +70,13 @@ class Writer(CRD.CRDWriter):
        Frames now 0-based instead of 1-based
     """
 
-    format: ClassVar[str] = "COR"
+    format = "COR"
     units: ClassVar[Dict[str, Optional[str]]] = {
         "time": None,
         "length": "Angstrom",
     }
 
-    fmt: Dict[str, str] = dict(
-        # crdtype = "extended"
-        # fortran_format = "(2I10,2X,A8,2X,A8,3F20.10,2X,A8,2X,A8,F20.10)"
-        ATOM_EXT=(
-            "{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
-            "{pos[0]:20.10f}{pos[1]:20.10f}{pos[2]:20.10f}  "
-            "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}"
-        ),
-        NUMATOMS_EXT="{0:10d}  EXT",
-        # crdtype = "standard"
-        # fortran_format = "(2I5,1X,A4,1X,A4,3F10.5,1X,A4,1X,A4,F10.5)"
-        ATOM=(
-            "{serial:5d}{totRes:5d} {resname:<4.4s} {name:<4.4s}"
-            "{pos[0]:10.5f}{pos[1]:10.5f}{pos[2]:10.5f} "
-            "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}"
-        ),
-        TITLE="* FRAME {frame} FROM {where}",
-        NUMATOMS="{0:5d}",
-    )
-
-    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
+    def __init__(self, filename: Union[str, Path], **kwargs: str) -> None:
         """
         Parameters
         ----------
@@ -105,14 +85,34 @@ class Writer(CRD.CRDWriter):
         """
         super().__init__(filename, **kwargs)
 
-        self.filename: Path = Path(filename).with_suffix(".cor")
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
         self.crd: Optional[str] = None
+
+        self.fmt = dict(
+            # crdtype = "extended"
+            # fortran_format = "(2I10,2X,A8,2X,A8,3F20.10,2X,A8,2X,A8,F20.10)"
+            ATOM_EXT=(
+                "{serial:10d}{totRes:10d}  {resname:<8.8s}  {name:<8.8s}"
+                "{pos[0]:20.10f}{pos[1]:20.10f}{pos[2]:20.10f}  "
+                "{chainID:<8.8s}  {resSeq:<8d}{tempfactor:20.10f}"
+            ),
+            NUMATOMS_EXT="{0:10d}  EXT",
+            # crdtype = "standard"
+            # fortran_format = "(2I5,1X,A4,1X,A4,3F10.5,1X,A4,1X,A4,F10.5)"
+            ATOM=(
+                "{serial:5d}{totRes:5d} {resname:<4.4s} {name:<4.4s}"
+                "{pos[0]:10.5f}{pos[1]:10.5f}{pos[2]:10.5f} "
+                "{chainID:<4.4s} {resSeq:<4d}{tempfactor:10.5f}"
+            ),
+            TITLE="* FRAME {frame} FROM {where}",
+            NUMATOMS="{0:5d}",
+        )
 
     def write(
         self,
         selection: Union[mda.Universe, mda.AtomGroup],
         frame: Optional[int] = None,
-    ):
+    ) -> None:
         """Write selection at current trajectory frame to file.
 
         write(selection,frame=FRAME)
@@ -120,7 +120,7 @@ class Writer(CRD.CRDWriter):
         selection         MDAnalysis AtomGroup
         frame             optionally move to frame FRAME
         """
-        universe: mda.Universe = selection.universe
+        universe = selection.universe
         if frame is not None:
             universe.trajectory[frame]  # advance to frame
         else:
@@ -129,7 +129,7 @@ class Writer(CRD.CRDWriter):
             except AttributeError:
                 frame: int = 0
 
-        atoms: mda.AtomGroup = selection.atoms
+        atoms = selection.atoms
         coordinates: np.ndarray = atoms.positions
 
         n_atoms: int = atoms.n_atoms
@@ -180,19 +180,19 @@ class Writer(CRD.CRDWriter):
                 miss,
             )
 
-        with open(self.filename, "w") as crd:
+        with open(self.filename, "w") as output:
             # Write Title
             logger.info("Writing %s", self.filename)
             print(
                 self.fmt["TITLE"].format(
                     frame=frame, where=universe.trajectory.filename
                 ),
-                file=crd,
+                file=output,
             )
-            print("*", file=crd)
+            print("*", file=output)
 
             # Write NUMATOMS
-            print(self.fmt["NUMATOMS_EXT"].format(n_atoms), file=crd)
+            print(self.fmt["NUMATOMS_EXT"].format(n_atoms), file=output)
 
             # Write all atoms
             current_resid: int = 1
@@ -225,6 +225,6 @@ class Writer(CRD.CRDWriter):
                         resSeq=resid,
                         tempfactor=tempfactor,
                     ),
-                    file=crd,
+                    file=output,
                 )
             logger.info("Coordinate file successfully written.")
