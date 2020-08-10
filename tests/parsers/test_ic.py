@@ -45,7 +45,7 @@ import pytest
 import static_frame as sf
 from numpy.testing import assert_allclose
 
-import fluctmatch.parsers.readers.IC as IntCor
+import fluctmatch.parsers.readers.IC as ICReader
 from tests.datafiles import IC
 
 
@@ -55,7 +55,7 @@ class TestICReader:
 
     @pytest.fixture()
     def u(self) -> sf.Frame:
-        return IntCor.Reader(IC).read()
+        return ICReader.Reader(IC).read()
 
     def test_reader(self, u: sf.Frame):
         rows, cols = u.shape
@@ -66,22 +66,22 @@ class TestICReader:
 class TestICWriter:
     @pytest.fixture()
     def u(self) -> sf.Frame:
-        return IntCor.Reader(IC).read()
+        return ICReader.Reader(IC).read()
 
-    def test_writer(self, u: sf.Frame, tmp_path: Path):
-        filename: Path = tmp_path / "temp.ic"
+    def test_writer(self, u: sf.Frame, tmp_path: Path) -> None:
+        filename = tmp_path / "temp.ic"
         with patch("fluctmatch.parsers.writers.IC.Writer.write") as icw, mda.Writer(
             filename
         ) as ofile:
             ofile.write(u)
             icw.assert_called()
 
-    def test_bond_distances(self, u: sf.Frame, tmp_path: Path):
+    def test_bond_distances(self, u: sf.Frame, tmp_path: Path) -> None:
         filename: Path = tmp_path / "temp.ic"
         with mda.Writer(filename) as ofile:
             ofile.write(u)
 
-        u2 = IntCor.Reader(tmp_path / "temp.ic").read()
+        u2 = ICReader.Reader(tmp_path / "temp.ic").read()
         assert_allclose(u["r_IJ"], u2["r_IJ"], err_msg="The distances don't match.")
 
     def test_roundtrip(self, u: sf.Frame, tmp_path: Path):
