@@ -41,7 +41,7 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import (Dict, NamedTuple, Optional, Tuple, Union)
+from typing import Dict, NamedTuple, Optional, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
