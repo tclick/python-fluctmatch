@@ -48,8 +48,6 @@ from MDAnalysisTests.topology.base import ParserBase
 from numpy.testing import assert_equal
 
 import fluctmatch.parsers.parsers.PSF as PSFParser
-import fluctmatch.parsers.writers.PSF
-
 from ..datafiles import COR, PSF
 
 
@@ -59,7 +57,7 @@ class TestPSFWriter(object):
         return mda.Universe(PSF, COR)
 
     def test_writer(self, u: mda.Universe, tmp_path: Path):
-        filename: Path = tmp_path / "temp.xplor.psf"
+        filename = tmp_path / "temp.xplor.psf"
         with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, mda.Writer(
             filename
         ) as w:
@@ -70,7 +68,7 @@ class TestPSFWriter(object):
         # Write out a copy of the Universe, and compare this against the
         # original. This is more rigorous than simply checking the coordinates
         # as it checks all formatting
-        filename: Path = tmp_path / "temp.xplor.psf"
+        filename = tmp_path / "temp.xplor.psf"
         with mda.Writer(filename) as w:
             w.write(u.atoms)
 
@@ -85,11 +83,11 @@ class TestPSFWriter(object):
 
     def test_write_atoms(self, u: mda.Universe, tmp_path: Path):
         # Test that written file when read gives same coordinates
-        filename: Path = tmp_path / "temp.xplor.psf"
+        filename = tmp_path / "temp.xplor.psf"
         with mda.Writer(filename) as w:
             w.write(u.atoms)
 
-        u2: mda.Universe = mda.Universe(filename, COR)
+        u2 = mda.Universe(filename, COR)
 
         assert_equal(u.atoms.charges, u2.atoms.charges)
 
