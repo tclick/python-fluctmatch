@@ -40,7 +40,7 @@
 
 import logging
 from pathlib import Path
-from typing import ClassVar, Mapping, Union
+from typing import ClassVar, Optional, Union
 
 from . import PRM
 
@@ -53,7 +53,19 @@ class Writer(PRM.Writer):
 
     format: ClassVar[str] = "PAR"
 
-    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
-        super().__init__(filename, **kwargs)
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        *,
+        charmm_version: int = 41,
+        nonbonded: bool = False,
+        n_atoms: Optional[int] = None,
+    ):
+        super().__init__(
+            filename,
+            charmm_version=charmm_version,
+            nonbonded=nonbonded,
+            n_atoms=n_atoms,
+        )
 
-        self.filename: Path = Path(filename).with_suffix(".par")
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
