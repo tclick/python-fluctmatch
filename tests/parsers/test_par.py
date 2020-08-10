@@ -47,11 +47,12 @@ import static_frame as sf
 from numpy.testing import assert_allclose
 
 import fluctmatch.parsers.readers.PAR as ParamReader
+from ..datafiles import PAR
 
 
-class TestPRMReader:
+class TestPARReader:
     def test_reader(self):
-        with ParamReader.Reader(PRM) as infile:
+        with ParamReader.Reader(PAR) as infile:
             parameters = infile.read()
 
         assert isinstance(parameters, ParamReader.Reader._HEADERS)
@@ -60,21 +61,21 @@ class TestPRMReader:
         assert parameters.ANGLES.size == 0
 
 
-class TestPRMWriter:
+class TestPARWriter:
     @pytest.fixture()
     def parameters(self) -> NamedTuple:
-        return ParamReader.Reader(PRM).read()
+        return ParamReader.Reader(PAR).read()
 
     def test_writer(self, parameters: sf.Frame, tmp_path: Path):
-        filename = tmp_path / "temp.prm"
-        with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, mda.Writer(
+        filename = tmp_path / "temp.par"
+        with patch("fluctmatch.parsers.writers.PAR.Writer.write") as writer, mda.Writer(
             filename, nonbonded=True
         ) as ofile:
             ofile.write(parameters)
             writer.assert_called()
 
     def test_parameters(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
-        filename = tmp_path / "temp.prm"
+        filename = tmp_path / "temp.par"
         with mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(parameters)
 
@@ -93,15 +94,15 @@ class TestPRMWriter:
     def test_roundtrip(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
         # the original. This is more rigorous as it checks all formatting.
-        filename = tmp_path / "temp.prm"
+        filename = tmp_path / "temp.par"
         with mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(parameters)
 
-        def PRM_iter(fn: Union[str, Path]):
+        def PAR_iter(fn: Union[str, Path]):
             with open(fn) as input_file:
                 for line in input_file:
                     if not line.startswith("*"):
                         yield line
 
-        for ref, other in zip(PRM_iter(PRM), PRM_iter(filename)):
+        for ref, other in zip(PAR_iter(PAR), PAR_iter(filename)):
             assert ref == other
