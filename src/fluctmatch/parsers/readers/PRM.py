@@ -41,7 +41,7 @@
 import logging
 from collections import namedtuple
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import static_frame as sf
 
@@ -84,12 +84,12 @@ class Reader(TopologyReaderBase):
     def __init__(self, filename: Union[str, Path]) -> None:
         self.filename = Path(filename).with_suffix("." + self.format.lower())
 
-    def read(self) -> namedtuple:
+    def read(self) -> NamedTuple:
         """Parse the parameter file.
 
         Returns
         -------
-        Dictionary with CHARMM parameters per key.
+        Named tuple with CHARMM parameters per key.
         """
         headers: Tuple[str, ...] = self._headers._fields
         buffers: Dict[str, List] = {_: [] for _ in self._headers._fields}
