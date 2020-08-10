@@ -61,8 +61,8 @@ class Reader(TopologyReaderBase):
     format = "IC"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
-    _types = namedtuple("_types", "STANDARD RESID")
-    _cols = _types(
+    _TYPES = namedtuple("_TYPES", "STANDARD RESID")
+    _COLUMNS = _TYPES(
         STANDARD=tuple(
             "# resI I resJ J resK K resL L r_IJ T_IJK P_IJKL T_JKL r_KL".split()
         ),
@@ -70,7 +70,7 @@ class Reader(TopologyReaderBase):
             "# segidI resI I segidJ resJ J segidK resK K segidL resL L r_IJ T_IJK P_IJKL T_JKL r_KL".split()
         ),
     )
-    _dtypes = _types(
+    _DTYPES = _TYPES(
         STANDARD=(
             int,
             int,
@@ -110,7 +110,7 @@ class Reader(TopologyReaderBase):
     )
 
     def __init__(self, filename: Union[str, Path]) -> None:
-        self.filename: Path = Path(filename).with_suffix("." + self.format.lower())
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
 
     def read(self) -> sf.Frame:
         """Read the internal coordinates file.
@@ -125,7 +125,7 @@ class Reader(TopologyReaderBase):
 
             # Read title and header lines
             for line in infile:
-                line: str = line.split("!")[0].strip()
+                line = line.split("!")[0].strip()
                 if line.startswith("*") or line.startswith("!") or not line:
                     continue  # ignore TITLE, comments, and empty lines
                 break
@@ -142,14 +142,14 @@ class Reader(TopologyReaderBase):
             for line in infile:
                 columns: Iterator = filter(lambda x: x != ":", line.split())
                 rows.append(list(columns))
-            table: sf.Frame = sf.Frame.from_records(
+            table = sf.Frame.from_records(
                 rows,
-                columns=getattr(self._cols, key),
-                dtypes=getattr(self._dtypes, key),
+                columns=getattr(self._COLUMNS, key),
+                dtypes=getattr(self._DTYPES, key),
                 name="IC",
             )
             if table.loc[0, "#"] == 0:
-                table: sf.Frame = table.assign["#"](table["#"] + 1)
+                table = table.assign["#"](table["#"] + 1)
 
             if n_lines != len(table):
                 raise IOError(
