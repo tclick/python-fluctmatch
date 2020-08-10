@@ -98,22 +98,30 @@ class Writer(base.TopologyWriterBase):
         EXT_XPLOR_C35="%10d %-8s %-8d %-8s %-8s %-4s %14.6f%14.6f%8d",
     )
 
-    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        *,
+        extended: bool = True,
+        cmap: bool = True,
+        cheq: bool = True,
+        charmm_version: int = 41,
+        n_atoms: Optional[int] = None,
+    ) -> None:
         super().__init__()
 
-        self.filename: Path = Path(filename).with_suffix(".psf")
-        self._extended: bool = kwargs.get("extended", True)
-        self._cmap: bool = kwargs.get("cmap", True)
-        self._cheq: bool = kwargs.get("cheq", True)
-        self._version: int = kwargs.get("charmm_version", 41)
-        self._universe: mda.Universe = None
-        self._fmtkey: str = "EXT" if self._extended else "STD"
+        self.filename = Path(filename).with_suffix(".psf")
+        self._extended = extended
+        self._cmap = cmap
+        self._cheq = cheq
+        self._version = charmm_version
+        self._universe: Optional[mda.Universe] = None
+        self._fmtkey = "EXT" if self._extended else "STD"
+        self.n_atoms = n_atoms
 
-        self.col_width: int = 10 if self._extended else 8
-        self.sect_hdr: str = "{:>10d} !{}" if self._extended else "{:>8d} !{}"
-        self.sect_hdr2: str = (
-            "{:>10d}{:>10d} !{}" if self._extended else "{:>8d}{:>8d} !{}"
-        )
+        self.col_width = 10 if self._extended else 8
+        self.sect_hdr = "{:>10d} !{}" if self._extended else "{:>8d} !{}"
+        self.sect_hdr2 = "{:>10d}{:>10d} !{}" if self._extended else "{:>8d}{:>8d} !{}"
         self.sections: Tuple[Tuple[str, str, int], ...] = (
             ("bonds", "NBOND: bonds", 8),
             ("angles", "NTHETA: angles", 9),
@@ -123,7 +131,7 @@ class Writer(base.TopologyWriterBase):
             ("acceptors", "NACC: acceptors", 8),
         )
 
-    def write(self, universe: Union[mda.Universe, mda.AtomGroup]):
+    def write(self, universe: Union[mda.Universe, mda.AtomGroup]) -> None:
         """Write universe to PSF format.
 
         Parameters
@@ -133,14 +141,14 @@ class Writer(base.TopologyWriterBase):
             definitions.
         """
         try:
-            self._universe: Union[mda.Universe, mda.AtomGroup] = universe.copy()
+            self._universe = universe.copy()
         except TypeError:
-            self._universe: mda.Universe(
+            self._universe = mda.Universe(
                 universe.filename, universe.trajectory.filename
             )
-        xplor: bool = not np.issubdtype(universe.atoms.types.dtype, np.number)
+        xplor = not np.issubdtype(universe.atoms.types.dtype, np.number)
 
-        header: str = "PSF"
+        header = "PSF"
         if self._extended:
             header += " EXT"
         if self._cheq:
@@ -159,7 +167,7 @@ class Writer(base.TopologyWriterBase):
         with open(self.filename, mode="w") as psffile:
             print(header, file=psffile)
             print(file=psffile)
-            n_title: int = len(self.title.strip().split("\n"))
+            n_title = len(self.title.strip().split("\n"))
             print(self.sect_hdr.format(n_title, "NTITLE"), file=psffile)
             print(textwrap.dedent(self.title).strip(), file=psffile)
             print(file=psffile)
@@ -168,7 +176,7 @@ class Writer(base.TopologyWriterBase):
                 self._write_sec(psffile, section)
             self._write_other(psffile)
 
-    def _write_atoms(self, psffile: TextIO):
+    def _write_atoms(self, psffile: TextIO) -> None:
         """Write atom section in a Charmm PSF file.
 
         Normal (standard) and extended (EXT) PSF format are
@@ -199,29 +207,33 @@ class Writer(base.TopologyWriterBase):
         )
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.0] = 0.0
-        lines: sf.Frame = sf.Frame.from_records(
+        lines = sf.Frame.from_concat(
             (
-                np.arange(atoms.n_atoms)[:, np.newaxis] + 1,
-                atoms.segids[:, np.newaxis],
-                atoms.resids[:, np.newaxis],
-                atoms.resnames[:, np.newaxis],
-                atoms.names[:, np.newaxis],
-                atoms.types[:, np.newaxis],
-                atoms.charges[:, np.newaxis],
-                atoms.masses[:, np.newaxis],
-                np.zeros_like(atoms.ids[:, np.newaxis]),
-            )
-        ).T
+                sf.Series(np.arange(atoms.n_atoms) + 1),
+                sf.Series(atoms.segids),
+                sf.Series(atoms.resids),
+                sf.Series(atoms.resnames),
+                sf.Series(atoms.names),
+                sf.Series(atoms.types),
+                sf.Series(atoms.charges),
+                sf.Series(atoms.masses),
+                sf.Series(np.zeros_like(atoms.ids)),
+            ),
+            columns="# segid resid resname name type charge mass id".split(),
+            axis=1,
+        )
 
         if self._cheq:
             fmt += "%10.6f%18s"
-            cheq: sf.Frame = sf.Frame.from_records(
+            cheq = sf.Frame.from_concat(
                 (
-                    np.zeros_like(atoms.masses[:, np.newaxis]),
-                    np.full_like(atoms.names[:, np.newaxis], "-0.301140E-02"),
-                )
-            ).T
-            lines: sf.Frame = sf.Frame.from_concat([lines, cheq], axis=1)
+                    sf.Series(np.zeros_like(atoms.masses)),
+                    sf.Series(np.full_like(atoms.names, "-0.301140E-02")),
+                ),
+                columns="x cheq".split(),
+                axis=1,
+            )
+            lines = sf.Frame.from_concat([lines, cheq], axis=1)
         np.savetxt(psffile, lines.values, fmt=fmt)
         print(file=psffile)
 
@@ -236,31 +248,31 @@ class Writer(base.TopologyWriterBase):
             print("\n", file=psffile)
             return
 
-        values: np.ndarray = np.asarray(getattr(self._universe, attr).to_indices()) + 1
-        values: np.ndarray = values.astype(object)
+        values = np.asarray(getattr(self._universe, attr).to_indices()) + 1
+        values = values.astype(object)
         n_rows, n_cols = values.shape
         n_values: int = n_perline // n_cols
         if n_rows % n_values > 0:
             n_extra: int = n_values - (n_rows % n_values)
-            values: np.ndarray = np.concatenate(
+            values = np.concatenate(
                 (values, np.full((n_extra, n_cols), "", dtype=np.object))
             )
-        values: np.ndarray = values.reshape((values.shape[0] // n_values, n_perline))
+        values = values.reshape((values.shape[0] // n_values, n_perline))
         print(self.sect_hdr.format(n_rows, header), file=psffile)
         np.savetxt(psffile, values, fmt=f"%{self.col_width:d}s", delimiter="")
         print(file=psffile)
 
     def _write_other(self, psffile: TextIO):
-        n_atoms: int = self._universe.atoms.n_atoms
-        n_cols: int = 8
-        dn_cols: int = n_atoms % n_cols
-        missing: int = n_cols - dn_cols if dn_cols > 0 else dn_cols
+        n_atoms = self._universe.atoms.n_atoms
+        n_cols = 8
+        dn_cols = n_atoms % n_cols
+        missing = n_cols - dn_cols if dn_cols > 0 else dn_cols
 
         # NNB
-        nnb: np.ndarray = np.full(n_atoms, "0", dtype=np.object)
+        nnb = np.full(n_atoms, "0", dtype=np.object)
         if missing > 0:
-            nnb: np.ndarray = np.concatenate([nnb, np.full(missing, "", dtype=object)])
-        nnb: np.ndarray = nnb.reshape((nnb.size // n_cols, n_cols))
+            nnb = np.concatenate([nnb, np.full(missing, "", dtype=object)])
+        nnb = nnb.reshape((nnb.size // n_cols, n_cols))
 
         print(self.sect_hdr.format(0, "NNB\n"), file=psffile)
         np.savetxt(psffile, nnb, fmt=f"%{self.col_width:d}s", delimiter="")
@@ -268,19 +280,17 @@ class Writer(base.TopologyWriterBase):
 
         # NGRP NST2
         print(self.sect_hdr2.format(1, 0, "NGRP NST2"), file=psffile)
-        line: np.ndarray = np.zeros(3, dtype=np.int)
+        line = np.zeros(3, dtype=np.int)
         line = line.reshape((1, line.size))
         np.savetxt(psffile, line, fmt=f"%{self.col_width:d}d", delimiter="")
         print(file=psffile)
 
         # MOLNT
         if self._cheq:
-            line: np.ndarray = np.full(n_atoms, "1", dtype=np.object)
+            line = np.full(n_atoms, "1", dtype=np.object)
             if dn_cols > 0:
-                line: np.ndarray = np.concatenate(
-                    [line, np.zeros(missing, dtype=object)]
-                )
-            line: np.ndarray = line.reshape((line.size // n_cols, n_cols))
+                line = np.concatenate([line, np.zeros(missing, dtype=object)])
+            line = line.reshape((line.size // n_cols, n_cols))
             print(self.sect_hdr.format(1, "MOLNT"), file=psffile)
             np.savetxt(psffile, line, fmt=f"%{self.col_width:d}s", delimiter="")
             print(file=psffile)
