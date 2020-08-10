@@ -41,7 +41,7 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import ClassVar, Dict, List, Mapping, Optional, TextIO, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -70,7 +70,7 @@ class Writer(topbase.TopologyWriterBase):
         Version of CHARMM for formatting (default: 41)
     """
 
-    format: ClassVar[str] = "RTF"
+    format = "RTF"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length=None)
     fmt: ClassVar[Dict[str, str]] = dict(
         HEADER="{:>5d}{:>5d}",
@@ -85,20 +85,26 @@ class Writer(topbase.TopologyWriterBase):
         ("IMPH", ("impropers", 8)),
     )
 
-    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        charmm_version: int = 41,
+        n_atoms: Optional[int] = None,
+    ) -> None:
         super().__init__()
-        self.filename: Path = Path(filename).with_suffix(".rtf")
-        self._version: int = kwargs.get("charmm_version", 41)
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
+        self._version: int = charmm_version
+        self.n_atoms = n_atoms
         self._atoms: mda.AtomGroup = None
         self.rtffile: TextIO = None
 
-    def _write_mass(self):
+    def _write_mass(self) -> None:
         _, idx = np.unique(self._atoms.names, return_index=True)
         try:
             atomtypes: np.ndarray = self._atoms[idx].types.astype(np.int)
         except ValueError:
-            atomtypes: np.ndarray = np.arange(idx.size, dtype=np.int) + 1
-        columns: np.ndarray = np.hstack(
+            atomtypes = np.arange(idx.size, dtype=np.int) + 1
+        columns = np.hstack(
             (
                 atomtypes[:, np.newaxis],
                 self._atoms.names[idx, np.newaxis],
@@ -110,13 +116,13 @@ class Writer(topbase.TopologyWriterBase):
             columns[:, 0] = -1
         np.savetxt(self.rtffile, columns, fmt=self.fmt["MASS"], delimiter="")
 
-    def _write_decl(self):
-        names: np.ndarray = np.unique(self._atoms.names)[:, np.newaxis]
-        decl: np.ndarray = np.hstack((names, names))
+    def _write_decl(self) -> None:
+        names = np.unique(self._atoms.names)[:, np.newaxis]
+        decl = np.hstack((names, names))
         np.savetxt(self.rtffile, decl, fmt=self.fmt["DECL"])
         print(file=self.rtffile)
 
-    def _write_residues(self, residue: groups.Residue):
+    def _write_residues(self, residue: groups.Residue) -> None:
         atoms: mda.AtomGroup = residue.atoms
 
         print(
@@ -136,7 +142,7 @@ class Writer(topbase.TopologyWriterBase):
         # Write the bond, angle, dihedral, and improper dihedral lines.
         for key, value in self.bonds:
             attr, n_perline = value
-            fmt: str = key + n_perline * "%10s"
+            fmt = key + n_perline * "%10s"
             try:
                 bonds: TopologyObject = getattr(atoms, attr)
                 if len(bonds) == 0:
@@ -144,18 +150,14 @@ class Writer(topbase.TopologyWriterBase):
 
                 # Create list of atom names and include "+" for atoms not
                 # within the residue.
-                names: np.ndarray = np.vstack(
-                    [_.atoms.names[np.newaxis, :] for _ in bonds]
-                )
+                names = np.vstack([_.atoms.names[np.newaxis, :] for _ in bonds])
 
                 idx: List[np.ndarray] = [
                     np.isin(_.atoms, atoms, invert=True) for _ in bonds
                 ]
-                idx: np.ndarray = np.any(idx, axis=1)
+                idx = np.any(idx, axis=1)
 
-                pos_names: np.ndarray = np.where(
-                    np.isin(bonds[idx], atoms, invert=True), "+", ""
-                )
+                pos_names = np.where(np.isin(bonds[idx], atoms, invert=True), "+", "")
                 if pos_names.size == 0:
                     logger.warning(
                         "Please check that all bond definitions are "
@@ -172,17 +174,17 @@ class Writer(topbase.TopologyWriterBase):
                 dtype: np.dtype = np.dtype(
                     (np.void, names.dtype.itemsize * names.shape[1])
                 )
-                sorted: np.ndarray = np.ascontiguousarray(np.sort(names)).view(dtype)
+                sorted = np.ascontiguousarray(np.sort(names)).view(dtype)
                 _, idx = np.unique(sorted, return_index=True)
                 names: np.ndarray = names[idx]
 
                 # Add padding for missing columns.
                 n_rows, n_cols = names.shape
-                n_values: int = n_perline // n_cols
+                n_values = n_perline // n_cols
                 if n_rows % n_values > 0:
-                    n_extra: int = n_values - (n_rows % n_values)
-                    extras: np.ndarray = np.full((n_extra, n_cols), "")
-                    names: np.ndarray = np.concatenate((names, extras))
+                    n_extra = n_values - (n_rows % n_values)
+                    extras = np.full((n_extra, n_cols), "")
+                    names = np.concatenate((names, extras))
                 names: np.ndarray = names.reshape(
                     (names.shape[0] // n_values, n_perline)
                 )
@@ -191,7 +193,7 @@ class Writer(topbase.TopologyWriterBase):
                 continue
         print(file=self.rtffile)
 
-    def write(self, universe: Union[mda.Universe, mda.AtomGroup], decl=True):
+    def write(self, universe: Union[mda.Universe, mda.AtomGroup], decl=True) -> None:
         """Write a CHARMM-formatted RTF topology file.
 
         Parameters
