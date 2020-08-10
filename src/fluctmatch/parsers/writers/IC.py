@@ -41,7 +41,7 @@
 import logging
 import textwrap
 from pathlib import Path
-from typing import ClassVar, Dict, Mapping, Optional, Union
+from typing import ClassVar, Dict, Optional, Union
 
 import numpy as np
 import static_frame as sf
@@ -69,7 +69,7 @@ class Writer(TopologyWriterBase):
         If no title is given, a default title will be written.
     """
 
-    format: ClassVar[str] = "IC"
+    format = "IC"
     units: ClassVar[Dict[str, Optional[str]]] = dict(
         time="picosecond", length="Angstrom"
     )
@@ -91,17 +91,17 @@ class Writer(TopologyWriterBase):
         ),
     )
 
-    def __init__(self, filename: Union[str, Path], **kwargs: Mapping):
+    def __init__(self, filename: Union[str, Path], *, extended: bool=True, resid: bool = True) -> None:
         super().__init__()
 
-        self.filename: Path = Path(filename).with_suffix(".ic")
-        self._intcor: Union[sf.Frame, None] = None
-        self._extended: bool = kwargs.get("extended", True)
-        self._resid: bool = kwargs.get("resid", True)
+        self.filename = Path(filename).with_suffix("." + self.format.lower())
+        self._intcor: Optional[sf.Frame] = None
+        self._extended: bool = extended
+        self._resid: bool = resid
         self.key: str = "EXTENDED" if self._extended else "STANDARD"
         self.key += "_RESID" if self._resid else ""
 
-    def write(self, table: sf.Frame):
+    def write(self, table: sf.Frame, /) -> None:
         """Write an internal coordinates table.
 
         Parameters
@@ -115,13 +115,13 @@ class Writer(TopologyWriterBase):
             print(textwrap.dedent(self.title).strip(), file=outfile)
 
             # Save the header information
-            line: np.ndarray = np.zeros((1, 20), dtype=int)
+            line = np.zeros((1, 20), dtype=int)
             line[0, 0]: int = 30 if self._extended else 20
             line[0, 1]: int = 2 if self._resid else 1
             np.savetxt(outfile, line, fmt="%4d", delimiter="")
 
             # Save the internal coordinates
-            line: np.ndarray = np.zeros((1, 2), dtype=int)
+            line = np.zeros((1, 2), dtype=int)
             n_rows, _ = table.shape
             line[0, 0] += n_rows
             line[0, 1] += 2 if self._resid else 1
