@@ -39,7 +39,7 @@
 """CHARMM PSF reader (for CHARMM36 style) and writer."""
 
 import logging
-from typing import Callable, ClassVar, List, Mapping, TextIO, Tuple, Union
+from typing import Callable, List, Mapping, TextIO, Union
 
 import numpy as np
 from MDAnalysis.core.topology import Topology
@@ -86,7 +86,7 @@ class Reader(PSFParser.PSFParser):
     .. _PSF: http://www.charmm.org/documentation/c35b1/struct.html
     """
 
-    format: ClassVar[str] = "PSF"
+    format = "PSF"
 
     def parse(self, **kwargs: Mapping) -> Topology:
         """Parse PSF file into Topology
@@ -97,28 +97,26 @@ class Reader(PSFParser.PSFParser):
         """
         # Open and check psf validity
         with open(self.filename) as psffile:
-            header: str = next(psffile)
+            header = next(psffile)
             if not header.startswith("PSF"):
-                err: str = (
-                    f"{self.filename} is not valid PSF file (header = {header})"
-                )
+                err = f"{self.filename} is not valid PSF file (header = {header})"
                 logger.error(err)
                 raise ValueError(err)
             header_flags: List[str] = header[3:].split()
 
             if "NAMD" in header_flags:
-                self._format: str = "NAMD"  # NAMD/VMD
+                self._format = "NAMD"  # NAMD/VMD
             elif "EXT" in header_flags:
-                self._format: str = "EXTENDED"  # CHARMM
+                self._format = "EXTENDED"  # CHARMM
             else:
-                self._format: str = "STANDARD"  # CHARMM
+                self._format = "STANDARD"  # CHARMM
             if "XPLOR" in header_flags:
                 self._format += "_XPLOR"
 
             next(psffile)
-            title: str = next(psffile).split()
+            title = next(psffile).split()
             if title[1] != "!NTITLE":
-                err: str = f"{psffile.name} is not a valid PSF file"
+                err = f"{psffile.name} is not a valid PSF file"
                 logger.error(err)
                 raise ValueError(err)
             # psfremarks = [psffile.next() for i in range(int(title[0]))]
@@ -208,23 +206,23 @@ class Reader(PSFParser.PSFParser):
             EXTENDED_XPLOR="I10,1X,A8,1X,A8,1X,A8,1X,A8,1X,A6,1X,2F14.6,I8",
             NAMD="I8,1X,A4,1X,A4,1X,A4,1X,A4,1X,I4,1X,2F14.6,I8",
         )
-        atom_parser: FORTRANReader = FORTRANReader(atom_parsers[self._format])
+        atom_parser = FORTRANReader(atom_parsers[self._format])
 
         # Allocate arrays
-        atomids: np.ndarray = np.zeros(numlines, dtype=np.int32)
-        segids: np.ndarray = np.zeros(numlines, dtype=object)
-        resids: np.ndarray = np.zeros(numlines, dtype=np.int32)
-        resnames: np.ndarray = np.zeros(numlines, dtype=object)
-        atomnames: np.ndarray = np.zeros(numlines, dtype=object)
-        atomtypes: np.ndarray = np.zeros(numlines, dtype=object)
-        charges: np.ndarray = np.zeros(numlines, dtype=np.float32)
-        masses: np.ndarray = np.zeros(numlines, dtype=np.float64)
+        atomids = np.zeros(numlines, dtype=np.int32)
+        segids = np.zeros(numlines, dtype=object)
+        resids = np.zeros(numlines, dtype=np.int32)
+        resnames = np.zeros(numlines, dtype=object)
+        atomnames = np.zeros(numlines, dtype=object)
+        atomtypes = np.zeros(numlines, dtype=object)
+        charges = np.zeros(numlines, dtype=np.float32)
+        masses = np.zeros(numlines, dtype=np.float64)
 
         for i in range(numlines):
             try:
-                line: str = lines()
+                line = lines()
             except StopIteration:
-                err: str = f"{self.filename} is not valid PSF file"
+                err = f"{self.filename} is not valid PSF file"
                 logger.error(err)
                 raise ValueError(err)
             try:
@@ -233,7 +231,7 @@ class Reader(PSFParser.PSFParser):
                 # last ditch attempt: this *might* be a NAMD/VMD
                 # space-separated "PSF" file from VMD version < 1.9.1
                 try:
-                    atom_parser: FORTRANReader = FORTRANReader(atom_parsers["NAMD"])
+                    atom_parser = FORTRANReader(atom_parsers["NAMD"])
                     values: List[str] = atom_parser.read(line)
                     logger.warning(
                         "Guessing that this is actually a NAMD-type "
@@ -242,7 +240,7 @@ class Reader(PSFParser.PSFParser):
                     )
                     logger.info("First NAMD-type line: %s: %s", i, line.rstrip())
                 except ValueError:
-                    atom_parser: FORTRANReader = FORTRANReader(
+                    atom_parser = FORTRANReader(
                         atom_parsers[self._format].replace("A6", "A4")
                     )
                     values: List[str] = atom_parser.read(line)
@@ -263,12 +261,12 @@ class Reader(PSFParser.PSFParser):
             masses[i]: float = values[7]
 
         # Atom
-        atomids: Atomids = Atomids(atomids - 1)
-        atomnames: Atomnames = Atomnames(atomnames)
-        atomtypes: Atomtypes = Atomtypes(atomtypes)
+        atomids = Atomids(atomids - 1)
+        atomnames = Atomnames(atomnames)
+        atomtypes = Atomtypes(atomtypes)
         charges[charges == -0.0] = 0.0
-        charges: Charges = Charges(charges)
-        masses: Masses = Masses(masses)
+        charges = Charges(charges)
+        masses = Masses(masses)
 
         # Residue
         # resids, resnames
@@ -276,15 +274,15 @@ class Reader(PSFParser.PSFParser):
             (resids, resnames, segids), (resids, resnames, segids)
         )
         # transform from atom:Rid to atom:Rix
-        residueids: Resids = Resids(new_resids)
-        residuenums: Resnums = Resnums(new_resids.copy())
-        residuenames: Resnames = Resnames(new_resnames)
+        residueids = Resids(new_resids)
+        residuenums = Resnums(new_resids.copy())
+        residuenames = Resnames(new_resnames)
 
         # Segment
         segidx, (perseg_segids,) = change_squash((perres_segids,), (perres_segids,))
-        segids: Segids = Segids(perseg_segids)
+        segids = Segids(perseg_segids)
 
-        top: Topology = Topology(
+        top = Topology(
             len(atomids),
             len(new_resids),
             len(segids),
