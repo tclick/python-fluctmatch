@@ -49,7 +49,7 @@ from MDAnalysis.coordinates.base import IOBase, _Readermeta, _Writermeta
 class TopologyReaderBase(IOBase, metaclass=_Readermeta):
     """Base class for reading topology files."""
 
-    def __init_subclass__(cls, **kwargs: Mapping):
+    def __init_subclass__(cls, **kwargs: Mapping) -> None:
         super().__init_subclass__(**kwargs)
 
     def read(self):  # pragma: no cover
@@ -63,12 +63,12 @@ class TopologyWriterBase(IOBase, metaclass=_Writermeta):
     def __init_subclass__(cls, **kwargs: Mapping):
         super().__init_subclass__(**kwargs)
 
-    def __init__(self):
-        self.title: str = f"""
+    def __init__(self) -> None:
+        self.title = f"""
             * Created by fluctmatch on {time.asctime(time.localtime())}
             * User: {os.environ.get("USER", "User")}"""
 
-    def write(self, selection: Union[mda.Universe, mda.AtomGroup]):
+    def write(self, selection: Union[mda.Universe, mda.AtomGroup], /) -> None:
         """Write selection at current trajectory frame to file.
 
         Parameters
