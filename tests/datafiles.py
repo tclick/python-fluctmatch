@@ -56,6 +56,7 @@ __all__ = [
     "DCD",
     "IC",
     "COR",
+    "PAR",
     "PRM",
     "RTF",
     "STR",
@@ -74,6 +75,7 @@ NCSC = resource_filename(__name__, Path().joinpath("data", "ncsc.pdb").as_posix(
 PSF = resource_filename(__name__, Path().joinpath("data", "cg.xplor.psf").as_posix())
 DCD = resource_filename(__name__, Path().joinpath("data", "cg.dcd").as_posix())
 IC = resource_filename(__name__, Path().joinpath("data", "fluct.ic").as_posix())
+PAR = resource_filename(__name__, Path().joinpath("data", "fluctmatch.par").as_posix())
 PRM = resource_filename(__name__, Path().joinpath("data", "fluctmatch.prm").as_posix())
 COR = resource_filename(__name__, Path().joinpath("data", "cg.cor").as_posix())
 RTF = resource_filename(__name__, Path().joinpath("data", "cg.rtf").as_posix())

@@ -27,23 +27,33 @@ class TestCharmmInit:
     def test_simulate(self):
         with tempfile.NamedTemporaryFile(mode="r+", suffix="inp") as infile:
             directory = Path(infile.name).parent
-            init = FluctMatch(output_dir=directory)
+            simulator = FluctMatch(output_dir=directory)
             with patch("subprocess.check_call") as check_call:
-                init.simulate(input_dir=directory)
+                simulator.simulate(input_dir=directory)
                 check_call.assert_called()
 
     def test_simulate_error(self):
         with tempfile.NamedTemporaryFile(mode="r+", suffix="inp") as infile:
             directory = Path(infile.name).parent
-            init = FluctMatch(output_dir=directory)
-            pytest.raises(IOError, init.simulate, input_dir=directory, executable=None)
+            simulator = FluctMatch(output_dir=directory)
+            pytest.raises(
+                IOError, simulator.simulate, input_dir=directory, executable=None
+            )
 
     def test_calculate(self):
         with tempfile.NamedTemporaryFile(mode="r+", suffix="inp") as infile:
-            directory: Path = Path(infile.name).parent
-            init: FluctMatch = FluctMatch(output_dir=directory)
-            init.data["average"] = IC
-            init.data["fluctuation"] = init.data["average"]
-            parameters: sf.Frame = init.calculate()
+            directory = Path(infile.name).parent
+            simulator = FluctMatch(output_dir=directory)
+            simulator.data["average"] = IC
+            simulator.data["fluctuation"] = simulator.data["average"]
+            parameters: sf.Frame = simulator.calculate()
             assert isinstance(parameters, sf.Frame)
             assert parameters.size > 0
+
+    def test_simulate_calculate(self):
+        with tempfile.NamedTemporaryFile(mode="r+", suffix="inp") as infile:
+            directory = Path(infile.name).parent
+            simulator = FluctMatch(output_dir=directory)
+            with patch("subprocess.check_call") as check_call:
+                simulator.simulate_calculate(input_dir=directory)
+                check_call.assert_called()
