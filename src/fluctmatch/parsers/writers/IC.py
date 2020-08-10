@@ -91,7 +91,7 @@ class Writer(TopologyWriterBase):
         ),
     )
 
-    def __init__(self, filename: Union[str, Path], *, extended: bool=True, resid: bool = True) -> None:
+    def __init__(self, filename: Union[str, Path], *, extended: bool=True, resid: bool = True, n_atoms: Optional[int] = None) -> None:
         super().__init__()
 
         self.filename = Path(filename).with_suffix("." + self.format.lower())
@@ -100,6 +100,7 @@ class Writer(TopologyWriterBase):
         self._resid: bool = resid
         self.key: str = "EXTENDED" if self._extended else "STANDARD"
         self.key += "_RESID" if self._resid else ""
+        self.n_atoms = n_atoms
 
     def write(self, table: sf.Frame, /) -> None:
         """Write an internal coordinates table.
