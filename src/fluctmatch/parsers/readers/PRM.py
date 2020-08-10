@@ -63,15 +63,15 @@ class Reader(TopologyReaderBase):
     format = "PRM"
     units: ClassVar[Dict[str, Optional[str]]] = dict(time=None, length="Angstrom")
 
-    _headers = namedtuple("_neaders", ("ATOMS BONDS ANGLES DIHEDRALS IMPROPERS"))
-    _columns = _headers(
+    _HEADERS = namedtuple("_neaders", ("ATOMS BONDS ANGLES DIHEDRALS IMPROPERS"))
+    _COLUMNS = _HEADERS(
         ATOMS=tuple("header type atom mass".split()),
         BONDS=tuple("I J Kb b0".split()),
         ANGLES=tuple("I J K Ktheta theta0 Kub S0".split()),
         DIHEDRALS=tuple("I J K L Kchi n delta".split()),
         IMPROPERS=tuple("I J K L Kchi n delta".split()),
     )
-    _dtypes = _headers(
+    _DTYPES = _HEADERS(
         ATOMS=dict(header=str, type=int, atom=str, mass=float),
         BONDS=dict(I=str, J=str, Kb=float, b0=float),
         ANGLES=dict(
@@ -91,8 +91,8 @@ class Reader(TopologyReaderBase):
         -------
         Named tuple with CHARMM parameters per key.
         """
-        headers: Tuple[str, ...] = self._headers._fields
-        buffers: Dict[str, List] = {_: [] for _ in self._headers._fields}
+        headers: Tuple[str, ...] = self._HEADERS._fields
+        buffers: Dict[str, List] = {_: [] for _ in self._HEADERS._fields}
 
         with open(self.filename) as prmfile:
             for line in prmfile:
@@ -115,15 +115,15 @@ class Reader(TopologyReaderBase):
 
                 buffers[section].append(line.split())
 
-        parameters = self._headers(
+        parameters = self._HEADERS(
             **{
                 _: sf.Frame.from_records(
                     buffers[_],
-                    columns=getattr(self._columns, _),
-                    dtypes=getattr(self._dtypes, _),
+                    columns=getattr(self._COLUMNS, _),
+                    dtypes=getattr(self._DTYPES, _),
                     name=_.lower(),
                 )
-                for _ in self._headers._fields
+                for _ in self._HEADERS._fields
             }
         )
         if parameters.ATOMS.size > 0:

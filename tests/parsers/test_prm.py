@@ -38,27 +38,36 @@
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
-from typing import Dict, Mapping, Union
+from typing import Mapping, NamedTuple, Union
 from unittest.mock import patch
 
 import MDAnalysis as mda
-import pandas as pd
-import static_frame as sf
 import pytest
+import static_frame as sf
 from numpy.testing import assert_allclose
 
 import fluctmatch.parsers.readers.PRM as ParamReader
-import fluctmatch.parsers.writers.PRM
 from tests.datafiles import PRM
 
 
-class TestPRMWriter(object):
+class TestPRMReader:
+    def test_reader(self):
+        with ParamReader.Reader(PRM) as infile:
+            parameters = infile.read()
+
+        assert isinstance(parameters, ParamReader.Reader._HEADERS)
+        assert parameters.ATOMS.size > 0
+        assert parameters.BONDS.size > 0
+        assert parameters.ANGLES.size == 0
+
+
+class TestPRMWriter:
     @pytest.fixture()
-    def parameters(self) -> Dict[str, sf.Frame]:
+    def parameters(self) -> NamedTuple:
         return ParamReader.Reader(PRM).read()
 
     def test_writer(self, parameters: sf.Frame, tmp_path: Path):
-        filename: Path = tmp_path / "temp.prm"
+        filename = tmp_path / "temp.prm"
         with patch("fluctmatch.parsers.writers.PRM.Writer.write") as writer, mda.Writer(
             filename, nonbonded=True
         ) as ofile:
@@ -66,26 +75,26 @@ class TestPRMWriter(object):
             writer.assert_called()
 
     def test_parameters(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
-        filename: Path = tmp_path / "temp.prm"
+        filename = tmp_path / "temp.prm"
         with mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(parameters)
 
-        new_parameters: sf.Frame = ParamReader.Reader(filename).read()
+        new_parameters: NamedTuple = ParamReader.Reader(filename).read()
         assert_allclose(
-            parameters["ATOMS"]["mass"],
-            new_parameters["ATOMS"]["mass"],
+            parameters.ATOMS["mass"],
+            new_parameters.ATOMS["mass"],
             err_msg="The atomic masses don't match.",
         )
         assert_allclose(
-            parameters["BONDS"]["Kb"],
-            new_parameters["BONDS"]["Kb"],
+            parameters.BONDS["Kb"],
+            new_parameters.BONDS["Kb"],
             err_msg="The force constants don't match.",
         )
 
     def test_roundtrip(self, parameters: Mapping[str, sf.Frame], tmp_path: Path):
         # Write out a copy of the internal coordinates, and compare this against
         # the original. This is more rigorous as it checks all formatting.
-        filename: Path = tmp_path / "temp.prm"
+        filename = tmp_path / "temp.prm"
         with mda.Writer(filename, nonbonded=True) as ofile:
             ofile.write(parameters)
 
