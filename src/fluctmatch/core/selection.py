@@ -38,7 +38,8 @@
 # ------------------------------------------------------------------------------
 
 import numpy as np
-from MDAnalysis.core import AtomGroup, selection
+from MDAnalysis.core import selection
+from MDAnalysis.core.groups import AtomGroup
 
 
 class BioIonSelection(selection.Selection):
