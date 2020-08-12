@@ -42,7 +42,6 @@ import pytest
 from numpy import testing
 
 from fluctmatch.core.models import calpha, caside, ncsc, polar
-
 from ..datafiles import TPR, XTC
 
 
@@ -56,7 +55,7 @@ class TestCalpha:
     def system(self) -> calpha.Model:
         return calpha.Model()
 
-    def test_creation(self, u: mda.Universe, system: calpha.Model):
+    def test_creation(self, u: mda.Universe, system: calpha.Model) -> None:
         system.create_topology(u)
 
         n_atoms = u.select_atoms("calpha or bioion").n_atoms
@@ -66,15 +65,17 @@ class TestCalpha:
             err_msg="Number of sites don't match.",
         )
 
-    def test_positions(self, u: mda.Universe, system: calpha.Model):
+    def test_positions(self, u: mda.Universe, system: calpha.Model) -> None:
         cg_universe: mda.Universe = system.transform(u)
 
-        positions: np.ndarray = np.asarray(
+        positions = np.asarray(
             [
-                residue.atoms.select_atoms(sel).center_of_mass()
+                residue.atoms.select_atoms(
+                    getattr(system._mapping, key)
+                ).center_of_mass()
                 for residue in u.select_atoms("protein or bioion").residues
-                for sel in system._mapping.values()
-                if residue.atoms.select_atoms(sel)
+                for key in system._mapping._fields
+                if residue.atoms.select_atoms(getattr(system._mapping, key))
             ]
         )
 
@@ -84,7 +85,7 @@ class TestCalpha:
             err_msg="The coordinates do not match.",
         )
 
-    def test_trajectory(self, u: mda.Universe, system: calpha.Model):
+    def test_trajectory(self, u: mda.Universe, system: calpha.Model) -> None:
         cg_universe: mda.Universe = system.transform(u)
 
         testing.assert_equal(
@@ -94,17 +95,12 @@ class TestCalpha:
         )
 
 
-class TestCaside:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        universe = mda.Universe(TPR, XTC)
-        return mda.Merge(universe.residues[:6].atoms)
-
+class TestCaside(TestCalpha):
     @pytest.fixture(scope="class")
     def system(self) -> caside.Model:
         return caside.Model()
 
-    def test_creation(self, u: mda.Universe, system: caside.Model):
+    def test_creation(self, u: mda.Universe, system: caside.Model) -> None:
         system.create_topology(u)
 
         n_atoms = u.select_atoms("calpha or cbeta or bioion").n_atoms
@@ -114,40 +110,8 @@ class TestCaside:
             err_msg="Number of sites not equal.",
         )
 
-    def test_positions(self, u: mda.Universe, system: caside.Model):
-        cg_universe: mda.Universe = system.transform(u)
 
-        positions: np.ndarray = np.asarray(
-            [
-                residue.atoms.select_atoms(sel).center_of_mass()
-                for residue in u.select_atoms("protein or bioion").residues
-                for sel in system._mapping.values()
-                if residue.atoms.select_atoms(sel)
-            ]
-        )
-
-        testing.assert_allclose(
-            cg_universe.atoms.positions,
-            positions,
-            err_msg="The coordinates do not match.",
-        )
-
-    def test_trajectory(self, u: mda.Universe, system: caside.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames,
-            u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.",
-        )
-
-
-class TestNcsc:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        universe = mda.Universe(TPR, XTC)
-        return mda.Merge(universe.residues[:6].atoms)
-
+class TestNcsc(TestCalpha):
     @pytest.fixture(scope="class")
     def system(self) -> ncsc.Model:
         return ncsc.Model()
@@ -163,40 +127,8 @@ class TestNcsc:
             err_msg="Number of sites not equal.",
         )
 
-    def test_positions(self, u: mda.Universe, system: ncsc.Model):
-        cg_universe: mda.Universe = system.transform(u)
 
-        positions: np.ndarray = np.asarray(
-            [
-                residue.atoms.select_atoms(sel).center_of_mass()
-                for residue in u.select_atoms("protein or bioion").residues
-                for sel in system._mapping.values()
-                if residue.atoms.select_atoms(sel)
-            ]
-        )
-
-        testing.assert_allclose(
-            cg_universe.atoms.positions,
-            positions,
-            err_msg="The coordinates do not match.",
-        )
-
-    def test_trajectory(self, u: mda.Universe, system: ncsc.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames,
-            u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.",
-        )
-
-
-class TestPolar:
-    @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        universe = mda.Universe(TPR, XTC)
-        return mda.Merge(universe.residues[:6].atoms)
-
+class TestPolar(TestCalpha):
     @pytest.fixture(scope="class")
     def system(self) -> polar.Model:
         return polar.Model()
@@ -221,14 +153,15 @@ class TestPolar:
         beads: List[mda.AtomGroup] = []
 
         for residue in u.select_atoms("protein or bioion").residues:
-            for sel in system._mapping.values():
-                if isinstance(sel, dict):
-                    value: mda.AtomGroup = sel.get(
+            for key in system._mapping._fields:
+                selection = getattr(system._mapping, key)
+                if isinstance(selection, dict):
+                    value: mda.AtomGroup = getattr(system._mapping, key).get(
                         residue.resname, "hsidechain and not name H*"
                     )
                     bead: mda.AtomGroup = residue.atoms.select_atoms(value)
                 else:
-                    bead: mda.AtomGroup = residue.atoms.select_atoms(sel)
+                    bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
                 if bead:
                     beads.append(bead)
 
@@ -242,20 +175,10 @@ class TestPolar:
             err_msg="The coordinates do not match.",
         )
 
-    def test_trajectory(self, u: mda.Universe, system: polar.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames,
-            u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.",
-        )
-
     def test_ncsc_polar_positions(
         self, u: mda.Universe, system: polar.Model, other: ncsc.Model
-    ):
+    ) -> None:
         polar_universe: mda.Universe = system.transform(u)
-
         ncsc_universe: mda.Universe = other.transform(u)
 
         testing.assert_raises(
