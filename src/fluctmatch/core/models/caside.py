@@ -38,9 +38,9 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using C-alpha and C-beta positions"""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, NoReturn, Tuple
 
-import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
@@ -50,31 +50,46 @@ from ..selection import *
 class Model(ModelBase):
     """Universe consisting of the C-alpha and sidechains of a protein."""
 
-    model: ClassVar[str] = "CASIDE"
-    description: ClassVar[str] = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
+    model = "CASIDE"
+    description = "C-alpha and sidechain (c.o.m./c.o.g.) of protein"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping: Mapping[str, str] = dict(
+        BEADS = namedtuple("BEADS", "CA CB ions")
+        self._mapping = BEADS(
             CA="calpha", CB="hsidechain and not name H*", ions="bioion"
         )
-        self._selection: Mapping[str, str] = dict(
-            CA="hbackbone", CB="hsidechain", ions="bioion"
-        )
+        self._selection = BEADS(CA="hbackbone", CB="hsidechain", ions="bioion")
 
     def _add_bonds(self) -> NoReturn:
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds intraresidue C-alpha and C-beta atoms.
         residues = self.universe.select_atoms("protein and not resname GLY").residues
-        atom1: mda.AtomGroup = residues.atoms.select_atoms("calpha")
-        atom2: mda.AtomGroup = residues.atoms.select_atoms("cbeta")
-        bonds.extend(list(zip(atom1.ix, atom2.ix)))
+        atom1: AtomGroup = residues.atoms.select_atoms("calpha")
+        atom2: AtomGroup = residues.atoms.select_atoms("cbeta")
+        bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
 
         # Create interresidue C-alpha bonds within a segment
         for segment in self.universe.segments:
-            atoms: mda.AtomGroup = segment.atoms.select_atoms("calpha")
-            bonds.extend(list(zip(atoms.ix[1:], atoms.ix[:-1])))
+            atoms: AtomGroup = segment.atoms.select_atoms("calpha")
+            bonds.extend(tuple(zip(atoms.ix[1:], atoms.ix[:-1])))
 
         self.universe.add_TopologyAttr(Bonds(bonds))

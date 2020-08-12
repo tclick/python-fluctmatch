@@ -38,45 +38,59 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using N, carboxyl oxygens, and polar sidechains.
 """
+from typing import NamedTuple
 
-from typing import ClassVar, Mapping
-
-from ..selection import *
 from . import ncsc
 
 
 class Model(ncsc.Model):
     """Universe consisting of the amine, carboxyl, and polar regions."""
 
-    model: ClassVar[str] = "POLAR"
-    description: ClassVar[
-        str
-    ] = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
+    model = "POLAR"
+    description = "c.o.m./c.o.g. of N, C, and polar sidechains of protein"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping["CB"]: Mapping[str, str] = dict(
-            ALA="name CB",
-            ARG="name NH*",
-            ASN="name OD1 ND2",
-            ASP="name OD*",
-            CYS="name SG",
-            GLN="name OE1 NE2",
-            GLU="name OE*",
-            HIS="name CG ND1 CD2 CE1 NE2",
-            HSD="name CG ND1 CD2 CE1 NE2",
-            HSE="name CG ND1 CD2 CE1 NE2",
-            HSP="name CG ND1 CD2 CE1 NE2",
-            ILE="name CG1 CG2 CD",
-            LEU="name CD1 CD2",
-            LYS="name NZ",
-            MET="name SD",
-            PHE="name CG CD* CE* CZ",
-            PRO="name CG",
-            SER="name OG",
-            THR="name OG1",
-            TRP="name CG CD* NE CE* CZ* CH",
-            TYR="name CG CD* CE* CZ OH",
-            VAL="name CG1 CG2",
+        self._mapping: NamedTuple = self._mapping._replace(
+            CB=dict(
+                ALA="name CB",
+                ARG="name NH*",
+                ASN="name OD1 ND2",
+                ASP="name OD*",
+                CYS="name SG",
+                GLN="name OE1 NE2",
+                GLU="name OE*",
+                HIS="name CG ND1 CD2 CE1 NE2",
+                HSD="name CG ND1 CD2 CE1 NE2",
+                HSE="name CG ND1 CD2 CE1 NE2",
+                HSP="name CG ND1 CD2 CE1 NE2",
+                ILE="name CG1 CG2 CD",
+                LEU="name CD1 CD2",
+                LYS="name NZ",
+                MET="name SD",
+                PHE="name CG CD* CE* CZ",
+                PRO="name CG",
+                SER="name OG",
+                THR="name OG1",
+                TRP="name CG CD* NE CE* CZ* CH",
+                TYR="name CG CD* CE* CZ OH",
+                VAL="name CG1 CG2",
+            )
         )

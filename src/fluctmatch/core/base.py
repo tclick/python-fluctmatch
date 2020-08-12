@@ -42,12 +42,10 @@ import abc
 import itertools
 import logging
 import string
-from collections import OrderedDict
-from typing import Iterable, Iterator, List, MutableMapping, NoReturn, TypeVar, Union
+from typing import Dict, Iterable, List, NamedTuple, Optional, TypeVar, Union
 
 import MDAnalysis as mda
 import numpy as np
-from class_registry import AutoRegister, ClassRegistry
 from MDAnalysis.coordinates.memory import MemoryReader
 from MDAnalysis.core.topologyattrs import (
     Angles,
@@ -63,17 +61,14 @@ from MDAnalysis.core.topologyattrs import (
     Resnames,
     Resnums,
     Segids,
-    TopologyAttr,
 )
-from MDAnalysis.core.topologyobjects import TopologyGroup
-from MDAnalysis.topology import base as topbase
-from MDAnalysis.topology import guessers
-
-from ..libs.typing import StrMapping
+from MDAnalysis.topology import base as topbase, guessers
+from class_registry import AutoRegister, ClassRegistry
 
 logger: logging.Logger = logging.getLogger(__name__)
-MDUniverse: TypeVar = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
-models: ClassRegistry = ClassRegistry("model")
+MDUniverse = TypeVar("MDUniverse", mda.Universe, Iterable[mda.Universe])
+TModels = TypeVar("TModels", bound="ModelBase")
+models = ClassRegistry("model")
 
 
 class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
@@ -101,9 +96,10 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         Once Universe has been created, attempt to guess the connectivity
         between atoms.  This will populate the .angles, .dihedrals, and
         .impropers attributes of the Universe.
-    cutoff : float, optional
-        Used as a bond distance cutoff for an elastic network model; otherwise,
-        ignored.
+    rmin : float, optional
+        Minimum cutoff for bond lengths
+    rmax : float, optional
+        Maximum cutoff for bond lengths
 
     Attributes
     ----------
@@ -111,7 +107,16 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         The transformed universe
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
         """Initialise like a normal MDAnalysis Universe but give the mapping and
         com keywords.
 
@@ -129,22 +134,22 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         # Make a blank Universe for myself.
         super().__init__()
 
-        self.universe: Union[mda.Universe, None] = None
-        self._xplor: bool = kwargs.pop("xplor", True)
-        self._extended: bool = kwargs.pop("extended", True)
-        self._com: bool = kwargs.pop("com", True)
-        self._guess: bool = kwargs.pop("guess_angles", True)
-        self._rmin: float = np.clip(kwargs.pop("rmin", 0.0), 0.0, None)
-        self._rmax: float = np.clip(kwargs.pop("rmax", 10.0), self._rmin + 0.1, None)
+        self.universe: Optional[MDUniverse] = None
+        self._xplor = xplor
+        self._extended = extended
+        self._com = com
+        self._guess = guess_angles
+        self._rmin = np.clip(rmin, 0.0, None)
+        self._rmax = np.clip(rmax, self._rmin + 0.1, None)
 
         # Dictionary for specific bead selection
-        self._mapping: MutableMapping[str, StrMapping] = OrderedDict()
+        self._mapping: Optional[NamedTuple] = None
 
         # Dictionary for all-atom to bead selection. This is particularly useful
         # for mass and charge topology attributes.
-        self._selection: MutableMapping[str, StrMapping] = dict()
+        self._selection: Optional[NamedTuple] = None
 
-    def create_topology(self, universe: mda.Universe) -> NoReturn:
+    def create_topology(self, universe: mda.Universe) -> None:
         """Deteremine the topology attributes and initialize the universe.
 
         Parameters
@@ -155,35 +160,30 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         # Allocate arrays
         beads: List[mda.AtomGroup] = []
         atomnames: List[str] = []
-        selections: Iterator = itertools.product(
-            universe.residues, self._mapping.items()
-        )
+        selections = itertools.product(universe.residues, self._mapping._fields)
 
-        for residue, (name, selection) in selections:
+        for residue, name in selections:
+            selection: Union[Dict, str] = getattr(self._mapping, name)
             if isinstance(selection, dict):
-                value: mda.AtomGroup = selection.get(
-                    residue.resname[0], "hsidechain and not name H*"
-                )
-                bead: mda.AtomGroup = residue.atoms.select_atoms(value)
+                value = selection.get(residue.resname[0], "hsidechain and not name H*")
+                bead = residue.atoms.select_atoms(value)
             else:
-                bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
+                bead = residue.atoms.select_atoms(selection)
             if bead:
                 beads.append(bead)
                 atomnames.append(name)
 
-        atomids: np.ndarray = np.arange(len(beads), dtype=int)
+        atomids = np.arange(len(beads), dtype=int)
 
         # Atom
-        vdwradii: Radii = Radii(np.zeros_like(atomids, dtype=np.float32))
-        atomids: Atomids = Atomids(atomids)
-        atomnames: Atomnames = Atomnames(atomnames)
+        vdwradii = Radii(np.zeros_like(atomids, dtype=np.float32))
+        atomids = Atomids(atomids)
+        atomnames = Atomnames(atomnames)
 
         # Residue
-        resids: np.ndarray = np.asarray([bead.resids[0] for bead in beads], dtype=int)
-        resnames: np.ndarray = np.asarray(
-            [bead.resnames[0] for bead in beads], dtype=object
-        )
-        segids: np.ndarray = np.asarray(
+        resids = np.asarray([bead.resids[0] for bead in beads], dtype=int)
+        resnames = np.asarray([bead.resnames[0] for bead in beads], dtype=object)
+        segids = np.asarray(
             [bead.segids[0].split("_")[-1] for bead in beads], dtype=object
         )
         residx, (new_resids, new_resnames, perres_segids) = topbase.change_squash(
@@ -191,16 +191,16 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         )
 
         # transform from atom:Rid to atom:Rix
-        residueids: Resids = Resids(new_resids)
-        residuenums: Resnums = Resnums(new_resids.copy())
-        residuenames: Resnames = Resnames(new_resnames)
+        residueids = Resids(new_resids)
+        residuenums = Resnums(new_resids.copy())
+        residuenames = Resnames(new_resnames)
 
         # Segment
         segidx, perseg_segids = topbase.squash_by(perres_segids)[:2]
-        segids: Segids = Segids(perseg_segids)
+        segids = Segids(perseg_segids)
 
         # Create universe and add attributes
-        self.universe: mda.Universe = mda.Universe.empty(
+        self.universe = mda.Universe.empty(
             len(atomids),
             n_residues=len(new_resids),
             n_segments=len(segids),
@@ -210,7 +210,7 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         )
 
         # Add additonal attributes
-        attrs: List[TopologyAttr] = [
+        attrs = [
             atomids,
             atomnames,
             vdwradii,
@@ -225,7 +225,7 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         self._add_masses(universe)
         self._add_charges(universe)
 
-    def generate_bonds(self) -> NoReturn:
+    def generate_bonds(self) -> None:
         """Generate connectivity information for the new system."""
         if not hasattr(self, "universe"):
             raise AttributeError(
@@ -237,7 +237,7 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
             self._add_dihedrals()
             self._add_impropers()
 
-    def add_trajectory(self, universe: mda.Universe) -> NoReturn:
+    def add_trajectory(self, universe: mda.Universe) -> None:
         """Add coordinates to the new system.
 
         Parameters
@@ -257,18 +257,15 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         trajectory = universe.trajectory
         trajectory.rewind()
 
-        selections: Iterator = itertools.product(
-            universe.residues, self._mapping.values()
-        )
+        selections = itertools.product(universe.residues, self._mapping._fields)
         beads: List[mda.AtomGroup] = []
-        for residue, selection in selections:
+        for residue, key in selections:
+            selection = getattr(self._mapping, key)
             if isinstance(selection, dict):
-                value: mda.AtomGroup = selection.get(
-                    residue.resname, "hsidechain and not name H*"
-                )
-                bead: mda.AtomGroup = residue.atoms.select_atoms(value)
+                value = selection.get(residue.resname, "hsidechain and not name H*")
+                bead = residue.atoms.select_atoms(value)
             else:
-                bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
+                bead = residue.atoms.select_atoms(selection)
             beads.append(bead)
 
         trajectory2 = self.universe.trajectory
@@ -308,16 +305,16 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
             except (AttributeError, mda.NoDataError):
                 pass
 
-        trajectory2.dimensions_array: np.ndarray = np.asarray(dimension_array)
+        trajectory2.dimensions_array = np.asarray(dimension_array)
         if trajectory2.ts.has_positions:
-            position_array: np.ndarray = np.asarray(position_array)
+            position_array = np.asarray(position_array)
             self.universe.load_new(
                 position_array, format=MemoryReader, dimensions=dimension_array
             )
         if trajectory2.ts.has_velocities:
-            trajectory2.velocity_array: np.ndarray = np.asarray(velocity_array)
+            trajectory2.velocity_array = np.asarray(velocity_array)
         if trajectory2.ts.has_forces:
-            trajectory2.force_array: np.ndarray = np.asarray(force_array)
+            trajectory2.force_array = np.asarray(force_array)
         universe.trajectory.rewind()
 
     def transform(self, universe: mda.Universe) -> mda.Universe:
@@ -340,76 +337,68 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         self.add_trajectory(universe)
         return self.universe
 
-    def _add_atomtypes(self) -> NoReturn:
-        n_atoms: int = self.universe.atoms.n_atoms
-        atomtypes: Atomtypes = Atomtypes(np.arange(n_atoms) + 100)
+    def _add_atomtypes(self) -> None:
+        n_atoms = self.universe.atoms.n_atoms
+        atomtypes = Atomtypes(np.arange(n_atoms) + 100)
         self.universe.add_TopologyAttr(atomtypes)
 
-    def _add_masses(self, universe: mda.Universe) -> NoReturn:
+    def _add_masses(self, universe: mda.Universe) -> None:
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
-        select_residues: Iterator = itertools.product(
-            residues, self._selection.values()
-        )
+        select_residues = itertools.product(residues, self._selection._fields)
 
         try:
-            masses: np.ndarray = np.fromiter(
+            masses = np.fromiter(
                 [
-                    res.select_atoms(selection).total_mass()
-                    for res, selection in select_residues
-                    if res.select_atoms(selection)
+                    res.select_atoms(getattr(self._selection, key)).total_mass()
+                    for res, key in select_residues
+                    if res.select_atoms(getattr(self._selection, key))
                 ],
                 dtype=np.float32,
             )
         except (AttributeError, mda.NoDataError):
-            masses: np.ndarray = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
+            masses = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
 
         self.universe.add_TopologyAttr(Masses(masses))
 
-    def _add_charges(self, universe: mda.Universe) -> NoReturn:
+    def _add_charges(self, universe: mda.Universe) -> None:
         residues: List[mda.AtomGroup] = universe.atoms.split("residue")
-        select_residues: Iterator = itertools.product(
-            residues, self._selection.values()
-        )
+        select_residues = itertools.product(residues, self._selection._fields)
 
         try:
-            charges: np.ndarray = np.fromiter(
+            charges = np.fromiter(
                 [
-                    res.select_atoms(selection).total_charge()
-                    for res, selection in select_residues
-                    if res.select_atoms(selection)
+                    res.select_atoms(getattr(self._selection, key)).total_charge()
+                    for res, key in select_residues
+                    if res.select_atoms(getattr(self._selection, key))
                 ],
                 dtype=np.float32,
             )
         except (AttributeError, mda.NoDataError):
-            charges: np.ndarray = np.zeros(
-                self.universe.atoms.n_atoms, dtype=np.float32
-            )
+            charges = np.zeros(self.universe.atoms.n_atoms, dtype=np.float32)
 
         self.universe.add_TopologyAttr(Charges(charges))
 
     @abc.abstractmethod
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self: TModels) -> None:
         pass
 
-    def _add_angles(self) -> NoReturn:
+    def _add_angles(self) -> None:
         try:
-            angles: TopologyGroup = guessers.guess_angles(self.universe.bonds)
+            angles = guessers.guess_angles(self.universe.bonds)
             self.universe.add_TopologyAttr(Angles(angles))
         except AttributeError:
             pass
 
-    def _add_dihedrals(self) -> NoReturn:
+    def _add_dihedrals(self) -> None:
         try:
-            dihedrals: TopologyGroup = guessers.guess_dihedrals(self.universe.angles)
+            dihedrals = guessers.guess_dihedrals(self.universe.angles)
             self.universe.add_TopologyAttr(Dihedrals(dihedrals))
         except AttributeError:
             pass
 
-    def _add_impropers(self) -> NoReturn:
+    def _add_impropers(self) -> None:
         try:
-            impropers: TopologyGroup = guessers.guess_improper_dihedrals(
-                self.universe.angles
-            )
+            impropers = guessers.guess_improper_dihedrals(self.universe.angles)
             self.universe.add_TopologyAttr(Impropers(impropers))
         except AttributeError:
             pass
@@ -432,8 +421,8 @@ def Merge(*args: MDUniverse) -> mda.Universe:
     )
 
     # Merge universes
-    universe: mda.Universe = mda.Merge(*[u.atoms for u in args])
-    trajectory: mda._READERS[universe.trajectory.format] = universe.trajectory
+    universe = mda.Merge(*[u.atoms for u in args])
+    trajectory = universe.trajectory
 
     # Merge coordinates
     for u in args:
@@ -441,17 +430,17 @@ def Merge(*args: MDUniverse) -> mda.Universe:
 
     universe1: mda.Universe = args[0]
     trajectory1 = universe1.trajectory
-    trajectory.ts.has_velocities: bool = (trajectory1.ts.has_velocities)
-    trajectory.ts.has_forces: bool = trajectory1.ts.has_forces
-    frames: np.ndarray = np.fromiter(
+    trajectory.ts.has_velocities = trajectory1.ts.has_velocities
+    trajectory.ts.has_forces = trajectory1.ts.has_forces
+    frames = np.fromiter(
         [u.trajectory.n_frames == trajectory1.n_frames for u in args], dtype=bool
     )
     if not all(frames):
-        msg: str = "The trajectories are not the same length."
+        msg = "The trajectories are not the same length."
         logger.error(msg)
         raise ValueError(msg)
 
-    dimensions: np.ndarray = (
+    dimensions = (
         trajectory1.dimensions_array
         if hasattr(trajectory1, "dimensions_array")
         else np.asarray([ts.dimensions for ts in trajectory1])
@@ -472,7 +461,7 @@ def Merge(*args: MDUniverse) -> mda.Universe:
             forces.append([ts.forces for ts in u.trajectory if ts.has_forces])
 
         if trajectory.ts.has_positions:
-            positions: np.ndarray = np.concatenate(positions, axis=1)
+            positions = np.concatenate(positions, axis=1)
             if universe.atoms.n_atoms != positions.shape[1]:
                 msg = "The number of sites does not match the number " "of coordinates."
                 logger.error(msg)
@@ -484,16 +473,16 @@ def Merge(*args: MDUniverse) -> mda.Universe:
             universe.load_new(positions, format=MemoryReader, dimensions=dimensions)
 
         if trajectory.ts.has_velocities:
-            velocities: np.ndarray = np.concatenate(velocities, axis=1)
-            trajectory.velocity_array: np.ndarray = velocities.copy()
+            velocities = np.concatenate(velocities, axis=1)
+            trajectory.velocity_array = velocities.copy()
         if trajectory.ts.has_forces:
-            forces: np.ndarray = np.concatenate(forces, axis=1)
-            trajectory.force_array: np.ndarray = forces.copy()
+            forces = np.concatenate(forces, axis=1)
+            trajectory.force_array = forces.copy()
 
     return universe
 
 
-def rename_universe(universe: mda.Universe) -> NoReturn:
+def rename_universe(universe: mda.Universe) -> None:
     """Rename the atoms and residues within a universe.
 
     Standardizes naming of the universe by renaming atoms and residues based
@@ -508,14 +497,14 @@ def rename_universe(universe: mda.Universe) -> NoReturn:
         A collection of atoms in a universe.
     """
     logger.info("Renaming atom names and atom core within the universe.")
-    atomnames: np.ndarray = np.array(
+    atomnames = np.array(
         [
             "{}{:0>3d}".format(lett, i)
             for lett, segment in zip(string.ascii_uppercase, universe.segments)
             for i, _ in enumerate(segment.atoms, 1)
         ]
     )
-    resnames: np.ndarray = np.array(
+    resnames = np.array(
         [
             "{}{:0>3d}".format(lett, i)
             for lett, segment in zip(string.ascii_uppercase, universe.segments)

@@ -38,32 +38,49 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using C-alpha positions"""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, Tuple
 
-import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
-from ..selection import *
 
 
 class Model(ModelBase):
     """Universe defined by the protein C-alpha."""
 
-    model: ClassVar[str] = "CALPHA"
-    description: ClassVar[str] = "C-alpha of a protein"
+    model = "CALPHA"
+    description = "C-alpha of a protein"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping: Mapping[str, str] = dict(CA="calpha", ions="bioion")
-        self._selection: Mapping[str, str] = dict(CA="protein", ions="bioion")
+        BEADS = namedtuple("BEADS", "CA ions")
+        self._mapping = BEADS(CA="calpha", ions="bioion")
+        self._selection = BEADS(CA="protein", ions="bioion")
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds between C-alphas in adjacent residues
         for segment in self.universe.segments:
-            atoms: mda.AtomGroup = segment.atoms.select_atoms("calpha")
-            bonds.extend(list(zip(atoms.ix[1:], atoms.ix[:-1])))
+            atom_selection: str = getattr(self._mapping, self._mapping._fields[0])
+            atoms = segment.atoms.select_atoms(atom_selection)
+            bonds.extend(tuple(zip(atoms.ix[1:], atoms.ix[:-1])))
         self.universe.add_TopologyAttr(Bonds(bonds))

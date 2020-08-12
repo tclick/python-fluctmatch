@@ -38,7 +38,8 @@
 # ------------------------------------------------------------------------------
 """Class definition for beads using N, carboxyl oxygens, and sidechains."""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, NamedTuple, NoReturn, Tuple
 
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
@@ -50,19 +51,36 @@ from ..selection import *
 class Model(ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
 
-    model: ClassVar[str] = "NCSC"
-    description: ClassVar[str] = "c.o.m./c.o.g. of N, O, and sidechain of protein"
+    model = "NCSC"
+    description = "c.o.m./c.o.g. of N, O, and sidechain of protein"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping: Mapping[str, str] = dict(
+        BEADS = namedtuple("BEADS", "N CB O ions")
+        self._mapping: NamedTuple = BEADS(
             N="protein and name N",
             CB="hsidechain and not name H*",
             O="protein and name O OT1 OT2 OXT",
             ions="bioion",
         )
-        self._selection: Mapping[str, str] = dict(
+        self._selection: NamedTuple = BEADS(
             N="amine", CB="hsidechain", O="carboxyl", ions="bioion"
         )
 
@@ -71,35 +89,35 @@ class Model(ModelBase):
 
         # Create bonds intraresidue atoms
         residues = self.universe.select_atoms("protein").residues
-        atom1: mda.AtomGroup = residues.atoms.select_atoms("name N")
-        atom2: mda.AtomGroup = residues.atoms.select_atoms("name O")
-        bonds.extend(list(zip(atom1.ix, atom2.ix)))
+        atom1: AtomGroup = residues.atoms.select_atoms("name N")
+        atom2: AtomGroup = residues.atoms.select_atoms("name O")
+        bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
 
         residues = residues.atoms.select_atoms("not resname GLY").residues
-        atom1: mda.AtomGroup = residues.atoms.select_atoms("name N")
-        atom2: mda.AtomGroup = residues.atoms.select_atoms("name O")
-        atom3: mda.AtomGroup = residues.atoms.select_atoms("cbeta")
-        bonds.extend(list(zip(atom1.ix, atom2.ix)))
-        bonds.extend(list(zip(atom2.ix, atom3.ix)))
+        atom1: AtomGroup = residues.atoms.select_atoms("name N")
+        atom2: AtomGroup = residues.atoms.select_atoms("name O")
+        atom3: AtomGroup = residues.atoms.select_atoms("cbeta")
+        bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
+        bonds.extend(tuple(zip(atom2.ix, atom3.ix)))
 
         # Create interresidue bonds
         for segment in self.universe.segments:
-            atom1: mda.AtomGroup = segment.atoms.select_atoms("name O")
-            atom2: mda.AtomGroup = segment.atoms.select_atoms("name N")
-            bonds.extend(list(zip(atom1.ix[:-1], atom2.ix[1:])))
+            atom1: AtomGroup = segment.atoms.select_atoms("name O")
+            atom2: AtomGroup = segment.atoms.select_atoms("name N")
+            bonds.extend(tuple(zip(atom1.ix[:-1], atom2.ix[1:])))
 
         self.universe.add_TopologyAttr(Bonds(bonds))
 
     def _add_masses(self, universe: mda.Universe) -> NoReturn:
         super()._add_masses(universe)
-        amine: mda.AtomGroup = self.universe.select_atoms(self._mapping["N"])
-        carboxyl: mda.AtomGroup = self.universe.select_atoms(self._mapping["O"])
+        amine: AtomGroup = self.universe.select_atoms(self._mapping.N)
+        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping.O)
         amine.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
         carboxyl.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
 
     def _add_charges(self, universe: mda.Universe) -> NoReturn:
         super()._add_charges(universe)
-        amine: mda.AtomGroup = self.universe.select_atoms(self._mapping["N"])
-        carboxyl: mda.AtomGroup = self.universe.select_atoms(self._mapping["O"])
+        amine: AtomGroup = self.universe.select_atoms(self._mapping.N)
+        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping.O)
         amine.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
         carboxyl.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
