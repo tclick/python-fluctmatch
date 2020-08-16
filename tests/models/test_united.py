@@ -1,38 +1,16 @@
-#  python-fluctmatch -
-#  Copyright (c) 2019 Timothy H. Click, Ph.D.
+# fluctmatch --- https://github.com/tclick/python-fluctmatch
+# Copyright (c) 2013-2020 The fluctmatch Development Team and contributors
+# (see the file AUTHORS for the full list of names)
 #
-#  All rights reserved.
+# Released under the New BSD license.
 #
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions are met:
+# Please cite your use of fluctmatch in published work:
 #
-#  Redistributions of source code must retain the above copyright notice, this
-#  list of conditions and the following disclaimer.
+# Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+# Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
+# Simulation. Meth Enzymology. 578 (2016), 327-342,
+# doi:10.1016/bs.mie.2016.05.024.
 #
-#  Redistributions in binary form must reproduce the above copyright notice,
-#  this list of conditions and the following disclaimer in the documentation
-#  and/or other materials provided with the distribution.
-#
-#  Neither the name of the author nor the names of its contributors may be used
-#  to endorse or promote products derived from this software without specific
-#  prior written permission.
-#
-#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
-#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chuniverse.
-#  Simulation. Meth Enzymology. 578 (2016), 327-342,
-#  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
-#  doi:10.1016/bs.mie.2016.05.024.
-"""Tests for various protein core."""
 
 import itertools
 from typing import List
@@ -42,25 +20,28 @@ import numpy as np
 import pytest
 from numpy import testing
 
-from fluctmatch.core.models import generic
-from ..datafiles import DMA
+from fluctmatch.core.models import united
+from ..datafiles import TPR, XTC
+
+# Number of residues to test
+N_RESIDUES = 6
 
 
-class TestGeneric:
+class TestUnited:
     @pytest.fixture(scope="class")
     def universe(self) -> mda.Universe:
-        return mda.Universe(DMA)
+        return mda.Universe(TPR, XTC)
 
     @pytest.fixture(scope="class")
-    def model(self) -> generic.Model:
-        return generic.Model(guess_angles=True)
+    def model(self) -> united.Model:
+        return united.Model(guess_angles=True)
 
     @pytest.fixture(scope="class")
-    def system(self, universe: mda.Universe, model: generic.Model) -> mda.Universe:
+    def system(self, universe: mda.Universe, model: united.Model) -> mda.Universe:
         return model.transform(universe)
 
     def test_creation(
-        self, universe: mda.Universe, model: generic.Model, system: mda.Universe,
+        self, universe: mda.Universe, model: united.Model, system: mda.Universe,
     ) -> None:
         n_atoms = 0
         for residue, selection in itertools.product(universe.residues, model._mapping):
@@ -75,7 +56,7 @@ class TestGeneric:
         )
 
     def test_positions(
-        self, universe: mda.Universe, system: mda.Universe, model: generic.Model
+        self, universe: mda.Universe, system: mda.Universe, model: united.Model
     ) -> None:
         positions: List[np.ndarray] = []
         for residue, selection in itertools.product(universe.residues, model._mapping):
@@ -94,7 +75,7 @@ class TestGeneric:
         )
 
     def test_masses(
-        self, universe: mda.Universe, system: mda.Universe, model: generic.Model
+        self, universe: mda.Universe, system: mda.Universe, model: united.Model
     ) -> None:
         masses = np.concatenate(
             [
@@ -110,16 +91,18 @@ class TestGeneric:
         )
 
     def test_charges(
-        self, universe: mda.Universe, system: mda.Universe, model: generic.Model
+        self, universe: mda.Universe, system: mda.Universe, model: united.Model
     ) -> None:
         try:
-            charges = [
-                residue.atoms.select_atoms(selection).total_charge()
-                for residue, selection in itertools.product(
-                    universe.residues, model._selection
-                )
-                if residue.atoms.select_atoms(selection)
-            ]
+            charges = np.concatenate(
+                [
+                    residue.atoms.select_atoms(selection).charges
+                    for residue, selection in itertools.product(
+                        universe.residues, model._selection
+                    )
+                    if residue.atoms.select_atoms(selection)
+                ]
+            )
         except mda.NoDataError:
             charges = [0.0] * system.atoms.n_atoms
         testing.assert_allclose(

@@ -34,6 +34,7 @@
 #  doi:10.1016/bs.mie.2016.05.024.
 """Tests for various protein core."""
 
+import itertools
 from typing import List
 
 import MDAnalysis as mda
@@ -44,146 +45,142 @@ from numpy import testing
 from fluctmatch.core.models import calpha, caside, ncsc, polar
 from ..datafiles import TPR, XTC
 
+# Number of residues to test
+N_RESIDUES = 6
+
 
 class TestCalpha:
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        universe = mda.Universe(TPR, XTC)
-        return mda.Merge(universe.residues[:6].atoms)
+    def universe(self) -> mda.Universe:
+        u = mda.Universe(TPR, XTC)
+        return mda.Merge(u.residues[:N_RESIDUES].atoms)
 
     @pytest.fixture(scope="class")
-    def system(self) -> calpha.Model:
-        return calpha.Model()
+    def model(self, universe: mda.Universe) -> calpha.Model:
+        return calpha.Model(guess_angles=True)
 
-    def test_creation(self, u: mda.Universe, system: calpha.Model) -> None:
-        system.create_topology(u)
+    @pytest.fixture(scope="class")
+    def system(self, universe: mda.Universe, model: calpha.Model) -> mda.Universe:
+        return model.transform(universe)
 
-        n_atoms = u.select_atoms("calpha or bioion").n_atoms
+    def test_creation(
+        self, universe: mda.Universe, model: calpha.Model, system: mda.Universe,
+    ) -> None:
+        n_atoms = 0
+        for residue, selection in itertools.product(universe.residues, model._mapping):
+            value = (
+                selection.get(residue.resname)
+                if isinstance(selection, dict)
+                else selection
+            )
+            n_atoms += residue.atoms.select_atoms(value).residues.n_residues
         testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites don't match.",
+            system.atoms.n_atoms, n_atoms, err_msg="Number of sites don't match.",
         )
 
-    def test_positions(self, u: mda.Universe, system: calpha.Model) -> None:
-        cg_universe: mda.Universe = system.transform(u)
-
-        positions = np.asarray(
-            [
-                residue.atoms.select_atoms(
-                    getattr(system._mapping, key)
-                ).center_of_mass()
-                for residue in u.select_atoms("protein or bioion").residues
-                for key in system._mapping._fields
-                if residue.atoms.select_atoms(getattr(system._mapping, key))
-            ]
-        )
-
+    def test_positions(
+        self, universe: mda.Universe, system: mda.Universe, model: calpha.Model
+    ) -> None:
+        positions: List[List[np.ndarray]] = []
+        for residue, selection in itertools.product(universe.residues, model._mapping):
+            value = (
+                selection.get(residue.resname, "hsidechain and not name H*")
+                if isinstance(selection, dict)
+                else selection
+            )
+            if residue.atoms.select_atoms(value):
+                positions.append(residue.atoms.select_atoms(value).center_of_mass())
         testing.assert_allclose(
-            cg_universe.atoms.positions,
-            positions,
-            err_msg="The coordinates do not match.",
+            positions, system.atoms.positions, err_msg="The coordinates do not match.",
         )
 
-    def test_trajectory(self, u: mda.Universe, system: calpha.Model) -> None:
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            cg_universe.trajectory.n_frames,
-            u.trajectory.n_frames,
-            err_msg="All-atom and coarse-grain trajectories unequal.",
+    def test_masses(
+        self, universe: mda.Universe, system: mda.Universe, model: calpha.Model
+    ) -> None:
+        masses = [
+            residue.atoms.select_atoms(selection).total_mass()
+            for residue, selection in itertools.product(
+                universe.residues, model._selection
+            )
+            if residue.atoms.select_atoms(selection)
+        ]
+        testing.assert_allclose(
+            system.atoms.masses, masses, err_msg="The masses do not match."
         )
+
+    def test_charges(
+        self, universe: mda.Universe, system: mda.Universe, model: calpha.Model
+    ) -> None:
+        try:
+            charges = [
+                residue.atoms.select_atoms(selection).total_charge()
+                for residue, selection in itertools.product(
+                    universe.residues, model._selection
+                )
+                if residue.atoms.select_atoms(selection)
+            ]
+        except mda.NoDataError:
+            charges = [0.0] * system.atoms.n_atoms
+        testing.assert_allclose(
+            system.atoms.charges, charges, err_msg="The charges do not match.",
+        )
+
+    def test_trajectory(self, universe: mda.Universe, system: mda.Universe) -> None:
+        assert (
+            system.trajectory.n_frames == universe.trajectory.n_frames
+        ), "All-atom and coarse-grain trajectories unequal."
+
+    def test_bonds(self, system: mda.Universe) -> None:
+        assert len(system.bonds) > 0, "Number of bonds should be > 0."
+
+    def test_angles(self, system: mda.Universe) -> None:
+        assert len(system.angles) > 0, "Number of angles should be > 0."
+
+    def test_dihedrals(self, system: mda.Universe) -> None:
+        assert len(system.dihedrals) > 0, "Number of dihedral angles should be > 0."
+
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert (
+            len(system.impropers) == 0
+        ), "Number of improper angles should not be > 0."
 
 
 class TestCaside(TestCalpha):
     @pytest.fixture(scope="class")
-    def system(self) -> caside.Model:
-        return caside.Model()
+    def model(self) -> caside.Model:
+        return caside.Model(guess_angles=True)
 
-    def test_creation(self, u: mda.Universe, system: caside.Model) -> None:
-        system.create_topology(u)
-
-        n_atoms = u.select_atoms("calpha or cbeta or bioion").n_atoms
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites not equal.",
-        )
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert len(system.impropers) > 0, "Number of improper angles should be > 0."
 
 
-class TestNcsc(TestCalpha):
+class TestNcsc(TestCaside):
     @pytest.fixture(scope="class")
-    def system(self) -> ncsc.Model:
-        return ncsc.Model()
+    def model(self) -> ncsc.Model:
+        return ncsc.Model(guess_angles=True)
 
-    def test_creation(self, u: mda.Universe, system: ncsc.Model):
-        system.create_topology(u)
-        n_atoms = u.select_atoms(
-            "(protein and name N O OT1) or cbeta or bioion"
-        ).n_atoms
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites not equal.",
-        )
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert len(system.impropers) > 0, "Number of improper angles should be > 0."
 
 
-class TestPolar(TestCalpha):
+class TestPolar(TestNcsc):
     @pytest.fixture(scope="class")
-    def system(self) -> polar.Model:
-        return polar.Model()
+    def model(self) -> polar.Model:
+        return polar.Model(guess_angles=True)
 
     @pytest.fixture(scope="class")
     def other(self) -> ncsc.Model:
-        return ncsc.Model()
+        return ncsc.Model(guess_angles=True)
 
-    def test_creation(self, u: mda.Universe, system: polar.Model):
-        system.create_topology(u)
-        n_atoms = u.select_atoms(
-            "(protein and name N O OT1) or cbeta or bioion"
-        ).n_atoms
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites not equal.",
-        )
-
-    def test_positions(self, u: mda.Universe, system: polar.Model):
-        cg_universe: mda.Universe = system.transform(u)
-        beads: List[mda.AtomGroup] = []
-
-        for residue in u.select_atoms("protein or bioion").residues:
-            for key in system._mapping._fields:
-                selection = getattr(system._mapping, key)
-                if isinstance(selection, dict):
-                    value: mda.AtomGroup = getattr(system._mapping, key).get(
-                        residue.resname, "hsidechain and not name H*"
-                    )
-                    bead: mda.AtomGroup = residue.atoms.select_atoms(value)
-                else:
-                    bead: mda.AtomGroup = residue.atoms.select_atoms(selection)
-                if bead:
-                    beads.append(bead)
-
-        positions: np.ndarray = np.asarray(
-            [bead.center_of_mass() for bead in beads if bead]
-        )
-
-        testing.assert_allclose(
-            cg_universe.atoms.positions,
-            positions,
-            err_msg="The coordinates do not match.",
-        )
+    @pytest.fixture(scope="class")
+    def other_system(self, universe: mda.Universe, other: ncsc.Model) -> mda.Universe:
+        return other.transform(universe)
 
     def test_ncsc_polar_positions(
-        self, u: mda.Universe, system: polar.Model, other: ncsc.Model
+        self, universe, system: mda.Universe, other_system: mda.Universe
     ) -> None:
-        polar_universe: mda.Universe = system.transform(u)
-        ncsc_universe: mda.Universe = other.transform(u)
 
-        testing.assert_raises(
-            AssertionError,
-            testing.assert_allclose,
-            polar_universe.atoms.positions,
-            ncsc_universe.atoms.positions,
-        )
+        with pytest.raises(AssertionError):
+            testing.assert_allclose(
+                system.atoms.positions, other_system.atoms.positions
+            )

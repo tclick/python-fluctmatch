@@ -28,7 +28,7 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#  Timothy H. Click, Nixon Raj, and Jhih-Wei Chuniverse.
 #  Simulation. Meth Enzymology. 578 (2016), 327-342,
 #  Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #  doi:10.1016/bs.mie.2016.05.024.
@@ -39,46 +39,57 @@ import pytest
 from numpy import testing
 
 from fluctmatch.core.models import enm
-
 from ..datafiles import DCD, PSF
 
 
 class TestEnm:
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
+    def universe(self) -> mda.Universe:
         universe = mda.Universe(PSF, DCD)
         return mda.Merge(universe.residues[:6].atoms)
 
     @pytest.fixture(scope="class")
-    def system(self) -> enm.Model:
-        return enm.Model()
+    def model(self, universe: mda.Universe) -> enm.Model:
+        return enm.Model(charges=False)
 
-    def test_creation(self, u: mda.Universe, system: enm.Model):
-        cg_universe: mda.Universe = system.transform(u)
-        n_atoms: int = u.atoms.n_atoms
+    @pytest.fixture(scope="class")
+    def system(self, universe: mda.Universe, model: enm.Model) -> mda.Universe:
+        return model.transform(universe)
 
-        testing.assert_equal(
-            cg_universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="The number of beads don't match.",
-        )
+    def test_creation(self, universe: mda.Universe, system: mda.Universe) -> None:
+        n_atoms: int = universe.atoms.n_atoms
+        assert system.atoms.n_atoms == n_atoms, "The number of beads don't match."
 
-    def test_names(self, u: mda.Universe, system: enm.Model):
-        cg_universe: mda.Universe = system.transform(u)
+    def test_names(self, universe: mda.Universe, system: mda.Universe) -> None:
+        testing.assert_string_equal(system.atoms[0].name, "A001")
+        testing.assert_string_equal(system.residues[0].resname, "A001")
 
-        testing.assert_string_equal(cg_universe.atoms[0].name, "A001")
-        testing.assert_string_equal(cg_universe.residues[0].resname, "A001")
-
-    def test_positions(self, u: mda.Universe, system: enm.Model):
-        cg_universe = system.transform(u)
-
+    def test_positions(self, universe: mda.Universe, system: mda.Universe) -> None:
         testing.assert_allclose(
-            cg_universe.atoms.positions,
-            u.atoms.positions,
+            system.atoms.positions,
+            universe.atoms.positions,
             err_msg="Coordinates don't match.",
         )
 
-    def test_bonds(self, u: mda.Universe, system: enm.Model):
-        cg_universe = system.transform(u)
+    def test_trajectory(self, universe: mda.Universe, system: mda.Universe) -> None:
+        assert (
+            system.trajectory.n_frames == universe.trajectory.n_frames
+        ), "All-atom and coarse-grain trajectories unequal."
 
-        assert len(cg_universe.bonds) > len(u.bonds)
+    def test_bonds(self, universe: mda.Universe, system: mda.Universe) -> None:
+        assert len(system.bonds) > len(
+            universe.bonds
+        ), "# of ENM bonds should be greater than the # of original CG bonds."
+
+    def test_angles(self, system: mda.Universe) -> None:
+        assert len(system.angles) == 0, "Number of angles should not be > 0."
+
+    def test_dihedrals(self, system: mda.Universe) -> None:
+        assert (
+            len(system.dihedrals) == 0
+        ), "Number of dihedral angles should not be > 0."
+
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert (
+            len(system.impropers) == 0
+        ), "Number of improper angles should not not be > 0."

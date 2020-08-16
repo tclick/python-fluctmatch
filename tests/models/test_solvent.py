@@ -30,257 +30,137 @@
 #
 """Tests for different solvent core."""
 
+import itertools
+from typing import List
+
 import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
 
 from fluctmatch.core.models import dma, tip3p, water
-
 from ..datafiles import DMA, TIP3P
 
 
 class TestWater:
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
+    def universe(self) -> mda.Universe:
         return mda.Universe(TIP3P)
 
     @pytest.fixture(scope="class")
-    def system(self) -> water.Model:
+    def model(self, universe: mda.Universe) -> water.Model:
         return water.Model()
 
-    def test_creation(self, u: mda.Universe, system: water.Model):
-        system.create_topology(u)
-
-        n_atoms: int = sum(
-            u.select_atoms(select).residues.n_residues
-            for select in system._mapping.values()
-        )
-
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites don't match.",
-        )
-
-    def test_positions(self, u: mda.Universe, system: water.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        positions: np.ndarray = np.asarray(
-            [
-                _.atoms.select_atoms(select).center_of_mass()
-                for _ in u.select_atoms("water").residues
-                for select in system._mapping.values()
-                if _.atoms.select_atoms(select)
-            ]
-        )
-
-        testing.assert_allclose(
-            np.asarray(positions),
-            cg_universe.atoms.positions,
-            err_msg="The coordinates do not match.",
-        )
-
-    def test_bonds(self, u: mda.Universe, system: water.Model):
-        aa_universe: mda.Universe = mda.Universe(TIP3P)
-        system: water.Model = water.Model()
-        cg_universe: mda.Universe = system.transform(aa_universe)
-
-        testing.assert_equal(
-            len(cg_universe.bonds), 0, err_msg="No bonds should exist."
-        )
-
-    def test_mass(self, u: mda.Universe, system: water.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        masses: np.ndarray = np.fromiter(
-            [
-                _.atoms.select_atoms(select).total_mass()
-                for _ in u.select_atoms("water").residues
-                for select in system._selection.values()
-                if _.atoms.select_atoms(select)
-            ],
-            dtype=np.float32,
-        )
-
-        testing.assert_allclose(
-            cg_universe.atoms.masses, masses, err_msg="The masses do not match."
-        )
-
-    def test_charges(self, u: mda.Universe, system: water.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_allclose(
-            cg_universe.atoms.charges,
-            np.zeros(cg_universe.atoms.n_atoms),
-            err_msg="The masses do not match.",
-        )
-
-    def test_creation_from_tip4p(self, u: mda.Universe, system: water.Model):
-        system.create_topology(u)
-
-        n_atoms: int = sum(
-            u.select_atoms(select).residues.n_residues
-            for select in system._mapping.values()
-        )
-
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites don't match.",
-        )
-
-    def test_positions_from_tip4p(self, u: mda.Universe, system: water.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        positions: np.ndarray = np.asarray(
-            [
-                _.atoms.select_atoms(select).center_of_mass()
-                for _ in u.select_atoms("water").residues
-                for select in system._mapping.values()
-                if _.atoms.select_atoms(select)
-            ]
-        )
-
-        testing.assert_allclose(
-            np.asarray(positions),
-            cg_universe.atoms.positions,
-            err_msg="The coordinates do not match.",
-        )
-
-    def test_bonds_from_tip4p(self, u: mda.Universe, system: water.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            len(cg_universe.bonds), 0, err_msg="No bonds should exist."
-        )
-
-
-class TestTip3p:
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
-        return mda.Universe(TIP3P)
+    def system(self, universe: mda.Universe, model: water.Model) -> mda.Universe:
+        return model.transform(universe)
 
-    @pytest.fixture(scope="class")
-    def system(self) -> tip3p.Model:
-        return tip3p.Model()
+    def test_creation(
+        self, universe: mda.Universe, model: water.Model, system: mda.Universe
+    ) -> None:
+        n_atoms = 0
+        for residue, selection in itertools.product(universe.residues, model._mapping):
+            value = (
+                selection.get(residue.resname)
+                if isinstance(selection, dict)
+                else selection
+            )
+            n_atoms += residue.atoms.select_atoms(value).residues.n_residues
+        assert system.atoms.n_atoms == n_atoms, "Number of sites don't match."
 
-    def test_creation(self, u: mda.Universe, system: tip3p.Model):
-        system.create_topology(u)
-
-        n_atoms: int = sum(
-            u.select_atoms(select).residues.n_residues
-            for select in system._mapping.values()
-        )
-
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites don't match.",
-        )
-
-    def test_tip3p_positions(self, u: mda.Universe, system: tip3p.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        positions: np.ndarray = np.asarray(
-            [
-                _.atoms.select_atoms(select).center_of_mass()
-                for _ in u.select_atoms("water").residues
-                for select in system._mapping.values()
-                if _.atoms.select_atoms(select)
-            ]
-        )
-
+    def test_positions(
+        self, universe: mda.Universe, system: mda.Universe, model: water.Model
+    ) -> None:
+        positions: List[List[np.ndarray]] = []
+        for residue, selection in itertools.product(universe.residues, model._mapping):
+            value = (
+                selection.get(residue.resname, "hsidechain and not name H*")
+                if isinstance(selection, dict)
+                else selection
+            )
+            if residue.atoms.select_atoms(value):
+                positions.append(residue.atoms.select_atoms(value).center_of_mass())
         testing.assert_allclose(
-            np.asarray(positions),
-            cg_universe.atoms.positions,
-            err_msg="The coordinates do not match.",
+            positions, system.atoms.positions, err_msg="The coordinates do not match.",
         )
 
-    def test_tip3p_bonds(self, u: mda.Universe, system: tip3p.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            len(cg_universe.bonds),
-            system.universe.residues.n_residues * 3,
-            err_msg=("Expected and actual number of bonds " "not equal"),
-        )
-        testing.assert_equal(
-            len(cg_universe.angles),
-            system.universe.residues.n_residues * 3,
-            err_msg=("Expected and actual number of angles " "not equal"),
-        )
-        testing.assert_equal(
-            len(cg_universe.dihedrals), 0, err_msg="No dihedral angles should exist.",
-        )
-        testing.assert_equal(
-            len(cg_universe.impropers),
-            0,
-            err_msg=("No improper dihedral angles " "should exist."),
+    def test_masses(
+        self, universe: mda.Universe, system: mda.Universe, model: water.Model
+    ) -> None:
+        masses = [
+            residue.atoms.select_atoms(selection).total_mass()
+            for residue, selection in itertools.product(
+                universe.residues, model._selection
+            )
+            if residue.atoms.select_atoms(selection)
+        ]
+        testing.assert_allclose(
+            system.atoms.masses, masses, err_msg="The masses do not match."
         )
 
+    def test_charges(
+        self, universe: mda.Universe, system: mda.Universe, model: water.Model
+    ) -> None:
+        try:
+            charges = [
+                residue.atoms.select_atoms(selection).total_charge()
+                for residue, selection in itertools.product(
+                    universe.residues, model._selection
+                )
+                if residue.atoms.select_atoms(selection)
+            ]
+        except mda.NoDataError:
+            charges = [0.0] * system.atoms.n_atoms
+        testing.assert_allclose(
+            system.atoms.charges, charges, err_msg="The charges do not match.",
+        )
 
-class TestDma:
+    def test_bonds(self, system: mda.Universe) -> None:
+        assert len(system.bonds) == 0, "Number of bonds should not be > 0."
+
+    def test_angles(self, system: mda.Universe) -> None:
+        with pytest.raises(mda.NoDataError) as error_info:
+            system.angles
+
+    def test_dihedrals(self, system: mda.Universe) -> None:
+        with pytest.raises(mda.NoDataError) as error_info:
+            system.dihedrals
+
+    def test_impropers(self, system: mda.Universe) -> None:
+        with pytest.raises(mda.NoDataError) as error_info:
+            system.impropers
+
+
+class TestTip3p(TestWater):
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
+    def model(self, universe: mda.Universe) -> tip3p.Model:
+        return tip3p.Model(guess_angles=True)
+
+    def test_bonds(self, system: mda.Universe) -> None:
+        assert len(system.bonds) > 0, "Number of bonds should be > 0."
+
+    def test_angles(self, system: mda.Universe) -> None:
+        assert len(system.angles) > 0, "Number of angles should be > 0."
+
+    def test_dihedrals(self, system: mda.Universe) -> None:
+        assert (
+            len(system.dihedrals) == 0
+        ), "Number of dihedral angles should not be > 0."
+
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert (
+            len(system.impropers) == 0
+        ), "Number of improper angles should not be > 0."
+
+
+class TestDma(TestTip3p):
+    @pytest.fixture(scope="class")
+    def universe(self) -> mda.Universe:
         return mda.Universe(DMA)
 
-    @pytest.fixture()
-    def system(self) -> dma.Model:
-        return dma.Model()
+    @pytest.fixture(scope="class")
+    def model(self) -> dma.Model:
+        return dma.Model(guess_angles=True)
 
-    def test_creation(self, u: mda.Universe, system: dma.Model):
-        system.create_topology(u)
-
-        n_atoms: int = sum(
-            u.select_atoms(select).residues.n_residues
-            for select in system._mapping.values()
-        )
-
-        testing.assert_equal(
-            system.universe.atoms.n_atoms,
-            n_atoms,
-            err_msg="Number of sites don't match.",
-        )
-
-    def test_positions(self, u: mda.Universe, system: dma.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        positions: np.ndarray = np.asarray(
-            [
-                _.atoms.select_atoms(select).center_of_mass()
-                for _ in u.select_atoms("resname DMA").residues
-                for select in system._mapping.values()
-                if _.atoms.select_atoms(select)
-            ]
-        )
-
-        testing.assert_allclose(
-            positions,
-            cg_universe.atoms.positions,
-            err_msg="The coordinates do not match.",
-        )
-
-    def test_bonds(self, u: mda.Universe, system: dma.Model):
-        cg_universe: mda.Universe = system.transform(u)
-
-        testing.assert_equal(
-            len(cg_universe.bonds),
-            system.universe.residues.n_residues * 3,
-            err_msg=("Expected and actual number of bonds " "not equal"),
-        )
-        testing.assert_equal(
-            len(cg_universe.angles),
-            system.universe.residues.n_residues * 3,
-            err_msg=("Expected and actual number of angles " "not equal"),
-        )
-        testing.assert_equal(
-            len(cg_universe.dihedrals), 0, err_msg="No dihedral angles should exist.",
-        )
-        testing.assert_equal(
-            len(cg_universe.impropers),
-            system.universe.residues.n_residues * 3,
-            err_msg=(
-                "Expected and actual number of improper " "dihedral angles not equal."
-            ),
-        )
+    def test_impropers(self, system: mda.Universe) -> None:
+        assert len(system.impropers) > 0, "Number of improper angles should be > 0."
