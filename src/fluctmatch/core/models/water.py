@@ -38,32 +38,42 @@
 # ------------------------------------------------------------------------------
 """Tests for a united atom water model."""
 
-from typing import ClassVar, NoReturn
+from collections import namedtuple
 
-import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
-from ..selection import *
 
 
 class Model(ModelBase):
     """Create a universe consisting of the water oxygen."""
 
-    model: ClassVar[str] = "WATER"
-    description: ClassVar[str] = "c.o.m./c.o.g. of whole water molecule"
+    model = "WATER"
+    description = "c.o.m./c.o.g. of whole water molecule"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
+        BEADS = namedtuple("BEADS", "OW")
         self._guess: bool = False
-        self._mapping["OW"]: str = "water"
-        self._selection.update(self._mapping)
+        self._mapping = BEADS(OW="name OW")
+        self._selection = BEADS(OW="water")
 
-    def _add_atomtypes(self) -> NoReturn:
-        n_atoms: int = self.universe.atoms.n_atoms
-        atomtypes: Atomtypes = Atomtypes(np.ones(n_atoms))
-        self.universe.add_TopologyAttr(atomtypes)
-
-    def _add_bonds(self) -> NoReturn:
-        self.universe.add_TopologyAttr(Bonds([]))
+    def _add_bonds(self) -> None:
+        self._universe.add_TopologyAttr(Bonds([]))

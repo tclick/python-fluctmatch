@@ -38,20 +38,16 @@
 # ------------------------------------------------------------------------------
 """Class for elastic network model."""
 
-from typing import ClassVar, List, NoReturn, Tuple
-
 import MDAnalysis as mda
-import numpy as np
+import MDAnalysis.topology.guessers as guessers
 from MDAnalysis.core.topologyattrs import (
     Angles,
     Atomtypes,
     Bonds,
     Charges,
-    Dihedrals,
-    Impropers,
 )
 from MDAnalysis.lib import distances
-import MDAnalysis.topology.guessers as guessers
+
 from ..base import ModelBase, rename_universe
 from ..selection import *
 
@@ -96,20 +92,35 @@ class Model(ModelBase):
 
     Attributes
     ----------
-    universe : :class:`~MDAnalysis.Universe`
+    _universe : :class:`~MDAnalysis.Universe`
         The transformed universe
-
     """
 
-    model: ClassVar[str] = "ENM"
-    description: ClassVar[str] = "Elastic network model"
+    model = "ENM"
+    description = "Elastic network model"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+        charges: bool = True,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
+        self._charges: bool = charges
 
-        self._charges: bool = kwargs.pop("charges", False)
-
-    def create_topology(self, universe: mda.Universe) -> NoReturn:
+    def create_topology(self, universe: mda.Universe, /) -> None:
         """Deteremine the topology attributes and initialize the universe.
 
         Parameters
@@ -118,32 +129,32 @@ class Model(ModelBase):
             An all-atom universe
         """
         try:
-            self.universe: mda.Universe = universe.copy()
+            self._universe: mda.Universe = universe.copy()
         except TypeError:
-            self.universe: mda.Universe = mda.Universe(
+            self._universe = mda.Universe(
                 universe.filename, universe.trajectory.filename
             )
 
-        rename_universe(self.universe)
-        n_atoms: int = self.universe.atoms.n_atoms
+        rename_universe(self._universe)
+        n_atoms: int = self._universe.atoms.n_atoms
 
         if not self._charges:
-            charges: np.ndarray = np.zeros(n_atoms)
-            self.universe.add_TopologyAttr(Charges(charges))
+            charges = np.zeros(n_atoms)
+            self._universe.add_TopologyAttr(Charges(charges))
 
-        self.atomtypes: np.ndarray = np.arange(n_atoms, dtype=int) + 1
-        self.universe.add_TopologyAttr(Atomtypes(self.universe.atoms.names))
+        self.atomtypes = np.arange(n_atoms, dtype=int) + 1
+        self._universe.add_TopologyAttr(Atomtypes(self._universe.atoms.names))
 
-    def add_trajectory(self, universe: mda.Universe) -> NoReturn:
+    def add_trajectory(self, universe: mda.Universe, /) -> None:
         pass
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         # Determine the average positions of the system
-        positions: np.ndarray = np.zeros_like(self.universe.atoms.positions)
-        for _ in self.universe.trajectory:
-            positions += self.universe.atoms.positions
-        self.universe.trajectory.rewind()
-        positions /= self.universe.trajectory.n_frames
+        positions = np.zeros_like(self._universe.atoms.positions)
+        for _ in self._universe.trajectory:
+            positions += self._universe.atoms.positions
+        self._universe.trajectory.rewind()
+        positions /= self._universe.trajectory.n_frames
 
         # Find bonds with distance range of rmin <= r <= rmax
         pairs, _ = distances.self_capped_distance(
@@ -151,25 +162,25 @@ class Model(ModelBase):
         )
 
         # Include predefined bonds
-        if hasattr(self.universe, "bonds"):
-            bonds: List[Tuple[int, int]] = self.universe.bonds.dump_contents()
-            pairs: np.ndarray = np.concatenate([pairs, bonds], axis=0)
 
-        pairs: np.ndarray = np.unique(pairs, axis=0)
-        pairs: List[Tuple[int, int]] = list(zip(pairs[:, 0], pairs[:, 1]))
-        bonds: Bonds = Bonds(pairs)
-        angles: Angles = Angles(
-            guessers.guess_angles(bonds)
-        ) if self._guess else Angles([])
-        dihedrals: Dihedrals = Dihedrals(
-            guessers.guess_dihedrals(angles)
-        ) if self._guess else Dihedrals([])
-        impropers: Impropers = Impropers(
-            guessers.guess_improper_dihedrals(angles)
-        ) if self._guess else Impropers([])
+        bonds: np.ndarray = self._universe.bonds.dump_contents() if hasattr(
+            self._universe, "bonds"
+        ) else []
+        pairs = np.concatenate([pairs, bonds], axis=0)
+
+        bonds = np.unique(pairs, axis=0)
+        angles = guessers.guess_angles(Bonds(pairs)) if self._guess else []
+        dihedrals = guessers.guess_dihedrals(Angles(angles)) if self._guess else []
+        impropers = (
+            guessers.guess_improper_dihedrals(Angles(angles)) if self._guess else []
+        )
 
         # Add topology information
-        self.universe.add_TopologyAttr(bonds)
-        self.universe.add_TopologyAttr(angles)
-        self.universe.add_TopologyAttr(dihedrals)
-        self.universe.add_TopologyAttr(impropers)
+        attributes = (
+            ("bonds", bonds),
+            ("angles", angles),
+            ("dihedrals", dihedrals),
+            ("impropers", impropers),
+        )
+        for attribute in attributes:
+            self._universe.add_TopologyAttr(*attribute)

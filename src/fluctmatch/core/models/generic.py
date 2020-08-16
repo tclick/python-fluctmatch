@@ -37,13 +37,12 @@
 #
 # ------------------------------------------------------------------------------
 """Model a generic system of all atoms."""
-
-from typing import ClassVar, List, NoReturn, Tuple
+import itertools
+from collections import namedtuple
+from typing import List, Tuple
 
 import MDAnalysis as mda
-import numpy as np
 from MDAnalysis.coordinates.memory import MemoryReader
-from MDAnalysis.core.topologyattrs import Bonds
 from MDAnalysis.topology import guessers
 
 from .. import base
@@ -53,15 +52,33 @@ from ..selection import *
 class Model(base.ModelBase):
     """Universe consisting of the amine, carboxyl, and sidechain regions."""
 
-    model: ClassVar[str] = "GENERIC"
-    description: ClassVar[str] = (
-        "all heavy atoms excluding proteins and nucleic acids"
-    )
+    model = "GENERIC"
+    description = "all heavy atoms excluding proteins and nucleic acids"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-    def create_topology(self, universe: mda.Universe) -> NoReturn:
+        BEAD = namedtuple("BEAD", "bead")
+        self._mapping = BEAD(bead="not (protein or nucleic or bioion or water)")
+        self._selection = self._mapping
+
+    def create_topology(self, universe: mda.Universe, /) -> None:
         """Determine the topology attributes and initialize the universe.
 
         Parameters
@@ -69,11 +86,25 @@ class Model(base.ModelBase):
         universe : :class:`~MDAnalysis.Universe`
             An all-atom universe
         """
-        self._mapping: str = "not (protein or nucleic or bioion or water)"
-        ag: mda.AtomGroup = universe.select_atoms(self._mapping)
-        self.universe: mda.Universe = mda.Merge(ag)
+        atom_group: List[AtomGroup] = [universe.select_atoms(_) for _ in self._mapping]
+        self._universe: mda.Universe = mda.Merge(*atom_group)
 
-    def add_trajectory(self, universe: mda.Universe) -> NoReturn:
+        float_type = universe.atoms.masses.dtype
+        int_type = universe.atoms.resids.dtype
+
+        # Atom
+        atomids = np.arange(self._universe.atoms.n_atoms, dtype=int_type)
+        attributes = (
+            ("radii", np.zeros_like(atomids, dtype=float_type)),
+            ("ids", np.zeros_like(atomids, dtype=float_type)),
+        )
+        for attribute in attributes:
+            self._universe.add_TopologyAttr(*attribute)
+
+        self._add_masses(universe)
+        self._add_charges(universe)
+
+    def add_trajectory(self, universe: mda.Universe, /) -> None:
         """Add coordinates to the new system.
 
         Parameters
@@ -81,69 +112,115 @@ class Model(base.ModelBase):
         universe: :class:`~MDAnalysis.Universe`
             An all-atom universe
         """
-        if not hasattr(self, "universe"):
+        if not hasattr(self, "_universe"):
             raise AttributeError(
-                "Topologies need to be created before bonds " "can be added."
+                "Topologies need to be created before bonds can be added."
             )
 
         if not hasattr(universe, "trajectory"):
             raise AttributeError(
-                "The provided universe does not have " "coordinates defined."
+                "The provided universe does not have coordinates defined."
             )
 
-        ag: mda.AtomGroup = universe.select_atoms(self._mapping)
-        trajectory = universe.trajectory
-        trajectory.rewind()
+        selections = itertools.product(
+            universe.residues, self._mapping._asdict().items()
+        )
+        beads: List[AtomGroup] = []
+        total_beads: List[AtomGroup] = []
+        for residue, (key, selection) in selections:
+            value = (
+                selection.get(residue.resname)
+                if isinstance(selection, dict)
+                else selection
+            )
+            if residue.atoms.select_atoms(value):
+                beads.append(residue.atoms.select_atoms(value))
 
-        trajectory2 = self.universe.trajectory
-        trajectory2.ts.has_positions = trajectory.ts.has_positions
-        trajectory2.ts.has_velocities = trajectory.ts.has_velocities
-        trajectory2.ts.has_forces = trajectory.ts.has_forces
+            other_selection = getattr(self._selection, key)
+            total_beads.append(residue.atoms.select_atoms(other_selection))
 
         position_array: List[np.ndarray] = []
         velocity_array: List[np.ndarray] = []
         force_array: List[np.ndarray] = []
         dimension_array: List[np.ndarray] = []
-
-        for ts in trajectory:
+        universe.trajectory.rewind()
+        for ts in universe.trajectory:
             dimension_array.append(ts.dimensions)
 
             # Positions
             try:
-                position_array.append(ag.positions)
+                positions = [_.positions for _ in beads if _]
+                position_array.append(np.concatenate(positions, axis=0))
             except (AttributeError, mda.NoDataError):
                 pass
 
             # Velocities
             try:
-                velocity_array.append(ag.velocities)
+                velocities = [_.velocities.sum(axis=0) for _ in total_beads if _]
+                velocity_array.append(np.concatenate(velocities, axis=0))
             except (AttributeError, mda.NoDataError):
                 pass
 
             # Forces
             try:
-                force_array.append(ag.forces)
+                forces = [_.forces.sum(axis=0) for _ in total_beads if _]
+                force_array.append(np.concatenate(forces, axis=0))
             except (AttributeError, mda.NoDataError):
                 pass
 
-        trajectory2.dimensions_array = np.asarray(dimension_array)
-        if trajectory2.ts.has_positions:
-            position_array: np.ndarray = np.asarray(position_array)
-            self.universe.load_new(
-                position_array, format=MemoryReader, dimensions=dimension_array
+        self._universe.trajectory.dimensions_array = np.asarray(dimension_array)
+        if self._universe.trajectory.ts.has_positions:
+            self._universe.load_new(
+                np.asarray(position_array),
+                format=MemoryReader,
+                dimensions=dimension_array,
             )
-        if trajectory2.ts.has_velocities:
-            trajectory2.velocity_array = np.asarray(velocity_array)
-        if trajectory2.ts.has_forces:
-            trajectory2.force_array = np.asarray(force_array)
+        if self._universe.trajectory.ts.has_velocities:
+            self._universe.trajectory.velocity_array = np.asarray(velocity_array)
+        if self._universe.trajectory.ts.has_forces:
+            self._universe.trajectory.force_array = np.asarray(force_array)
         universe.trajectory.rewind()
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_masses(self, universe: mda.Universe, /) -> None:
+        selections = itertools.product(universe.residues, self._selection)
         try:
-            atoms: mda.AtomGroup = self.universe.atoms
-            positions: np.ndarray = self.universe.atoms.positions
+            masses = np.concatenate(
+                [
+                    residue.atoms.select_atoms(selection).masses
+                    for residue, selection in selections
+                    if residue.atoms.select_atoms(selection)
+                ]
+            )
+        except (AttributeError, mda.NoDataError):
+            masses = np.zeros(
+                self._universe.atoms.n_atoms, dtype=universe.atoms.masses.dtype
+            )
+
+        self._universe.add_TopologyAttr("masses", masses)
+
+    def _add_charges(self, universe: mda.Universe, /) -> None:
+        selections = itertools.product(universe.residues, self._selection)
+        try:
+            charges = np.concatenate(
+                [
+                    residue.atoms.select_atoms(selection).charges
+                    for residue, selection in selections
+                    if residue.atoms.select_atoms(selection)
+                ]
+            )
+        except (AttributeError, mda.NoDataError):
+            charges = np.zeros(
+                self._universe.atoms.n_atoms, dtype=universe.atoms.masses.dtype
+            )
+
+        self._universe.add_TopologyAttr("charges", charges)
+
+    def _add_bonds(self) -> None:
+        try:
+            atoms: AtomGroup = self._universe.atoms
+            positions = self._universe.atoms.positions
 
             bonds: List[Tuple[int, int]] = guessers.guess_bonds(atoms, positions)
-            self.universe.add_TopologyAttr(Bonds(bonds))
+            self._universe.add_TopologyAttr("bonds", bonds)
         except AttributeError:
             pass

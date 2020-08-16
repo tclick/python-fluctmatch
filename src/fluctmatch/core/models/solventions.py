@@ -38,10 +38,9 @@
 # ------------------------------------------------------------------------------
 """Class defining solvent ions."""
 
-from typing import ClassVar, List, MutableMapping, NoReturn
+from collections import namedtuple
 
-import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
 
@@ -49,26 +48,32 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Select ions within the solvent."""
 
-    model: ClassVar[str] = "SOLVENTIONS"
-    description: ClassVar[str] = "Common ions within solvent (Li K Na F Cl Br I)"
+    model = "SOLVENTIONS"
+    description = "Common ions within solvent (Li K Na F Cl Br I)"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
         self._guess: bool = False
-        self._mapping["ION"]: str = "name LI LIT K NA F CL BR I"
-        self._selection.update(self._mapping)
+        BEAD = namedtuple("BEAD", "ION")
+        self._mapping = BEAD(ION="name LI LIT K NA F CL BR I")
+        self._selection = self._mapping
 
-    def _add_atomtypes(self) -> NoReturn:
-        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
-        restypes: MutableMapping[str, int] = {
-            k: v for k, v in zip(resnames, np.arange(resnames.size) + 10)
-        }
-
-        atomtypes: List[int] = [
-            restypes[residue.resname] for residue in self.universe.residues
-        ]
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
-
-    def _add_bonds(self) -> NoReturn:
-        self.universe.add_TopologyAttr(Bonds([]))
+    def _add_bonds(self) -> None:
+        self._universe.add_TopologyAttr(Bonds([]))

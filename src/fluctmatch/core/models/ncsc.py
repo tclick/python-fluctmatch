@@ -39,7 +39,7 @@
 """Class definition for beads using N, carboxyl oxygens, and sidechains."""
 
 from collections import namedtuple
-from typing import List, NamedTuple, NoReturn, Tuple
+from typing import List, NamedTuple, Tuple
 
 import MDAnalysis as mda
 from MDAnalysis.core.topologyattrs import Bonds
@@ -84,11 +84,11 @@ class Model(ModelBase):
             N="amine", CB="hsidechain", O="carboxyl", ions="bioion"
         )
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds intraresidue atoms
-        residues = self.universe.select_atoms("protein").residues
+        residues = self._universe.select_atoms("protein").residues
         atom1: AtomGroup = residues.atoms.select_atoms("name N")
         atom2: AtomGroup = residues.atoms.select_atoms("name O")
         bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
@@ -101,23 +101,23 @@ class Model(ModelBase):
         bonds.extend(tuple(zip(atom2.ix, atom3.ix)))
 
         # Create interresidue bonds
-        for segment in self.universe.segments:
+        for segment in self._universe.segments:
             atom1: AtomGroup = segment.atoms.select_atoms("name O")
             atom2: AtomGroup = segment.atoms.select_atoms("name N")
             bonds.extend(tuple(zip(atom1.ix[:-1], atom2.ix[1:])))
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))
 
-    def _add_masses(self, universe: mda.Universe) -> NoReturn:
+    def _add_masses(self, universe: mda.Universe) -> None:
         super()._add_masses(universe)
-        amine: AtomGroup = self.universe.select_atoms(self._mapping.N)
-        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping.O)
-        amine.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
-        carboxyl.masses += 0.5 * self.universe.select_atoms("hcalpha").total_mass()
+        amine: AtomGroup = self._universe.select_atoms(self._mapping.N)
+        carboxyl: AtomGroup = self._universe.select_atoms(self._mapping.O)
+        amine.masses += 0.5 * self._universe.select_atoms("hcalpha").total_mass()
+        carboxyl.masses += 0.5 * self._universe.select_atoms("hcalpha").total_mass()
 
-    def _add_charges(self, universe: mda.Universe) -> NoReturn:
+    def _add_charges(self, universe: mda.Universe) -> None:
         super()._add_charges(universe)
-        amine: AtomGroup = self.universe.select_atoms(self._mapping.N)
-        carboxyl: AtomGroup = self.universe.select_atoms(self._mapping.O)
-        amine.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
-        carboxyl.charges += 0.5 * self.universe.select_atoms("hcalpha").total_charge()
+        amine: AtomGroup = self._universe.select_atoms(self._mapping.N)
+        carboxyl: AtomGroup = self._universe.select_atoms(self._mapping.O)
+        amine.charges += 0.5 * self._universe.select_atoms("hcalpha").total_charge()
+        carboxyl.charges += 0.5 * self._universe.select_atoms("hcalpha").total_charge()

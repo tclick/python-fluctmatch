@@ -38,10 +38,11 @@
 # ------------------------------------------------------------------------------
 """Tests for TIP3P water model."""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from itertools import combinations
+from typing import List, Mapping, Tuple
 
-import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
 
@@ -49,33 +50,49 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Create a universe containing all three water atoms."""
 
-    model: ClassVar[str] = "TIP3P"
-    description: ClassVar[str] = "All-atom watter"
+    model = "TIP3P"
+    description = "All-atom watter"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping["OW"]: str = "name OW MW"
-        self._mapping["HW1"]: str = "name HW1"
-        self._mapping["HW2"]: str = "name HW2"
-        self._selection.update(self._mapping)
+        BEADS = namedtuple("BEADS", "OW HW1 HW2")
+        self._mapping = BEADS(OW="name OW", HW1="name HW1", HW2="name HW2")
+        self._selection = BEADS(OW="name OW MW", HW1="name HW1", HW2="name HW2")
         self._types: Mapping[str, int] = {
             key: value + 1
-            for key, value in zip(self._mapping.keys(), range(len(self._mapping)))
+            for key, value in zip(self._mapping._fields, range(len(self._mapping)))
         }
 
-    def _add_atomtypes(self) -> NoReturn:
-        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
-
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
-        for segment in self.universe.segments:
-            atom1: mda.AtomGroup = segment.atoms.select_atoms("name OW")
-            atom2: mda.AtomGroup = segment.atoms.select_atoms("name HW1")
-            atom3: mda.AtomGroup = segment.atoms.select_atoms("name HW2")
-            bonds.extend(list(zip(atom1.ix, atom2.ix)))
-            bonds.extend(list(zip(atom1.ix, atom3.ix)))
-            bonds.extend(list(zip(atom2.ix, atom3.ix)))
+        for segment in self._universe.segments:
+            for select1, select2 in combinations(self._selection._fields, 2):
+                atom1 = getattr(self._selection, select1)
+                atom2 = getattr(self._selection, select2)
+                bonds.extend(
+                    tuple(
+                        zip(
+                            segment.atoms.select_atoms(atom1).ix,
+                            segment.atoms.select_atoms(atom2).ix,
+                        )
+                    )
+                )
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))

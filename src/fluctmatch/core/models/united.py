@@ -38,34 +38,39 @@
 # ------------------------------------------------------------------------------
 """Model a generic system of heavy atoms."""
 
-from typing import ClassVar
+from collections import namedtuple
 
-import MDAnalysis as mda
-
-from ..selection import *
 from . import generic
 
 
 class Model(generic.Model):
     """Universe consisting of all heavy atoms in proteins and nucleic acids."""
 
-    model: ClassVar[str] = "UNITED"
-    description: ClassVar[str] = "all heavy atoms in proteins and nucleic acids"
+    model = "UNITED"
+    description = "all heavy atoms in proteins and nucleic acids"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-    def create_topology(self, universe: mda.Universe):
-        """Determine the topology attributes and initialize the universe.
+        BEADS = namedtuple("BEADS", "united")
+        self._mapping = BEADS(united="(protein or nucleic or bioion) and not name H*")
+        self._selection = self._mapping
 
-        Parameters
-        ----------
-        universe : :class:`~MDAnalysis.Universe`
-            An all-atom universe
-        """
-        self._mapping = "(protein or nucleic or bioion) and not name H*"
-        ag: mda.AtomGroup = universe.select_atoms(self._mapping)
-        self.universe: mda.Universe = mda.Merge(ag)
-
-    def _add_bonds(self):
+    def _add_bonds(self) -> None:
         pass

@@ -38,47 +38,61 @@
 # ------------------------------------------------------------------------------
 """Class for 4-bead nucleic acid."""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, Tuple
 
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
-from ..selection import *
 
 
 class Model(ModelBase):
     """A universe of the phosphate, C4', C3', and base of the nucleic acid."""
 
-    model: ClassVar[str] = "NUCLEIC4"
-    description: ClassVar[str] = (
-        "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of nucleic acid"
-    )
+    model = "NUCLEIC4"
+    description = "Phosphate, C2', C4', and c.o.m./c.o.g. of C4/C5 of nucleic acid"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping["P"]: str = "nucleicphosphate and not name H*"
-        self._mapping["C4'"]: str = "name C4'"
-        self._mapping["C2'"]: str = "name C2'"
-        self._mapping["C5"]: str = "nucleiccenter and not name H*"
-        self._selection: Mapping[str, str] = {
-            "P": "nucleicphosphate",
-            "C4'": "sugarC4",
-            "C2'": "sugarC2",
-            "C5": "hnucleicbase",
-        }
+        BEAD = namedtuple("BEADS", "P C4 C2 C5")
+        self._mapping = BEAD(
+            P="nucleicphosphate and not name H*",
+            C4="name C4'",
+            C2="name C2'",
+            C5="nucleiccenter and not name H*",
+        )
+        self._selection = BEAD(
+            P="nucleicphosphate", C4="sugarC4", C2="sugarC2", C5="hnucleicbase",
+        )
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
-        for segment in self.universe.segments:
+        for segment in self._universe.segments:
             atom1 = segment.atoms.select_atoms("name P")
-            atom2 = segment.atoms.select_atoms("name C4'")
-            atom3 = segment.atoms.select_atoms("name C2'")
+            atom2 = segment.atoms.select_atoms("name C4")
+            atom3 = segment.atoms.select_atoms("name C2")
             atom4 = segment.atoms.select_atoms("name C5")
 
-            bonds.extend(list(zip(atom1.ix, atom2.ix)))
-            bonds.extend(list(zip(atom2.ix, atom3.ix)))
-            bonds.extend(list(zip(atom2.ix, atom4.ix)))
-            bonds.extend(list(zip(atom2.ix[:-1], atom1.ix[1:])))
+            bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
+            bonds.extend(tuple(zip(atom2.ix, atom3.ix)))
+            bonds.extend(tuple(zip(atom2.ix, atom4.ix)))
+            bonds.extend(tuple(zip(atom2.ix[:-1], atom1.ix[1:])))
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))

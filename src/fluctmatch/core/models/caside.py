@@ -82,14 +82,14 @@ class Model(ModelBase):
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds intraresidue C-alpha and C-beta atoms.
-        residues = self.universe.select_atoms("protein and not resname GLY").residues
+        residues = self._universe.select_atoms("protein and not resname GLY").residues
         atom1: AtomGroup = residues.atoms.select_atoms("calpha")
         atom2: AtomGroup = residues.atoms.select_atoms("cbeta")
         bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
 
         # Create interresidue C-alpha bonds within a segment
-        for segment in self.universe.segments:
+        for segment in self._universe.segments:
             atoms: AtomGroup = segment.atoms.select_atoms("calpha")
             bonds.extend(tuple(zip(atoms.ix[1:], atoms.ix[:-1])))
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))

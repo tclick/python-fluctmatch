@@ -38,9 +38,9 @@
 # ------------------------------------------------------------------------------
 """Class defining biological ions."""
 
-from typing import ClassVar, List, MutableMapping, NoReturn
+from collections import namedtuple
+from typing import List, MutableMapping
 
-import numpy as np
 from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
 
 from ..base import ModelBase
@@ -50,26 +50,41 @@ from ..selection import *
 class Model(ModelBase):
     """Select ions normally found within biological systems."""
 
-    model: ClassVar[str] = "BIOIONS"
-    description: ClassVar[
-        str
-    ] = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
+    model = "BIOIONS"
+    description = "Common ions found near proteins (Mg Ca Mn Fe Cu Zn Ag)"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
+        BEADS = namedtuple("BEADS", "ions")
         self._guess: bool = False
-        self._mapping["ions"]: str = "bioion"
-        self._selection.update(self._mapping)
+        self._mapping = BEADS(ions="bioion")
+        self._selection = self._mapping
 
-    def _add_atomtypes(self) -> NoReturn:
-        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
+    def _add_atomtypes(self) -> None:
+        resnames = np.unique(self._universe.residues.resnames)
         restypes: MutableMapping[str, int] = {
             k: v for k, v in zip(resnames, np.arange(resnames.size) + 20)
         }
 
-        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
+        atomtypes: List[int] = [restypes[atom.name] for atom in self._universe.atoms]
+        self._universe.add_TopologyAttr(Atomtypes(atomtypes))
 
-    def _add_bonds(self) -> NoReturn:
-        self.universe.add_TopologyAttr(Bonds([]))
+    def _add_bonds(self) -> None:
+        self._universe.add_TopologyAttr(Bonds([]))

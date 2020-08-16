@@ -38,10 +38,7 @@
 # ------------------------------------------------------------------------------
 """Class defining noble gases."""
 
-from typing import ClassVar, List, MutableMapping, NoReturn
-
-import numpy as np
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from collections import namedtuple
 
 from ..base import ModelBase
 
@@ -49,24 +46,32 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Select atoms column VIII of the periodic table."""
 
-    model: ClassVar[str] = "NOBLE"
-    description: ClassVar[str] = "Noble gases (He Ne Kr Xe)"
+    model = "NOBLE"
+    description = "Noble gases (He Ne Kr Xe)"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
         self._guess: bool = False
-        self._mapping["noble"]: str = "name HE NE KR XE"
-        self._selection.update(self._mapping)
+        BEADS = namedtuple("BEADS", "noble")
+        self._mapping = BEADS(noble="name HE NE KR XE")
+        self._selection = self._mapping
 
-    def _add_atomtypes(self) -> NoReturn:
-        resnames: np.ndarray = np.unique(self.universe.residues.resnames)
-        restypes: MutableMapping[str, int] = {
-            k: v for k, v in zip(resnames, np.arange(resnames.size) + 40)
-        }
-
-        atomtypes: List[int] = [restypes[atom.name] for atom in self.universe.atoms]
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
-
-    def _add_bonds(self) -> NoReturn:
-        self.universe.add_TopologyAttr(Bonds([]))
+    def _add_bonds(self) -> None:
+        self._universe.add_TopologyAttr("bonds", [])

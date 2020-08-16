@@ -38,41 +38,58 @@
 # ------------------------------------------------------------------------------
 """Class for a 3-bead nucleic acid."""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, Tuple
 
 from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
-from ..selection import *
 
 
 class Model(ModelBase):
     """A universe the phosphate, sugar, and base of the nucleic acid."""
 
-    model: ClassVar[str] = "NUCLEIC3"
-    description: ClassVar[str] = "Phosohate, sugar, and nucleotide of nucleic acid"
+    model = "NUCLEIC3"
+    description = "Phosohate, sugar, and nucleotide of nucleic acid"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping["P"]: str = "nucleicphosphate and not name H*"
-        self._mapping["C4'"]: str = "hnucleicsugar and not name H*"
-        self._mapping["C5"]: str = "hnucleicbase and not name H*"
-        self._selection: Mapping[str, str] = {
-            "P": "nucleicphosphate",
-            "C4'": "hnucleicsugar",
-            "C5": "hnucleicbase",
-        }
+        BEAD = namedtuple("BEADS", "P C4 C5")
+        self._mapping = BEAD(
+            P="nucleicphosphate and not name H*",
+            C4="hnucleicsugar and not name H*",
+            C5="hnucleicbase and not name H*",
+        )
+        self._selection = BEAD(
+            P="nucleicphosphate", C4="hnucleicsugar", C5="hnucleicbase",
+        )
 
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
-        for segment in self.universe.segments:
+        for segment in self._universe.segments:
             atom1 = segment.atoms.select_atoms("name P")
-            atom2 = segment.atoms.select_atoms("name C4'")
+            atom2 = segment.atoms.select_atoms("name C4")
             atom3 = segment.atoms.select_atoms("name C5")
 
-            bonds.extend(list(zip(atom1.ix, atom2.ix)))
-            bonds.extend(list(zip(atom2.ix, atom3.ix)))
-            bonds.extend(list(zip(atom2.ix[:-1], atom1.ix[1:])))
+            bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
+            bonds.extend(tuple(zip(atom2.ix, atom3.ix)))
+            bonds.extend(tuple(zip(atom2.ix[:-1], atom1.ix[1:])))
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))

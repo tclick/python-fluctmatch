@@ -38,10 +38,11 @@
 # ------------------------------------------------------------------------------
 """Tests for DMA solvent model."""
 
-from typing import ClassVar, List, Mapping, NoReturn, Tuple
+from collections import namedtuple
+from typing import List, Mapping, Tuple
 
-import MDAnalysis as mda
-from MDAnalysis.core.topologyattrs import Atomtypes, Bonds
+from MDAnalysis.core.groups import AtomGroup
+from MDAnalysis.core.topologyattrs import Bonds
 
 from ..base import ModelBase
 
@@ -49,35 +50,51 @@ from ..base import ModelBase
 class Model(ModelBase):
     """Create a universe for N-dimethylacetamide."""
 
-    model: ClassVar[str] = "DNA"
-    description: ClassVar[str] = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
+    model = "DNA"
+    description = "c.o.m./c.o.g. of C1, N, C2, and C3 of DMA"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *,
+        xplor: bool = True,
+        extended: bool = True,
+        com: bool = True,
+        guess_angles: bool = False,
+        rmin: float = 0.0,
+        rmax: float = 10.0,
+    ) -> None:
+        super().__init__(
+            xplor=xplor,
+            extended=extended,
+            com=com,
+            guess_angles=guess_angles,
+            rmin=rmin,
+            rmax=rmax,
+        )
 
-        self._mapping["C1"]: str = "resname DMA and name C1 H1*"
-        self._mapping["N"]: str = "resname DMA and name C N O"
-        self._mapping["C2"]: str = "resname DMA and name C2 H2*"
-        self._mapping["C3"]: str = "resname DMA and name C3 H3*"
-        self._selection.update(self._mapping)
+        BEADS = namedtuple("BEADS", "C1 N C2 C3")
+        self._mapping = BEADS(
+            C1="resname DMA and name C1 H1*",
+            N="resname DMA and name C N O",
+            C2="resname DMA and name C2 H2*",
+            C3="resname DMA and name C3 H3*",
+        )
+        self._selection = self._mapping
+
         self._types: Mapping[str, int] = {
             key: value + 4
-            for key, value in zip(self._mapping.keys(), range(len(self._mapping)))
+            for key, value in zip(self._mapping._fields, range(len(self._mapping)))
         }
 
-    def _add_atomtypes(self) -> NoReturn:
-        atomtypes: List[int] = [self._types[atom.name] for atom in self.universe.atoms]
-        self.universe.add_TopologyAttr(Atomtypes(atomtypes))
-
-    def _add_bonds(self) -> NoReturn:
+    def _add_bonds(self) -> None:
         bonds: List[Tuple[int, int]] = []
-        for segment in self.universe.segments:
-            atom1: mda.AtomGroup = segment.atoms.select_atoms("name C1")
-            atom2: mda.AtomGroup = segment.atoms.select_atoms("name N")
-            atom3: mda.AtomGroup = segment.atoms.select_atoms("name C2")
-            atom4: mda.AtomGroup = segment.atoms.select_atoms("name C3")
-            bonds.extend(list(zip(atom1.ix, atom2.ix)))
-            bonds.extend(list(zip(atom2.ix, atom3.ix)))
-            bonds.extend(list(zip(atom2.ix, atom4.ix)))
+        for segment in self._universe.segments:
+            atom1: AtomGroup = segment.atoms.select_atoms("name C1")
+            atom2: AtomGroup = segment.atoms.select_atoms("name N")
+            atom3: AtomGroup = segment.atoms.select_atoms("name C2")
+            atom4: AtomGroup = segment.atoms.select_atoms("name C3")
+            bonds.extend(tuple(zip(atom1.ix, atom2.ix)))
+            bonds.extend(tuple(zip(atom2.ix, atom3.ix)))
+            bonds.extend(tuple(zip(atom2.ix, atom4.ix)))
 
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))

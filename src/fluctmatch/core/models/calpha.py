@@ -79,8 +79,8 @@ class Model(ModelBase):
         bonds: List[Tuple[int, int]] = []
 
         # Create bonds between C-alphas in adjacent residues
-        for segment in self.universe.segments:
+        for segment in self._universe.segments:
             atom_selection: str = getattr(self._mapping, self._mapping._fields[0])
             atoms = segment.atoms.select_atoms(atom_selection)
             bonds.extend(tuple(zip(atoms.ix[1:], atoms.ix[:-1])))
-        self.universe.add_TopologyAttr(Bonds(bonds))
+        self._universe.add_TopologyAttr(Bonds(bonds))
