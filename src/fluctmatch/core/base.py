@@ -289,9 +289,7 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
 
             # Velocities
             try:
-                velocities = [
-                    _.velocities.sum(axis=0) for _ in total_beads if _
-                ]
+                velocities = [_.velocities.sum(axis=0) for _ in total_beads if _]
                 velocity_array.append(velocities)
             except (AttributeError, mda.NoDataError):
                 pass
@@ -370,9 +368,7 @@ class ModelBase(abc.ABC, metaclass=AutoRegister(models)):
         except (AttributeError, mda.NoDataError):
             charges = np.zeros(self._universe.atoms.n_atoms)
 
-        self._universe.add_TopologyAttr(
-            "charges", charges
-        )
+        self._universe.add_TopologyAttr("charges", charges)
 
     @abc.abstractmethod
     def _add_bonds(self: TModels) -> None:
