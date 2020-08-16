@@ -176,7 +176,7 @@ class Writer(base.TopologyWriterBase):
                 self._write_sec(psffile, section)
             self._write_other(psffile)
 
-    def _write_atoms(self, psffile: TextIO) -> None:
+    def _write_atoms(self, psffile: TextIO, xplor: bool = True) -> None:
         """Write atom section in a Charmm PSF file.
 
         Normal (standard) and extended (EXT) PSF format are
@@ -207,6 +207,9 @@ class Writer(base.TopologyWriterBase):
         )
         atoms: mda.AtomGroup = self._universe.atoms
         atoms.charges[atoms.charges == -0.0] = 0.0
+        types, index = np.unique(atoms.types, return_index=True)
+        int_types = {k: v for k, v in zip(types, index)}
+        atom_types = atoms.types if xplor else [int_types[_] for _ in atoms.types]
         lines = sf.Frame.from_concat(
             (
                 sf.Series(np.arange(atoms.n_atoms) + 1),
@@ -214,7 +217,7 @@ class Writer(base.TopologyWriterBase):
                 sf.Series(atoms.resids),
                 sf.Series(atoms.resnames),
                 sf.Series(atoms.names),
-                sf.Series(atoms.types),
+                sf.Series(atom_types),
                 sf.Series(atoms.charges),
                 sf.Series(atoms.masses),
                 sf.Series(np.zeros_like(atoms.ids)),

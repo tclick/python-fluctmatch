@@ -123,14 +123,19 @@ class Writer(TopologyWriterBase):
 
             if self._version > 35 and parameters.ATOMS.size == 0:
                 if atomgroup is not None:
-                    atom_types: np.ndarray = (
+                    types, index = np.unique(atomgroup.names, return_index=True)
+                    int_types = {k: v for k, v in zip(types, index)}
+                    int_atom_types = (
                         atomgroup.types
                         if np.issubdtype(atomgroup.types.dtype, np.int)
-                        else np.arange(atomgroup.n_atoms) + 1
+                        else [int_types[_] for _ in atomgroup.name]
                     )
-                    atoms: np.ndarray = np.vstack(
-                        (atom_types, atomgroup.types, atomgroup.masses)
+                    atom_types = (
+                        atomgroup.types
+                        if not np.issubdtype(atomgroup.types.dtype, np.int)
+                        else atomgroup.names
                     )
+                    atoms = np.vstack((int_atom_types, atom_types, atomgroup.masses))
                     parameters["ATOMS"]: sf.Frame = parameters["ATOMS"].assign["type"](
                         atoms.T
                     )

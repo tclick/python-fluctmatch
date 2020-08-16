@@ -99,11 +99,12 @@ class Writer(topbase.TopologyWriterBase):
         self.rtffile: TextIO = None
 
     def _write_mass(self) -> None:
-        _, idx = np.unique(self._atoms.names, return_index=True)
+        types, index = np.unique(self._atoms.names, return_index=True)
+        int_types = {k: v for k, v in zip(types, index)}
         try:
-            atomtypes: np.ndarray = self._atoms[idx].types.astype(np.int)
+            atomtypes = [int_types[_] for _ in self._atoms.names]
         except ValueError:
-            atomtypes = np.arange(idx.size, dtype=np.int) + 1
+            atomtypes = np.arange(index.size, dtype=int) + 1
         columns = np.hstack(
             (
                 atomtypes[:, np.newaxis],
