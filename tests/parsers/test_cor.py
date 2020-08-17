@@ -30,7 +30,7 @@
 #    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 #    DAMAGE.
 #
-#   Timothy H. Click, Nixon Raj, and Jhih-Wei Chu.
+#   Timothy H. Click, Nixon Raj, and Jhih-Wei Chuniverse.
 #   Simulation. Meth Enzymology. 578 (2016), 327-342,
 #   Calculation of Enzyme Fluctuograms from All-Atom Molecular Dynamics
 #   doi:10.1016/bs.mie.2016.05.024.
@@ -47,32 +47,29 @@ import pytest
 from MDAnalysisTests import make_Universe
 from numpy.testing import assert_equal
 
-import fluctmatch.parsers.writers.COR
-
 from ..datafiles import COR
 
 
 class TestCORWriter:
     @pytest.fixture()
-    def u(self) -> mda.Universe:
-        print(mda._READERS)
+    def universe(self) -> mda.Universe:
         return mda.Universe(COR)
 
-    def test_writer(self, u: mda.Universe, tmp_path: Path):
+    def test_writer(self, universe: mda.Universe, tmp_path: Path):
         filename: Path = tmp_path / "temp.cor"
         with patch("fluctmatch.parsers.writers.COR.Writer.write") as writer, mda.Writer(
-            filename, n_atoms=u.atoms.n_atoms
+            filename, n_atoms=universe.atoms.n_atoms
         ) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
             writer.assert_called()
 
-    def test_roundtrip(self, u: mda.Universe, tmp_path: Path):
+    def test_roundtrip(self, universe: mda.Universe, tmp_path: Path):
         # Write out a copy of the Universe, and compare this against the
         # original. This is more rigorous than simply checking the coordinates
         # as it checks all formatting
         filename: Path = tmp_path / "temp.cor"
-        with mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
-            w.write(u.atoms)
+        with mda.Writer(filename, n_atoms=universe.atoms.n_atoms) as w:
+            w.write(universe.atoms)
 
         def CRD_iter(fn):
             with open(fn, "r") as inf:
@@ -83,20 +80,20 @@ class TestCORWriter:
         for ref, other in zip(CRD_iter(COR), CRD_iter(filename)):
             assert ref == other
 
-    def test_write_atoms(self, u: mda.Universe, tmp_path: Path):
+    def test_write_atoms(self, universe: mda.Universe, tmp_path: Path):
         # Test that written file when read gives same coordinates
         filename: Path = tmp_path / "temp.cor"
-        with mda.Writer(filename, n_atoms=u.atoms.n_atoms) as w:
-            w.write(u.atoms)
+        with mda.Writer(filename, n_atoms=universe.atoms.n_atoms) as w:
+            w.write(universe.atoms)
 
         u2 = mda.Universe(filename)
 
-        assert_equal(u.atoms.positions, u2.atoms.positions)
+        assert_equal(universe.atoms.positions, u2.atoms.positions)
 
 
 class TestCORWriterMissingAttrs:
     # All required attributes with the default value
-    req_attrs: OrderedDict = OrderedDict(
+    req_attrs = OrderedDict(
         [("resnames", "UNK"), ("resids", 1), ("names", "X"), ("tempfactors", 0.0)]
     )
 
@@ -104,30 +101,30 @@ class TestCORWriterMissingAttrs:
     def test_warns(self, missing_attr: OrderedDict, tmp_path: Path):
         attrs: List[str, ...] = list(self.req_attrs.keys())
         attrs.remove(missing_attr)
-        u: mda.Universe = make_Universe(attrs, trajectory=True)
+        universe: mda.Universe = make_Universe(attrs, trajectory=True)
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), mda.Writer(
-            outfile, n_atoms=u.atoms.n_atoms
+            outfile, n_atoms=universe.atoms.n_atoms
         ) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
 
     @pytest.mark.parametrize("missing_attr", req_attrs)
     def test_write(self, missing_attr: OrderedDict, tmp_path: Path):
         attrs: List[str, ...] = list(self.req_attrs.keys())
         attrs.remove(missing_attr)
-        u: mda.Universe = make_Universe(attrs, trajectory=True)
+        universe: mda.Universe = make_Universe(attrs, trajectory=True)
 
         outfile: Path = tmp_path / "out.cor"
         with pytest.warns(UserWarning), mda.Writer(
-            outfile, n_atoms=u.atoms.n_atoms
+            outfile, n_atoms=universe.atoms.n_atoms
         ) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
 
         u2 = mda.Universe(outfile)
 
         # Check all other attrs aren't disturbed
         for attr in attrs:
-            assert_equal(getattr(u.atoms, attr), getattr(u2.atoms, attr))
+            assert_equal(getattr(universe.atoms, attr), getattr(u2.atoms, attr))
         # Check missing attr is as expected
         assert_equal(getattr(u2.atoms, missing_attr), self.req_attrs[missing_attr])
