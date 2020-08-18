@@ -38,7 +38,6 @@
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
-from typing import ClassVar, List
 from unittest.mock import patch
 
 import MDAnalysis as mda
@@ -53,24 +52,24 @@ from ..datafiles import COR, PSF
 
 class TestPSFWriter(object):
     @pytest.fixture(scope="class")
-    def u(self) -> mda.Universe:
+    def universe(self) -> mda.Universe:
         return mda.Universe(PSF, COR)
 
-    def test_writer(self, u: mda.Universe, tmp_path: Path):
+    def test_writer(self, universe: mda.Universe, tmp_path: Path):
         filename = tmp_path / "temp.xplor.psf"
         with patch("fluctmatch.parsers.writers.PSF.Writer.write") as writer, mda.Writer(
             filename
         ) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
             writer.assert_called()
 
-    def test_roundtrip(self, u: mda.Universe, tmp_path: Path):
+    def test_roundtrip(self, universe: mda.Universe, tmp_path: Path):
         # Write out a copy of the Universe, and compare this against the
         # original. This is more rigorous than simply checking the coordinates
         # as it checks all formatting
         filename = tmp_path / "temp.xplor.psf"
         with mda.Writer(filename) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
 
         def PSF_iter(fn: str):
             with open(fn) as inf:
@@ -81,15 +80,15 @@ class TestPSFWriter(object):
         for ref, other in zip(PSF_iter(PSF), PSF_iter(filename.as_posix())):
             assert ref == other
 
-    def test_write_atoms(self, u: mda.Universe, tmp_path: Path):
+    def test_write_atoms(self, universe: mda.Universe, tmp_path: Path):
         # Test that written file when read gives same coordinates
         filename = tmp_path / "temp.xplor.psf"
         with mda.Writer(filename) as w:
-            w.write(u.atoms)
+            w.write(universe.atoms)
 
         u2 = mda.Universe(filename, COR)
 
-        assert_equal(u.atoms.charges, u2.atoms.charges)
+        assert_equal(universe.atoms.charges, u2.atoms.charges)
 
 
 class TestPSFParser(ParserBase):
@@ -97,24 +96,12 @@ class TestPSFParser(ParserBase):
     Based on small PDB with AdK (:data:`PDB_small`).
     """
 
-    parser: ClassVar[PSFParser.Reader] = PSFParser.Reader
-    ref_filename: ClassVar[str] = PSF
-    expected_attrs: ClassVar[List[str]] = [
-        "ids",
-        "names",
-        "masses",
-        "charges",
-        "resids",
-        "resnames",
-        "segids",
-        "bonds",
-        "angles",
-        "dihedrals",
-        "impropers",
-    ]
-    expected_n_atoms: ClassVar[int] = 330
-    expected_n_residues: ClassVar[int] = 115
-    expected_n_segments: ClassVar[int] = 1
+    parser = PSFParser.Reader
+    ref_filename = PSF
+    expected_attrs = "ids names masses charges resids resnames segids bonds angles dihedrals impropers".split()
+    expected_n_atoms = 330
+    expected_n_residues = 115
+    expected_n_segments = 1
 
     def test_bonds_total_counts(self, top: TopologyObject):
         assert len(top.bonds.values) == 429

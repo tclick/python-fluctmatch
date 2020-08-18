@@ -47,6 +47,7 @@ import pytest
 from MDAnalysisTests import make_Universe
 from numpy.testing import assert_equal
 
+import fluctmatch.parsers.readers.COR
 from ..datafiles import COR
 
 
