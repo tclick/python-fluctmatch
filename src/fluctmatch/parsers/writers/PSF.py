@@ -45,7 +45,6 @@ from typing import ClassVar, Mapping, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
-import static_frame as sf
 
 from .. import base
 
