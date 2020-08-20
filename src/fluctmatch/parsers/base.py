@@ -60,7 +60,7 @@ class TopologyReaderBase(IOBase, metaclass=_Readermeta):
 class TopologyWriterBase(IOBase, metaclass=_Writermeta):
     """Base class for writing topology files."""
 
-    def __init_subclass__(cls, **kwargs: Mapping):
+    def __init_subclass__(cls, **kwargs: Mapping) -> None:
         super().__init_subclass__(**kwargs)
 
     def __init__(self) -> None:
