@@ -95,24 +95,16 @@ class Writer(topbase.TopologyWriterBase):
         self.filename = Path(filename).with_suffix("." + self.format.lower())
         self._version: int = charmm_version
         self.n_atoms = n_atoms
-        self._atoms: mda.AtomGroup = None
-        self.rtffile: TextIO = None
+        self._atoms: Optional[mda.AtomGroup] = None
+        self.rtffile: Optional[TextIO] = None
 
     def _write_mass(self) -> None:
         types, index = np.unique(self._atoms.names, return_index=True)
-        int_types = {k: v for k, v in zip(types, index)}
-        try:
-            atomtypes = [int_types[_] for _ in self._atoms.names]
-        except ValueError:
-            atomtypes = np.arange(index.size, dtype=int) + 1
-        columns = np.hstack(
-            (
-                atomtypes[:, np.newaxis],
-                self._atoms.names[idx, np.newaxis],
-                self._atoms.masses[idx, np.newaxis],
-            )
-        )
+        masses = self._atoms.masses[index]
 
+        columns = np.hstack(
+            (index[:, np.newaxis], types[:, np.newaxis], masses[:, np.newaxis],)
+        )
         if self._version >= 39:
             columns[:, 0] = -1
         np.savetxt(self.rtffile, columns, fmt=self.fmt["MASS"], delimiter="")
@@ -135,7 +127,7 @@ class Writer(topbase.TopologyWriterBase):
         atoms = residue.atoms
         lines: np.ndarray = sf.Frame.from_records(
             (atoms.names, atoms.types, atoms.charges)
-            if np.issubdtype(atoms.types.dtype, np.signedinteger)
+            if not np.issubdtype(atoms.types.dtype, np.number)
             else (atoms.names, atoms.names, atoms.charges)
         ).T.values
         np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
