@@ -44,7 +44,6 @@ from typing import ClassVar, Dict, Mapping, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
-import static_frame as sf
 
 from .. import base as topbase
 
@@ -74,7 +73,7 @@ class Writer(topbase.TopologyWriterBase):
 
         width: int = 4 if self._version < 36 else 8
         if self._version >= 36:
-            self.fmt: str = """
+            self.fmt = """
                 IC EDIT
                 DIST %-{}s %{}d %-{}s %-{}s %{}d %-{}s%{}.1f
                 END
@@ -101,33 +100,32 @@ class Writer(topbase.TopologyWriterBase):
         """
         # Create the table
         try:
-            n_bonds: int = universe.atoms.bonds.bonds()
-            dist: np.ndarray = np.zeros_like(n_bonds, dtype=float)
-            if self._version >= 36:
-                atom1, atom2 = universe.atoms.bonds.atom1, universe.atoms.bonds.atom2
-                data: sf.Frame = sf.Frame.from_dict(
-                    dict(
-                        segidI=atom1.segids,
-                        resI=atom1.resids,
-                        I=atom1.names,
-                        segidJ=atom2.segids,
-                        resJ=atom2.resids,
-                        J=atom2.names,
-                        b0=dist,
+            bonds: np.ndarray = universe.atoms.bonds.bonds()
+            dist = np.zeros_like(bonds, dtype=float)
+
+            data = (
+                np.hstack(
+                    (
+                        universe.atoms.bonds.atom1.segids[:, np.newaxis],
+                        universe.atoms.bonds.atom1.resids[:, np.newaxis],
+                        universe.atoms.bonds.atom1.names[:, np.newaxis],
+                        universe.atoms.bonds.atom2.segids[:, np.newaxis],
+                        universe.atoms.bonds.atom2.resids[:, np.newaxis],
+                        universe.atoms.bonds.atom2.names[:, np.newaxis],
+                        dist[:, np.newaxis],
                     )
                 )
-            else:
-                data: sf.Frame = sf.Frame(universe._topology.bonds.values)
-                data: sf.Frame = data.from_concat(
-                    [sf.Series(dist),]
+                if self._version >= 36
+                else np.concatenate(
+                    [np.asarray(universe._topology.bonds.values), dist], axis=1
                 )
+            )
         except AttributeError:
-            AttributeError("No bonds were found.")
+            raise AttributeError("No bonds were found.")
 
         # Write the data to the file.
-        with open(self.filename, "w") as stream_file:
-            print(textwrap.dedent(self.title).strip(), file=stream_file)
-            np.savetxt(
-                stream_file, data.values, fmt=textwrap.dedent(self.fmt.strip("\n"))
-            )
-            print("RETURN", file=stream_file)
+        with open(self.filename, "w") as infile:
+            print(textwrap.dedent(self.title).strip(), file=infile)
+            formatted = textwrap.dedent(self.fmt.strip("\n"))
+            np.savetxt(infile, data, fmt=formatted)
+            print("RETURN", file=infile)
