@@ -44,6 +44,7 @@ import MDAnalysis as mda
 import pytest
 from numpy import testing
 
+import fluctmatch.parsers.writers.RTF
 from ..datafiles import COR, PSF, RTF
 
 
