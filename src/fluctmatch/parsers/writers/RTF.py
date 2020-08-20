@@ -45,7 +45,6 @@ from typing import ClassVar, Dict, List, Optional, TextIO, Tuple, Union
 
 import MDAnalysis as mda
 import numpy as np
-import static_frame as sf
 from MDAnalysis.core import groups
 from MDAnalysis.core.topologyobjects import TopologyObject
 
@@ -125,12 +124,20 @@ class Writer(topbase.TopologyWriterBase):
         # Write the atom lines with site name, type, and charge.
         key = "ATOM"
         atoms = residue.atoms
-        lines: np.ndarray = sf.Frame.from_records(
-            (atoms.names, atoms.types, atoms.charges)
+        lines: Tuple[np.ndarray, ...] = (
+            (
+                atoms.names[:, np.newaxis],
+                atoms.types[:, np.newaxis],
+                atoms.charges[:, np.newaxis],
+            )
             if not np.issubdtype(atoms.types.dtype, np.number)
-            else (atoms.names, atoms.names, atoms.charges)
-        ).T.values
-        np.savetxt(self.rtffile, lines, fmt=self.fmt[key])
+            else (
+                atoms.names[:, np.newaxis],
+                atoms.names[:, np.newaxis],
+                atoms.charges[:, np.newaxis],
+            )
+        )
+        np.savetxt(self.rtffile, np.hstack(lines), fmt=self.fmt[key])
 
         # Write the bond, angle, dihedral, and improper dihedral lines.
         for key, value in self.bonds:
