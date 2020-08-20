@@ -210,34 +210,30 @@ class Writer(base.TopologyWriterBase):
         types, index = np.unique(atoms.types, return_index=True)
         int_types = {k: v for k, v in zip(types, index)}
         atom_types = atoms.types if xplor else [int_types[_] for _ in atoms.types]
-        lines = sf.Frame.from_concat(
+        lines = np.hstack(
             (
-                sf.Series(np.arange(atoms.n_atoms) + 1),
-                sf.Series(atoms.segids),
-                sf.Series(atoms.resids),
-                sf.Series(atoms.resnames),
-                sf.Series(atoms.names),
-                sf.Series(atom_types),
-                sf.Series(atoms.charges),
-                sf.Series(atoms.masses),
-                sf.Series(np.zeros_like(atoms.ids)),
-            ),
-            columns="# segid resid resname name type charge mass id".split(),
-            axis=1,
+                (np.arange(atoms.n_atoms) + 1)[:, np.newaxis],
+                atoms.segids[:, np.newaxis],
+                atoms.resids[:, np.newaxis],
+                atoms.resnames[:, np.newaxis],
+                atoms.names[:, np.newaxis],
+                atom_types[:, np.newaxis],
+                atoms.charges[:, np.newaxis],
+                atoms.masses[:, np.newaxis],
+                np.zeros_like(atoms.ids)[:, np.newaxis],
+            )
         )
 
         if self._cheq:
             fmt += "%10.6f%18s"
-            cheq = sf.Frame.from_concat(
+            cheq = np.hstack(
                 (
-                    sf.Series(np.zeros_like(atoms.masses)),
-                    sf.Series(np.full_like(atoms.names, "-0.301140E-02")),
-                ),
-                columns="x cheq".split(),
-                axis=1,
+                    np.zeros_like(atoms.masses)[:, np.newaxis],
+                    np.full_like(atoms.names, "-0.301140E-02")[:, np.newaxis],
+                )
             )
-            lines = sf.Frame.from_concat([lines, cheq], axis=1)
-        np.savetxt(psffile, lines.values, fmt=fmt)
+            lines = np.concatenate([lines, cheq], axis=1)
+        np.savetxt(psffile, lines, fmt=fmt)
         print(file=psffile)
 
     def _write_sec(self, psffile: TextIO, section_info: Tuple[str, str, int]):
