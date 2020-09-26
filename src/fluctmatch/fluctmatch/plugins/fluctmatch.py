@@ -17,14 +17,14 @@ import shutil
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import NoReturn, Union
+from typing import MutableMapping, Optional
 
 import numpy as np
 import static_frame as sf
 from jinja2 import Environment, PackageLoader, Template
 
 from .. import base
-from ...parsers.readers import IC
+from ...parsers.readers import IC, PRM
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -34,93 +34,113 @@ class FluctMatch(base.FluctMatchBase):
         self,
         *,
         temperature: float = 300.0,
-        output_dir: Union[Path, str] = Path.home(),
-        logfile: Union[Path, str] = "output.log",
-        prefix: Union[Path, str] = "fluctmatch",
-    ):
-        """Initialization of fluctuation matching using CHARMM.
+        output_dir: Optional[str] = None,
+        prefix: Optional[str] = "fluctmatch",
+    ) -> None:
+        """Fluctuation matching using CHARMM.
 
         Parameters
         ----------
-        output_dir, Path or str
+        output_dir, str, optional
             Output directory
         temperature : float
             Temperature (in K)
-        logfile : Path or str
-            Output log file
-        prefix : Path or str
+        prefix : str, optional
             Filename prefix
         """
         super(FluctMatch, self).__init__(
-            output_dir=output_dir,
-            temperature=temperature,
-            logfile=logfile,
-            prefix=prefix,
+            output_dir=output_dir, temperature=temperature, prefix=prefix,
         )
-        title: str = """
+        title = """
             * Calculate the bond distance average and fluctuations.
             *
         """
-        self.data.update(
-            dict(
-                title=textwrap.dedent(title[1:]),
-                initialize=True,
-                average=self.output_dir / "init.average.ic",
-                fluctuation=self.output_dir / "init.fluct.ic",
-            )
+        self.data.update(dict(title=textwrap.dedent(title[1:]),))
+
+    def calculate(self, *, target: Optional[sf.Frame] = None) -> sf.Frame:
+        """Calculate the parameters from CHARMM fluctuations.
+
+        target : Frame or None
+            Target fluctuation data
+        """
+        error_columns = (
+            "fluct_rms",
+            "b0_rms",
+            "Kb_rms",
+        )
+        with IC.Reader(self.data["average"]) as infile:
+            average = infile.read()
+        with IC.Reader(self.data["fluctuation"]) as infile:
+            fluctuation = infile.read()
+        parameters = sf.Frame.from_concat(
+            [fluctuation[["I J r_IJ".split()]], average[["r_IJ",]]],
+            axis=1,
+            columns=["I J Kb b0".split()],
         )
 
-    def calculate(self) -> sf.Frame:
-        """Calculate the initial parameters from CHARMM fluctuations."""
-        with IC.Reader(self.data["average"]) as infile:
-            average: sf.Frame = infile.read()
-        with IC.Reader(self.data["fluctuation"]) as infile:
-            fluctuation: sf.Frame = infile.read()
-        parameters: sf.Frame = sf.Frame.from_concat(
-            [fluctuation[["I", "J", "r_IJ"]], average[["r_IJ",]]],
-            axis=1,
-            columns=["I", "J", "Kb", "b0"],
-        )
-        parameters: sf.Frame = parameters.assign["Kb"](
-            self.boltzmann / np.square(parameters["Kb"])
-        )
+        if target is None:
+            parameters = parameters.assign["Kb"](
+                self.BOLTZMANN / np.square(parameters["Kb"].values)
+            )
+        else:
+            # Retrieve previously calculated parameters
+            factor = self.BOLTZMANN * self.K_FACTOR
+            with PRM.Reader(self.data["parameter"]) as infile:
+                old_parameters: sf.Frame = infile.read()["BONDS"]
+
+            target = target.apply["Kb"](np.power(target["Kb"].values, -2))
+            optimized = parameters.apply["Kb"](np.power(parameters["Kb"].values, -2))
+            optimized = optimized.apply["Kb"](factor * (optimized["Kb"] - target["Kb"]))
+            optimized = old_parameters.apply["Kb"](
+                old_parameters["Kb"] - optimized["Kb"]
+            )
+            optimized = optimized.apply["Kb"](
+                np.clip(optimized["Kb"].values, a_min=0.0, a_max=None)
+            )
+
         return parameters
 
     def simulate(
         self,
         *,
-        input_dir: Union[Path, str] = Path.home(),
-        charmm_input: Union[Path, str] = "init_fluct.inp",
-        executable: str = shutil.which("charmm"),
-        residue: Union[Path, str] = "fluctmatch.rtf",
-        topology: Union[Path, str] = "fluctmatch.xplor.psf",
-        coordinates: Union[Path, str] = "fluctmatch.cor",
-        trajectory: Union[Path, str] = "cg.dcd",
+        input_dir: Optional[str] = None,
+        charmm_input: Optional[str] = None,
+        executable: Optional[str] = None,
+        parameters: Optional[MutableMapping] = None,
+        trajectory: Optional[str] = None,
+        logfile: Optional[str] = None,
         version: int = 39,
-    ) -> NoReturn:
+        xplor: bool = True,
+        initialize: bool = False,
+        vibration: bool = False,
+    ) -> None:
         """Run the simulation using CHARMM.
 
-        input_dir : Path or str
+        input_dir : str, optional
             Location of input files
-        charmm_input : Path or str
+        charmm_input : str, optional
             CHARMM input file
         executable : str
             Location of CHARMM executable file
-        residue : Path or str
-            CHARMM residue topology file (e.g., RTF)
-        topology : Path or str
-            CHARMM topology file (e.g., PSF or PDB)
-        coordinates : Path or str
-            Coordinate file
-        trajectory : Path or str
+        logfile : str, optional
+            File for CHARMM output
+        trajectory : str, optional
             CHARMM trajectory file
         version : int
             CHARMM version
+        xplor : bool
+            XPLOR or standard CHARMM protein structure file
+        initialize: bool
+            Determine target values or run normal mode analysis
+        vibration : bool
+            Save normal mode data
         """
         try:
-            exec_file: Path = Path(executable)
+            exec_file = Path(
+                shutil.which("charmm") if executable is None else executable
+            )
         except TypeError:
-            error_msg: str = (
+            error_msg = (
                 "Please set CHARMMEXEC with the location of your "
                 "CHARMM executable file or add the charmm path to "
                 "your PATH environment."
@@ -129,42 +149,53 @@ class FluctMatch(base.FluctMatchBase):
             raise OSError(error_msg)
 
         # Update data dictionary
+        self.data["average"] = (
+            self.output_dir / "init.average.ic"
+            if initialize
+            else self.output_dir / "average.ic"
+        )
+        self.data["fluctuation"] = (
+            self.output_dir / "init.fluct.ic"
+            if initialize
+            else self.output_dir / "fluct.ic"
+        )
+        if not initialize:
+            self.data["parameter"] = self.output_dir / self.prefix.with_suffix(".prm")
+        if vibration:
+            self.data["normal_modes"] = self.output_dir / self.prefix.with_suffix(
+                ".vib"
+            )
+        topology = (
+            self.prefix.with_suffix(".xplor.psf")
+            if xplor
+            else self.prefix.with_suffix(".psf")
+        )
+        indir = Path.home() if input_dir is None else Path(input_dir)
         self.data.update(
             dict(
-                residue=residue,
-                topology=Path(input_dir) / topology,
-                coordinates=Path(input_dir) / coordinates,
-                trajectory=Path(input_dir) / trajectory,
-                stream=Path(input_dir) / self.prefix.with_suffix(".stream"),
+                initialize=initialize,
+                residue=indir / self.prefix.with_suffix(".rtf"),
+                topology=indir / topology,
+                coordinates=indir / self.prefix.with_suffix(".cor"),
+                trajectory=indir / trajectory,
+                stream=indir / self.prefix.with_suffix(".stream"),
+                nma_coord=self.output_dir / self.prefix.with_suffix(".mini.cor"),
                 version=version,
+                vibrations=vibration,
             )
         )
 
         # Read Jinja2 templates
-        env: Environment = Environment(
-            loader=PackageLoader("fluctmatch"), autoescape=True
-        )
+        env = Environment(loader=PackageLoader("fluctmatch"), autoescape=True)
         header: Template = env.get_template("charmm_cg_header.j2")
         body: Template = env.get_template("charmm_fluctmatch.j2")
-        with open(Path(input_dir) / charmm_input, "w") as infile:
-            print(header.render(self.data) + body.render(self.data), file=infile)
 
-        with open(self.logfile, "w") as logfile:
+        filename = indir / charmm_input
+        with open(filename, "w") as infile:
+            file_contents = header.render(self.data) + body.render(self.data)
+            print(file_contents, file=infile)
+
+        with open(self.output_dir / logfile, "w") as output:
             subprocess.check_call(
-                [exec_file, "-i", input_dir / charmm_input],
-                stdout=logfile,
-                stderr=subprocess.STDOUT,
+                [exec_file, "-i", filename], stdout=output, stderr=subprocess.STDOUT,
             )
-
-    def run(
-        self,
-        nma_exec: str = None,
-        tol: float = 1.0e-4,
-        min_cycles: int = 200,
-        max_cycles: int = 200,
-        force_tol: float = 0.02,
-    ) -> NoReturn:
-        pass
-
-    def initialize(self, nma_exec: str = None, restart: bool = False) -> NoReturn:
-        pass

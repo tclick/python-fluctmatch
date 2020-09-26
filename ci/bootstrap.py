@@ -3,11 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import sys
-from os.path import abspath
-from os.path import dirname
-from os.path import exists
-from os.path import join
-
+from os.path import abspath, dirname, exists, join
 
 if __name__ == "__main__":
     base_path = dirname(dirname(abspath(__file__)))
@@ -30,8 +26,7 @@ if __name__ == "__main__":
     activate = join(bin_path, "activate_this.py")
     # noinspection PyCompatibility
     exec(
-        compile(open(activate, "rb").read(), activate, "exec"),
-        dict(__file__=activate),
+        compile(open(activate, "rb").read(), activate, "exec"), dict(__file__=activate),
     )
 
     import jinja2
@@ -60,8 +55,6 @@ if __name__ == "__main__":
 
     for name in os.listdir(join("ci", "templates")):
         with open(join(base_path, name), "w") as fh:
-            fh.write(
-                jinja.get_template(name).render(tox_environments=tox_environments)
-            )
+            fh.write(jinja.get_template(name).render(tox_environments=tox_environments))
         print("Wrote {}".format(name))
     print("DONE.")

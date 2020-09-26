@@ -40,7 +40,7 @@
 
 import abc
 from pathlib import Path
-from typing import Optional, TypeVar, Union
+from typing import Optional, TypeVar
 
 import static_frame as sf
 from scipy import constants
@@ -55,29 +55,25 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         self,
         *,
         temperature: float = 300.0,
-        output_dir: Union[Path, str] = Path.home(),
-        logfile: Union[Path, str] = "output.log",
-        prefix: Union[Path, str] = "fluctmatch",
+        output_dir: Optional[str] = None,
+        prefix: str = "fluctmatch",
     ) -> None:
         """Initialization of fluctuation matching.
 
         Parameters
         ----------
-        output_dir, Path or str
+        output_dir, str, optional
             Output directory
         temperature : float
             Temperature (in K)
-        logfile : Path or str
-            Output log file
-        prefix : Union[Path, str]
+        prefix : Optional[str]
             Filename prefix
         """
         if temperature < 0:
             raise IOError("Temperature cannot be negative.")
 
         self.data = dict(temperature=temperature)
-        self.output_dir = Path(output_dir)
-        self.logfile = self.output_dir / logfile
+        self.output_dir = Path.home() if output_dir is None else Path(output_dir)
         self.prefix = Path(prefix)
 
         # Attempt to create the necessary subdirectory
@@ -89,23 +85,32 @@ class FluctMatchBase(metaclass=abc.ABCMeta):
         )
 
         # Bond factor mol^2-Ang./kcal^2
-        self.K_FACTOR: float = 0.02
+        self.K_FACTOR = 0.02
 
     @abc.abstractmethod
-    def calculate(
-        self: TFMBase, *, error_data: bool = False, target: Optional[sf.Frame] = None
-    ) -> tuple:
+    def calculate(self: TFMBase, *, target: Optional[sf.Frame] = None) -> sf.Frame:
         """Calculate the force constants from the fluctuations."""
+        pass
+
+    @abc.abstractmethod
+    def initialize(
+        self: TFMBase,
+        *,
+        input_dir: Optional[str] = None,
+        executable: Optional[str] = None,
+        trajectory: Optional[str] = None,
+        logfile: Optional[str] = None,
+    ) -> Optional[sf.Frame]:
         pass
 
     @abc.abstractmethod
     def simulate(
         self: TFMBase,
         *,
-        input_dir: Union[Path, str] = Path.home(),
-        executable: Union[Path, str] = None,
-        topology: Union[Path, str] = "cg.xplor.psf",
-        trajectory: Union[Path, str] = "cg.dcd",
-    ) -> None:
+        input_dir: Optional[str] = None,
+        executable: Optional[str] = None,
+        trajectory: Optional[str] = None,
+        logfile: Optional[str] = None,
+    ) -> Optional[sf.Frame]:
         """Perform normal mode analysis of the system."""
         pass

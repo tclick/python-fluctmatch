@@ -48,13 +48,9 @@ def download_latest_artifacts(account_project, build_id):
 
     for job in jobs:
         name = job["name"]
-        print(
-            "  {0}: {1[status]}, {1[artifactsCount]} artifacts".format(name, job)
-        )
+        print("  {0}: {1[status]}, {1[artifactsCount]} artifacts".format(name, job))
 
-        url = "https://ci.appveyor.com/api/buildjobs/{}/artifacts".format(
-            job["jobId"]
-        )
+        url = "https://ci.appveyor.com/api/buildjobs/{}/artifacts".format(job["jobId"])
         response = requests.get(url, headers=make_auth_headers())
         artifacts = response.json()
 
@@ -110,10 +106,7 @@ parser.add_argument(
     help="Project ID in AppVeyor.",
 )
 parser.add_argument(
-    "build",
-    nargs="?",
-    metavar="BUILD_ID",
-    help="Build ID in AppVeyor. Eg: master-123",
+    "build", nargs="?", metavar="BUILD_ID", help="Build ID in AppVeyor. Eg: master-123",
 )
 
 if __name__ == "__main__":

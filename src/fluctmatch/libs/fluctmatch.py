@@ -47,9 +47,9 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Mapping
 
-import click
 import MDAnalysis as mda
 import MDAnalysis.analysis.base as analysis
+import click
 import numpy as np
 
 from ..fluctmatch.data import charmm_split
@@ -74,9 +74,9 @@ class AverageStructure(analysis.AnalysisBase):
         verbose : bool, optional
             Turn on verbosity
         """
-        super().__init__(atomgroup.universe.trajectory, **kwargs)
+        super().__init__(atomgroup._universe.trajectory, **kwargs)
         self._ag = atomgroup
-        self._nframes = atomgroup.universe.trajectory.n_frames
+        self._nframes = atomgroup._universe.trajectory.n_frames
 
     def _prepare(self):
         self.result = np.zeros_like(self._ag.positions)
