@@ -2,7 +2,7 @@
 set ndcd    1
 
 ! Load the trajectory
-open read  unit @input file name {{ trajectory }}
+open read  unit @input file name {{ data.trajectory }}
 
 ! Gather information from the first trajectory assuming that all trajectories
 ! are similar.

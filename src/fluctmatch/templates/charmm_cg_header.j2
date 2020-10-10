@@ -36,25 +36,25 @@
 !   doi:10.1016/bs.mie.2016.05.024.
 !
 ! ------------------------------------------------------------------------------
-{{ title }}
+{{ data.title }}
 
 {% if version >= 36 %}dimension chsize 500000 maxres 3000000{% endif %}
 bomlev -5 ! This is for CHARMM 39
 
 ! Open CHARMM topology and parameter file
-read rtf card name "{{ residue }}"
-{% if parameter %}read para card {flex} name "{parameter}"{% endif %}
+read rtf card name "{{ data.residue }}"
+{% if parameter %}read para card {{ data.flex }} name "{parameter}"{% endif %}
 
 ! Open PSF and coordinate files
-read psf card name "{{ topology }}"
-read coor card name "{{ coordinates }}"
+read psf card name "{{ data.topology }}"
+read coor card name "{{ data.coordinates }}"
 coor copy comp
 
-{%if initialize %}stream "{{ stream }}"{% endif %}
+{%if initialize %}stream "{{ data.stream }}"{% endif %}
 
 skip all excl bond
 update inbfrq 0
 
 ! Additional information
-set temp    {{ temperature }}
+set temp    {{ data.temperature }}
 set input   10

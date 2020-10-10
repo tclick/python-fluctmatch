@@ -36,46 +36,46 @@
 !   doi:10.1016/bs.mie.2016.05.024.
 !
 ! ------------------------------------------------------------------------------
-{{ title }}
+{{ data.title }}
 
 {% if version >= 36 %}dimension chsize 500000 maxres 3000000{% endif %}
 bomlev -5 ! This is for CHARMM 39
 
-set toppar {{ toppar }}
-set begin {{ start }}
-set end {{ stop }}
+set toppar {{ data.toppar }}
+set begin {{ data.start }}
+set end {{ data.stop }}
 {% if version < 36 %}
 read rtf  card name @toppar/top_all27_prot_na.rtf
-read para card {flex} name @toppar/par_all27_prot_na.prm
+read para card {{ data.flex }} name @toppar/par_all27_prot_na.prm
 
 read rtf  card name @toppar/top_all27_lipid.rtf append
-read para card {flex} name @toppar/par_all27_lipid.prm append
+read para card {{ data.flex }} name @toppar/par_all27_lipid.prm append
 
 read rtf  card name @toppar/top_all35_sugar.rtf append
-read para card {flex} name @toppar/par_all35_sugar.prm append
+read para card {{ data.flex }} name @toppar/par_all35_sugar.prm append
 {% else %}
 read rtf  card name @toppar/top_all36_prot.rtf
-read para card {flex} name @toppar/par_all36_prot.prm
+read para card {{ data.flex }} name @toppar/par_all36_prot.prm
 
 read rtf  card name @toppar/top_all36_na.rtf append
-read para card {flex} name @toppar/par_all36_na.prm append
+read para card {{ data.flex }} name @toppar/par_all36_na.prm append
 
 read rtf  card name @toppar/top_all36_carb.rtf append
-read para card {flex} name @toppar/par_all36_carb.prm append
+read para card {{ data.flex }} name @toppar/par_all36_carb.prm append
 
 read rtf  card name @toppar/top_all36_lipid.rtf append
-read para card {flex} name @toppar/par_all36_lipid.prm append
+read para card {{ data.flex }} name @toppar/par_all36_lipid.prm append
 
 read rtf  card name @toppar/top_all36_cgenff.rtf append
-read para card {flex} name @toppar/par_all36_cgenff.prm append
+read para card {{ data.flex }} name @toppar/par_all36_cgenff.prm append
 {% endif %}
 stream @toppar/toppar_water_ions.str
 {% if suffix == ".PSF" %}
-read psf card name {{ topology }}
+read psf card name {{ data.topology }}
 {% elif suffix == ".COR" or suffix == "CRD" %}
-read sequence coor resi name {{ topology }}
+read sequence coor resi name {{ data.topology }}
 {% elif suffix == ".PDB" %}
-read sequence pdb resi {{ topology }}
+read sequence pdb resi {{ data.topology }}
 {% endif %}
 
 ! File handles

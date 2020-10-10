@@ -5,7 +5,7 @@ ioformat extended
 ic fill
 
 ! Load the trajectories
-open read unit @input file name {{ trajectory }}
+open read unit @input file name {{ data.trajectory }}
 
 ! Gather information from the first trajectory assuming that all
 ! trajectories are similar.
@@ -14,12 +14,12 @@ traj query unit @input
 
 ! Calculate internal coordinate average movement
 ic dyna aver first @input nunit 1 skip ?SKIP
-write ic card resid name {{ average }}
+write ic card resid name {{ data.average }}
 * Internal coordinate averages
 
 ! Calculate fluctuations in internal coordinate movement
 ic dyna fluc first @input nunit 1 skip ?SKIP
-write ic card resid name {{ fluctuation }}
+write ic card resid name {{ data.fluctuation }}
 * Internal coordinate fluctuations
 
 {% else %}
@@ -36,23 +36,23 @@ coor orie rms mass
 scalar wmain copy mass
 
 ioformat extended
-write coor card name "{{ nma_coord }}"
+write coor card name "{{ data.nma_coord }}"
 *
 
-stream "{{ stream }}"
+stream "{{ data.stream }}"
 
 ic fill
-write ic card resid name "{{ average }}"
+write ic card resid name "{{ data.average }}"
 
 calc nmode   ?natom * 3
 set nmodes   @nmode
 set type     temp
 
-open write unit @fluctu card name "{{ fluctuation }}"
+open write unit @fluctu card name "{{ data.fluctuation }}"
 *
 
 {% if vibrations %}
-open write unit @vibu   card name "{{ normal_modes }}"
+open write unit @vibu   card name "{{ data.normal_modes }}"
 *
 {% endif %}
 ! Perform normal mode analysis at desired temperature for vibrational normal
