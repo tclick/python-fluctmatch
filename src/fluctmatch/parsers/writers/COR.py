@@ -42,7 +42,7 @@ import itertools
 import logging
 import warnings
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Generator, List, Optional, Union
+from typing import Any, ClassVar, Dict, Generator, List, NoReturn, Optional, Union
 
 import MDAnalysis as mda
 import numpy as np
@@ -76,7 +76,7 @@ class Writer(CRD.CRDWriter):
         "length": "Angstrom",
     }
 
-    def __init__(self, filename: Union[str, Path], **kwargs: str) -> None:
+    def __init__(self, filename: Union[str, Path], **kwargs: str) -> NoReturn:
         """
         Parameters
         ----------
@@ -112,7 +112,7 @@ class Writer(CRD.CRDWriter):
         self,
         selection: Union[mda.Universe, mda.AtomGroup],
         frame: Optional[int] = None,
-    ) -> None:
+    ) -> NoReturn:
         """Write selection at current trajectory frame to file.
 
         write(selection,frame=FRAME)
