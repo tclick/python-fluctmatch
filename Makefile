@@ -1,21 +1,35 @@
 .PHONY: clean virtualenv test docker dist dist-upload
 
-SHELL = /bin/zsh
+SHELL = /bin/bash
 BASENAME = python-fluctmatch
 CONDA_DIR = ${HOME}/.conda/envs/${BASENAME}
 clean:
 	find . -name '*.py[co]' -delete
 
 conda:
-	conda create -y -p ${CONDA_DIR} pip
-	conda activate $(basename ${CONDA_DIR}) && \
-		pip install -r requirements.txt -r requirements-dev.txt && \
-		python setup.py develop
+	conda create -y -c conda-forge -p ${CONDA_DIR} pip python=3.8
+	source activate ${BASENAME} && pip install -r requirements.txt
+	source activate ${BASENAME} && pip install .
+
+conda-dev:
+	conda create -y -c conda-forge -p ${CONDA_DIR} pip python=3.8
+	source activate ${BASENAME} && pip install -r requirements.txt
+	source activate ${BASENAME} && pip install -r requirements-dev.txt
+	source activate ${BASENAME} && pip install -e .
 
 virtualenv:
 	virtualenv --prompt '|> python-fluctmatch <| ' env
+	env/bin/pip install -r requirements.txt
+	env/bin/pip install -e .
+	@echo
+	@echo "VirtualENV Setup Complete. Now run: source env/bin/activate"
+	@echo
+
+virtualenv-dev:
+	virtualenv --prompt '|> python-fluctmatch <| ' env
+	env/bin/pip install -r requirements.txt
 	env/bin/pip install -r requirements-dev.txt
-	env/bin/python setup.py develop
+	env/bin/pip install -e .
 	@echo
 	@echo "VirtualENV Setup Complete. Now run: source env/bin/activate"
 	@echo
